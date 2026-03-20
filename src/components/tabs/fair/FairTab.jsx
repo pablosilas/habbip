@@ -1,6 +1,8 @@
 import React from "react"
 import FairResultCard from "../fair/FairResultCard"
 import Button from "../../ui/Button"
+import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
+import { useMobiHistory } from "../../../hooks/useSearchHistory"
 
 export default function FairTab({
   mobiQuery,
@@ -13,13 +15,54 @@ export default function FairTab({
   loading,
   error,
   results,
+  loggedUserName,
 }) {
   const hasResults = results.length > 0
   const [expanded, setExpanded] = React.useState(true)
+  const [showDropdown, setShowDropdown] = React.useState(false)
+  const [sortBy, setSortBy] = React.useState("price")
+  const inputRef = React.useRef(null)
+
+  const {
+    history,
+    favorites,
+    addToHistory,
+    removeFromHistory,
+    clearHistory,
+    toggleFavorite,
+    isFavorite,
+  } = useMobiHistory(loggedUserName)
+
+  // Guarda o último termo buscado para associar ao classname quando results chegar
+  const lastSearchedTermRef = React.useRef(null)
 
   React.useEffect(() => {
     if (hasResults) setExpanded(false)
   }, [hasResults])
+
+  // Quando results chega, atualiza o histórico com o classname do primeiro resultado
+  React.useEffect(() => {
+    if (results.length > 0 && lastSearchedTermRef.current) {
+      const firstClassname = results[0]?.ClassName || null
+      addToHistory({ term: lastSearchedTermRef.current, classname: firstClassname })
+      lastSearchedTermRef.current = null
+    }
+  }, [addToHistory, results])
+
+  function handleSearch() {
+    if (mobiQuery.trim()) lastSearchedTermRef.current = mobiQuery.trim()
+    onSearch()
+    setShowDropdown(false)
+  }
+
+  function handleSelectFromDropdown(term) {
+    setMobiQuery(term)
+    setShowDropdown(false)
+    lastSearchedTermRef.current = term
+    onSearch(term)
+  }
+
+  const hasDropdownItems = history.length > 0 || favorites.length > 0
 
   return (
     <div>
@@ -37,15 +80,34 @@ export default function FairTab({
 
       {expanded && (
         <>
-          <input
-            value={mobiQuery}
-            onChange={(e) => setMobiQuery(e.target.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Enter") onSearch()
-            }}
-            placeholder="Digite o nome do mobi"
-            className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2] mb-2"
-          />
+          {/* Input com dropdown de histórico */}
+          <div className="relative mb-2">
+            <input
+              ref={inputRef}
+              value={mobiQuery}
+              onChange={(e) => setMobiQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") handleSearch()
+                if (e.key === "Escape") setShowDropdown(false)
+              }}
+              onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
+              onBlur={() => setShowDropdown(false)}
+              placeholder="Digite o nome do mobi"
+              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+            />
+
+            <SearchHistoryDropdown
+              show={showDropdown}
+              history={history}
+              favorites={favorites}
+              onSelect={handleSelectFromDropdown}
+              onRemove={removeFromHistory}
+              onToggleFav={toggleFavorite}
+              isFavorite={isFavorite}
+              onClear={clearHistory}
+              showFurniImage
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
             <select
@@ -75,8 +137,9 @@ export default function FairTab({
               <option value="90" className="text-black">90 dias</option>
             </select>
           </div>
+
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button onClick={onSearch} disabled={loading}>
+            <Button onClick={handleSearch} disabled={loading}>
               {loading ? "Consultando..." : "Consultar feira"}
             </Button>
 
@@ -91,21 +154,64 @@ export default function FairTab({
         <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>
       ) : null}
 
+      {/* Seletor de ordenação */}
+      {results.length > 1 && (
+        <div className="flex items-center gap-2 mb-2">
+          <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
+          <div className="flex gap-1 flex-wrap">
+            {[
+              { value: "price", label: "Preço" },
+              { value: "trend", label: "Tendência" },
+              { value: "offers", label: "Ofertas" },
+              { value: "updated", label: "Atualização" },
+            ].map(({ value, label }) => (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setSortBy(value)}
+                className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value
+                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
+                  }`}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       <div className="space-y-2 pr-1">
         {[...results]
           .sort((a, b) => {
-            const aHistory = a.marketData?.history
-            const bHistory = b.marketData?.history
-            const aLast = Array.isArray(aHistory) && aHistory.length ? aHistory[aHistory.length - 1][0] ?? 0 : 0
-            const bLast = Array.isArray(bHistory) && bHistory.length ? bHistory[bHistory.length - 1][0] ?? 0 : 0
-            return bLast - aLast
+            const aHist = a.marketData?.history
+            const bHist = b.marketData?.history
+            const aLast = Array.isArray(aHist) && aHist.length ? aHist[aHist.length - 1] : null
+            const bLast = Array.isArray(bHist) && bHist.length ? bHist[bHist.length - 1] : null
+            const aPrev = Array.isArray(aHist) && aHist.length > 1 ? aHist[aHist.length - 2] : null
+            const bPrev = Array.isArray(bHist) && bHist.length > 1 ? bHist[bHist.length - 2] : null
+
+            if (sortBy === "price") return (bLast?.[0] ?? 0) - (aLast?.[0] ?? 0)
+            if (sortBy === "trend") {
+              const aDiff = (aLast?.[0] ?? 0) - (aPrev?.[0] ?? aLast?.[0] ?? 0)
+              const bDiff = (bLast?.[0] ?? 0) - (bPrev?.[0] ?? bLast?.[0] ?? 0)
+              return bDiff - aDiff
+            }
+            if (sortBy === "offers") return (bLast?.[3] ?? 0) - (aLast?.[3] ?? 0)
+            if (sortBy === "updated") return (bLast?.[4] ?? 0) - (aLast?.[4] ?? 0)
+            return 0
           })
-          .map((item, index) => (
-            <FairResultCard
-              key={`${item.ClassName || item.FurniName || index}-${index}`}
-              item={item}
-            />
-          ))}
+          .map((item, index) => {
+            const favKey = item.ClassName || item.FurniName || String(index)
+            return (
+              <FairResultCard
+                key={`${favKey}-${index}`}
+                item={item}
+                isFavorite={isFavorite(favKey)}
+                onToggleFavorite={() => toggleFavorite(favKey)}
+              />
+            )
+          })}
 
         {!loading && !results.length && !error && (
           <div className="text-[#e0e0e0] text-[12px]">

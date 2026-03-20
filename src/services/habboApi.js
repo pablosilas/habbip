@@ -11,15 +11,17 @@ async function handleResponse(response, defaultMessage) {
 
 export async function fetchMarketHistory({
   name,
+  classname,
   hotel = "br",
   days = "all",
 }) {
-  if (!name?.trim()) {
-    throw new Error("Informe um nome.")
+  if (!name?.trim() && !classname?.trim()) {
+    throw new Error("Informe um nome ou classname.")
   }
 
   const params = new URLSearchParams()
-  params.set("name", name.trim())
+  if (name?.trim()) params.set("name", name.trim())
+  if (classname?.trim()) params.set("classname", classname.trim())
   params.set("hotel", hotel)
   params.set("days", days)
 

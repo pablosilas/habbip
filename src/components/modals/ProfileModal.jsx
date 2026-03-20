@@ -8,7 +8,7 @@ export default function ProfileModal({ open, user, onClose, onLogout }) {
   return (
     <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
       <ConsoleCard
-        title="Perfil do usuário"
+        title="Meu Perfil"
         onClose={onClose}
         expand
         className="w-full max-w-[760px] h-[90vh] flex flex-col"

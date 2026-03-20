@@ -3,28 +3,63 @@ import { getFurnitureImageUrl } from "../../../services/habboApi"
 import coinIcon from "../../../assets/coin.png"
 import flagBr from "../../../assets/flagbr.png"
 import flagCom from "../../../assets/flagcom.png"
+import starOn from "../../../assets/star_on.png"
+import starOff from "../../../assets/star_off.png"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
-
   const date = new Date(timestampInSeconds * 1000)
-
-  return new Intl.DateTimeFormat("pt-BR", {
-    day: "2-digit",
-    month: "2-digit",
-  }).format(date)
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date)
 }
 
 function formatLastUpdatedDate(lastUpdated) {
   if (!lastUpdated) return "-"
-
   const [datePart] = lastUpdated.split(" at ")
   if (!datePart) return "-"
-
   const [year, month, day] = datePart.split("-")
   if (!year || !month || !day) return "-"
+  return `${day}/${month}/${year}`
+}
 
-  return `${day}/${month}/${year.slice(2)}`
+function timeAgo(lastUpdated) {
+  if (!lastUpdated) return null
+  const [datePart, timePart] = lastUpdated.split(" at ")
+  if (!datePart) return null
+  const [year, month, day] = datePart.split("-")
+  if (!year || !month || !day) return null
+
+  const dateStr = timePart
+    ? `${year}-${month}-${day}T${timePart}`
+    : `${year}-${month}-${day}T00:00:00`
+
+  const date = new Date(dateStr)
+  if (isNaN(date.getTime())) return null
+
+  const diffMs = Date.now() - date.getTime()
+  const diffMin = Math.floor(diffMs / 60000)
+  const diffH = Math.floor(diffMin / 60)
+  const diffD = Math.floor(diffH / 24)
+
+  if (diffMin < 60) return "agora pouco"
+  if (diffH < 24) return `há ${diffH}h`
+  if (diffD === 1) return "há 1 dia"
+  if (diffD < 30) return `há ${diffD} dias`
+  const diffM = Math.floor(diffD / 30)
+  if (diffM === 1) return "há 1 mês"
+  return `há ${diffM} meses`
+}
+
+function getTimeAgoColor(lastUpdated) {
+  if (!lastUpdated) return "text-[#888]"
+  const [datePart] = lastUpdated.split(" at ")
+  if (!datePart) return "text-[#888]"
+  const [year, month, day] = datePart.split("-")
+  const date = new Date(`${year}-${month}-${day}`)
+  if (isNaN(date.getTime())) return "text-[#888]"
+  const diffD = Math.floor((Date.now() - date.getTime()) / 86400000)
+  if (diffD <= 1) return "text-[#7CFC8A]"   // fresco — verde
+  if (diffD <= 7) return "text-[#f1d97a]"   // recente — amarelo
+  return "text-[#FF8A8A]"                   // defasado — vermelho
 }
 
 function getLatestHistoryEntry(history = []) {
@@ -40,70 +75,40 @@ function getPreviousHistoryEntry(history = []) {
 function getTrendInfo(history = []) {
   const latest = getLatestHistoryEntry(history)
   const previous = getPreviousHistoryEntry(history)
-
   const latestPrice = latest?.[0]
   const previousPrice = previous?.[0]
 
   if (latestPrice == null || previousPrice == null) {
-    return {
-      label: "Sem tendência",
-      icon: "•",
-      colorClass: "text-[#cfcfcf]",
-    }
+    return { label: "Sem tendência", icon: "•", colorClass: "text-[#cfcfcf]" }
   }
-
   if (latestPrice > previousPrice) {
-    return {
-      label: "Subindo",
-      icon: "▲",
-      colorClass: "text-[#7CFC8A]",
-    }
+    return { label: "Subindo", icon: "▲", colorClass: "text-[#7CFC8A]" }
   }
-
   if (latestPrice < previousPrice) {
-    return {
-      label: "Caindo",
-      icon: "▼",
-      colorClass: "text-[#FF8A8A]",
-    }
+    return { label: "Caindo", icon: "▼", colorClass: "text-[#FF8A8A]" }
   }
-
-  return {
-    label: "Estável",
-    icon: "•",
-    colorClass: "text-[#f1d97a]",
-  }
+  return { label: "Estável", icon: "•", colorClass: "text-[#f1d97a]" }
 }
 
 function findHistoryByDaysWithTolerance(history = [], targetDaysAgo, toleranceInDays = 0) {
   if (!Array.isArray(history) || history.length === 0) return null
-
   const now = new Date()
   now.setHours(0, 0, 0, 0)
-
   const targetDate = new Date(now)
   targetDate.setDate(targetDate.getDate() - targetDaysAgo)
-
   let closest = null
   let closestDiff = Infinity
-
   for (const entry of history) {
     const timestamp = entry?.[4]
     if (!timestamp) continue
-
     const entryDate = new Date(timestamp * 1000)
     entryDate.setHours(0, 0, 0, 0)
-
-    const diffInDays = Math.abs(
-      (entryDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24)
-    )
-
+    const diffInDays = Math.abs((entryDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24))
     if (diffInDays <= toleranceInDays && diffInDays < closestDiff) {
       closest = entry
       closestDiff = diffInDays
     }
   }
-
   return closest
 }
 
@@ -117,11 +122,8 @@ function MetricBlock({ label, value, showCoin = false, coinIcon, children }) {
   return (
     <div>
       <div className="text-[11px] font-bold text-white">{label}</div>
-
       <div className="text-[13px] text-[#f1f1f1] flex items-center gap-1 flex-wrap">
-        {showCoin && coinIcon && (
-          <img src={coinIcon} alt="coin" className="w-4 h-4" />
-        )}
+        {showCoin && coinIcon && <img src={coinIcon} alt="coin" className="w-4 h-4" />}
         <span>{value ?? "-"}</span>
         {children}
       </div>
@@ -133,19 +135,15 @@ function HistoryInfo({ title, entry, coinIcon }) {
   const soldItems = entry?.[1] ?? 0
   const averagePrice = entry?.[0] ?? "-"
   const timestamp = entry?.[4]
-
   return (
     <div className="bg-[rgba(255,255,255,0.06)] px-2 py-1 rounded">
       <div className="text-[11px] font-bold text-white">{title}</div>
-
       <div className="text-[11px] text-[#e6e6e6] flex items-center gap-1 flex-wrap">
         {soldItems} un. por
         <img src={coinIcon} alt="coin" className="w-3 h-3" />
         {averagePrice}
         {timestamp && (
-          <span className="text-[#bdbdbd] ml-1">
-            • {formatDateLabel(timestamp)}
-          </span>
+          <span className="text-[#bdbdbd] ml-1">• {formatDateLabel(timestamp)}</span>
         )}
       </div>
     </div>
@@ -155,12 +153,7 @@ function HistoryInfo({ title, entry, coinIcon }) {
 function FurnitureImage({ classname, furniName, size = "small" }) {
   const [hasError, setHasError] = React.useState(false)
   const imageUrl = getFurnitureImageUrl(classname)
-
-  const sizeClass =
-    size === "large"
-      ? "w-[88px] h-[88px]"
-      : "w-[44px] h-[44px]"
-
+  const sizeClass = size === "large" ? "w-[88px] h-[88px]" : "w-[44px] h-[44px]"
   return (
     <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden`}>
       {!hasError && imageUrl ? (
@@ -171,15 +164,204 @@ function FurnitureImage({ classname, furniName, size = "small" }) {
           onError={() => setHasError(true)}
         />
       ) : (
-        <div className="text-[10px] text-[#bdbdbd] text-center leading-tight">
-          sem imagem
-        </div>
+        <div className="text-[10px] text-[#bdbdbd] text-center leading-tight">sem imagem</div>
       )}
     </div>
   )
 }
 
-export default function FairResultCard({ item }) {
+/**
+ * PriceSparkline
+ *
+ * Gráfico SVG de linha mostrando evolução do preço ao longo do histórico.
+ * Tooltip aparece ao passar o mouse sobre cada ponto com preço + data.
+ */
+function PriceSparkline({ history = [] }) {
+  const [tooltip, setTooltip] = React.useState(null)
+  const [expanded, setExpanded] = React.useState(true)
+
+  // Filtra entradas com preço válido, do ano vigente, e ordena por timestamp
+  const currentYear = new Date().getFullYear()
+  const points = history
+    .filter((e) => {
+      if (!e?.[0] || e[0] <= 0 || !e?.[4]) return false
+      return new Date(e[4] * 1000).getFullYear() === currentYear
+    })
+    .sort((a, b) => a[4] - b[4])
+
+  if (points.length < 2) return null
+
+  const W = 260
+  const H = 90
+  const PAD_X = 4
+  const PAD_Y = 8
+
+  const prices = points.map((e) => e[0])
+  const minPrice = Math.min(...prices)
+  const maxPrice = Math.max(...prices)
+  const priceRange = maxPrice - minPrice || 1
+
+  const coords = points.map((entry, i) => ({
+    x: PAD_X + (i / (points.length - 1)) * (W - PAD_X * 2),
+    y: PAD_Y + (1 - (entry[0] - minPrice) / priceRange) * (H - PAD_Y * 2),
+    price: entry[0],
+    date: formatDateLabel(entry[4]),
+  }))
+
+  const linePath = coords
+    .map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
+    .join(" ")
+
+  const areaPath =
+    linePath +
+    ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`
+
+  const firstPrice = prices[0]
+  const lastPrice = prices[prices.length - 1]
+
+  const lineColor =
+    lastPrice > firstPrice ? "#7CFC8A" :
+      lastPrice < firstPrice ? "#FF8A8A" :
+        "#f1d97a"
+
+  const areaColor =
+    lastPrice > firstPrice ? "rgba(124,252,138,0.08)" :
+      lastPrice < firstPrice ? "rgba(255,138,138,0.08)" :
+        "rgba(241,217,122,0.08)"
+
+  return (
+    <div className="mt-2 mb-3">
+      {/* Cabeçalho clicável */}
+      <div
+        className="flex items-center justify-between mb-1 cursor-pointer group"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <span className="text-[9px] font-bold text-[#aaa] uppercase tracking-wider group-hover:text-[#ccc] transition-colors">
+          Histórico de preços
+        </span>
+        <div className="flex items-center gap-2">
+          <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
+            {points.length} registros • {coords[0].date} → {coords[coords.length - 1].date}
+          </span>
+          <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
+            {expanded ? "▲ recolher" : "▼ expandir"}
+          </span>
+        </div>
+      </div>
+
+      {expanded && (
+        <>
+          <div className="relative w-full">
+            <svg
+              viewBox={`0 0 ${W} ${H}`}
+              className="w-full"
+              style={{ height: "90px", overflow: "visible" }}
+              onMouseLeave={() => setTooltip(null)}
+            >
+              {/* Linhas de grade */}
+              {[0.25, 0.5, 0.75].map((t) => (
+                <line
+                  key={t}
+                  x1={PAD_X}
+                  y1={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)}
+                  x2={W - PAD_X}
+                  y2={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)}
+                  stroke="rgba(255,255,255,0.05)"
+                  strokeWidth="1"
+                />
+              ))}
+
+              {/* Área preenchida */}
+              <path d={areaPath} fill={areaColor} />
+
+              {/* Linha principal */}
+              <path
+                d={linePath}
+                fill="none"
+                stroke={lineColor}
+                strokeWidth="2"
+                strokeLinejoin="round"
+                strokeLinecap="round"
+              />
+
+              {/* Pontos interativos invisíveis com hitbox maior */}
+              {coords.map((c, i) => (
+                <g key={i}>
+                  {/* Ponto visível */}
+                  <circle
+                    cx={c.x}
+                    cy={c.y}
+                    r={tooltip?.price === c.price && tooltip?.date === c.date ? 5 : 3.5}
+                    fill={lineColor}
+                    stroke="#1a1a1a"
+                    strokeWidth="1"
+                  />
+                  {/* Área de hover maior */}
+                  <circle
+                    cx={c.x}
+                    cy={c.y}
+                    r="8"
+                    fill="transparent"
+                    className="cursor-crosshair"
+                    onMouseEnter={() => setTooltip({ x: c.x, y: c.y, price: c.price, date: c.date })}
+                  />
+                </g>
+              ))}
+            </svg>
+
+            {/* Tooltip posicionado acima do ponto — ajusta para não vazar nas bordas */}
+            {tooltip && (() => {
+              const pct = tooltip.x / W  // 0..1
+              // Se o ponto está no 1º terço: ancora à esquerda
+              // Se está no último terço: ancora à direita
+              // Caso contrário: centraliza
+              const anchor =
+                pct < 0.2 ? "left" :
+                  pct > 0.8 ? "right" :
+                    "center"
+
+              const style = {
+                bottom: `${((H - tooltip.y) / H) * 100 + 14}%`,
+                ...(anchor === "left" && { left: `${pct * 100}%`, transform: "translateX(0)" }),
+                ...(anchor === "right" && { left: `${pct * 100}%`, transform: "translateX(-100%)" }),
+                ...(anchor === "center" && { left: `${pct * 100}%`, transform: "translateX(-50%)" }),
+              }
+
+              return (
+                <div
+                  className="absolute z-20 pointer-events-none px-2 py-[3px] rounded border border-[#555] bg-[#1e1e1e] text-[10px] text-white whitespace-nowrap shadow-lg"
+                  style={style}
+                >
+                  <div className="flex items-center gap-1">
+                    <img src={coinIcon} alt="coin" className="w-3 h-3" />
+                    <span className="font-bold">{tooltip.price}</span>
+                    <span className="text-[#888]">•</span>
+                    <span className="text-[#bbb]">{tooltip.date}</span>
+                  </div>
+                </div>
+              )
+            })()}
+          </div>
+
+          {/* Min / Max */}
+          <div className="flex justify-between mt-[2px]">
+            <span className="text-[9px] text-[#aaa]">mín {minPrice}</span>
+            <span className="text-[9px] text-[#aaa]">máx {maxPrice}</span>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
+
+/**
+ * FairResultCard
+ *
+ * Props:
+ *   isFavorite        {boolean}    Se o mobi está nos favoritos
+ *   onToggleFavorite  {function}   Callback para adicionar/remover dos favoritos
+ */
+export default function FairResultCard({ item, isFavorite = false, onToggleFavorite }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
@@ -192,6 +374,8 @@ export default function FairResultCard({ item }) {
   const sold30Days = findHistoryByDaysWithTolerance(history, 30, 3)
 
   const trendInfo = getTrendInfo(history)
+  const timeAgoLabel = timeAgo(item?.marketData?.lastUpdated)
+  const timeAgoColor = getTimeAgoColor(item?.marketData?.lastUpdated)
   const flag = getHotelFlag(item.hotel_domain)
   const formattedDate = formatLastUpdatedDate(item?.marketData?.lastUpdated)
 
@@ -204,45 +388,51 @@ export default function FairResultCard({ item }) {
 
   return (
     <div className="border border-[#8a8a8a] rounded-md px-3 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+      {/* ── Cabeçalho ── */}
       <div className="flex items-start justify-between gap-3 mb-2">
-        <div className="min-w-0">
-          <div className="text-[15px] font-bold text-white break-words">
-            {item.FurniName || "-"}
-          </div>
-          <div className="text-[11px] text-[#b7b7b7] break-all">
-            {item.ClassName || "-"}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-start gap-2">
+            <div className="min-w-0 flex-1">
+              <div className="text-[15px] font-bold text-white break-words">
+                {item.FurniName || "-"}
+              </div>
+              <div className="text-[11px] text-[#b7b7b7] break-all">
+                {item.ClassName || "-"}
+              </div>
+            </div>
+
+            {onToggleFavorite && (
+              <button
+                type="button"
+                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                onClick={onToggleFavorite}
+                className="shrink-0 cursor-pointer transition-transform hover:scale-125"
+              >
+                <img
+                  src={isFavorite ? starOn : starOff}
+                  alt={isFavorite ? "remover favorito" : "adicionar favorito"}
+                  className={isFavorite ? "w-5 h-5 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
+                />
+              </button>
+            )}
           </div>
         </div>
 
-        <FurnitureImage
-          classname={item.ClassName}
-          furniName={item.FurniName}
-          size="small"
-        />
+        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="small" />
       </div>
 
+      {/* ── Métricas ── */}
       <div className="grid grid-cols-3 gap-4 mb-3">
-        <MetricBlock
-          label="Preço atual"
-          value={priceNow}
-          showCoin
-          coinIcon={coinIcon}
-        >
+        <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
           <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
             {trendInfo.icon} {trendInfo.label}
           </span>
         </MetricBlock>
-
-        <MetricBlock
-          label="Média"
-          value={averagePrice}
-          showCoin
-          coinIcon={coinIcon}
-        />
-
+        <MetricBlock label="Média" value={averagePrice} showCoin coinIcon={coinIcon} />
         <MetricBlock label="Ofertas" value={openOffers} />
       </div>
 
+      {/* ── Cards de vendas por período ── */}
       {historyCards.length > 0 ? (
         <div className="grid grid-cols-2 gap-2 mb-3">
           {historyCards.map((historyItem) => (
@@ -256,19 +446,24 @@ export default function FairResultCard({ item }) {
         </div>
       ) : null}
 
-      <div className="flex items-end justify-between gap-3">
-        <FurnitureImage
-          classname={item.ClassName}
-          furniName={item.FurniName}
-          size="large"
-        />
+      {/* ── Gráfico de histórico de preços ── */}
+      <PriceSparkline history={history} />
 
+      {/* ── Rodapé ── */}
+      <div className="flex items-end justify-between gap-3">
+        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="large" />
         <div className="flex-1 text-right">
           <div className="flex items-center justify-end gap-1 text-[11px] text-[#d6d6d6]">
             {flag && <img src={flag} alt={item.hotel_domain} className="w-4 h-4" />}
             <span>{item.hotel_domain?.toUpperCase()}</span>
             <span>•</span>
             <span>{formattedDate}</span>
+            {timeAgoLabel && (
+              <>
+                <span>•</span>
+                <span className={`font-bold ${timeAgoColor}`}>{timeAgoLabel}</span>
+              </>
+            )}
           </div>
         </div>
       </div>

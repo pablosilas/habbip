@@ -3,33 +3,33 @@ import Button from "../ui/Button"
 const MESSAGES = [
   {
     title: "Oi?? Tá tentando me fechar??",
-    body: "Achei que éramos amigos... Mas tudo bem, pode ficar. Por enquanto. 👀",
+    body: "Achei que éramos amigos... Mas tudo bem, ainda da tempo de desistir.",
     confirm: "Desculpa, vou ficar!",
     cancel: "Vou fechar sim.",
   },
   {
     title: "De novo não...",
-    body: "Tá bem, girei a tela só pra te avisar. Da próxima pode ser pior. 🌀",
+    body: "Tá bem, girei a tela só pra te avisar. Da próxima pode ser pior.",
     confirm: "Ok, entendi o recado.",
     cancel: "Qual seria o pior?",
   },
   {
     title: "Você foi avisado.",
-    body: "Três vezes. TRÊS. E você continua tentando. Isso é sabotagem. 😤",
+    body: "Três vezes. TRÊS. E você continua tentando. Isso é sabotagem!",
     confirm: "Juro que paro.",
     cancel: "Não vou parar.",
   },
   {
     title: "Tá bom, respeito.",
-    body: "Mas saiba que o Habbip vai sentir sua falta. Principalmente a feira. 🥺",
+    body: "Mas saiba que o Habbo Console vai sentir sua falta.",
     confirm: "Meu coração amoleceu, vou ficar.",
     cancel: "Até logo, amigo.",
   },
   {
-    title: "Tá tonto já?? 😵‍💫",
-    body: "São 5 tentativas de fechar. A tela já girou tanto que até eu tô zonzo. Você não tá tonto não?",
+    title: "Tá tonto já??",
+    body: "A tela já girou tanto que até eu tô zonzo. Você não tá tonto não?",
     confirm: "Tô sim, vou descansar aqui então.",
-    cancel: "Não tô, e vou girar mais!",
+    cancel: "Não tô, vou girar mais!",
   },
 ]
 

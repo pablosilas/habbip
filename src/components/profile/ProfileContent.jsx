@@ -2,6 +2,8 @@ import React from "react"
 import roomPlaceholder from "../../assets/room.png"
 import onlineIcon from "../../assets/online.png"
 import offlineIcon from "../../assets/offline.png"
+import starOn from "../../assets/star_on.png"
+import starOff from "../../assets/star_off.png"
 
 import {
   formatHabboDate,
@@ -16,12 +18,8 @@ import ProfileListCard from "./ProfileListCard"
 function SectionTitle({ children, count }) {
   return (
     <div className="flex items-center justify-between mt-4 mb-2">
-      <div className="text-[12px] font-bold text-[#fff2c1]">
-        {children}
-      </div>
-      <div className="text-[11px] text-[#d7d7d7]">
-        {count}
-      </div>
+      <div className="text-[12px] font-bold text-[#fff2c1]">{children}</div>
+      <div className="text-[11px] text-[#d7d7d7]">{count}</div>
     </div>
   )
 }
@@ -49,15 +47,10 @@ function ImageWithFallback({ src, alt, className, fallback }) {
 
 function ScrollSectionCard({ children, emptyText, className = "" }) {
   const hasChildren = React.Children.count(children) > 0
-
   return (
-    <div
-      className={`border border-[#8a8a8a] bg-[rgba(255,255,255,0.06)] rounded-[10px] p-2 ${className}`}
-    >
+    <div className={`border border-[#8a8a8a] bg-[rgba(255,255,255,0.06)] rounded-[10px] p-2 ${className}`}>
       <div className="max-h-[210px] overflow-y-auto pr-1 space-y-2">
-        {hasChildren ? (
-          children
-        ) : (
+        {hasChildren ? children : (
           <div className="text-[12px] text-[#d7d7d7]">{emptyText}</div>
         )}
       </div>
@@ -65,14 +58,17 @@ function ScrollSectionCard({ children, emptyText, className = "" }) {
   )
 }
 
-export default function ProfileContent({ user, hotel = "br" }) {
+/**
+ * ProfileContent
+ *
+ * Props adicionadas:
+ *   isFavorite        {boolean}    Se o usuário está nos favoritos
+ *   onToggleFavorite  {function}   Callback para adicionar/remover dos favoritos
+ */
+export default function ProfileContent({ user, hotel = "br", isFavorite = false, onToggleFavorite }) {
   if (!user) return null
 
-  const avatarUrl = getHabboAvatarUrl({
-    name: user.name,
-    hotel,
-    size: "b",
-  })
+  const avatarUrl = getHabboAvatarUrl({ name: user.name, hotel, size: "b" })
 
   const selectedBadges = Array.isArray(user.selectedBadges) ? user.selectedBadges : []
   const badges = Array.isArray(user.badges) ? user.badges : []
@@ -93,8 +89,23 @@ export default function ProfileContent({ user, hotel = "br" }) {
         </div>
 
         <div className="flex-1 min-w-0 space-y-2 text-[12px]">
-          <div>
+          {/* Nome + botão favorito */}
+          <div className="flex items-center gap-2">
             <span className="font-bold">{user.name || "-"}</span>
+            {onToggleFavorite && (
+              <button
+                type="button"
+                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                onClick={onToggleFavorite}
+                className="cursor-pointer transition-transform hover:scale-125"
+              >
+                <img
+                  src={isFavorite ? starOn : starOff}
+                  alt={isFavorite ? "remover favorito" : "adicionar favorito"}
+                  className={isFavorite ? "w-4 h-4 image-rendering-pixel" : "w-3 h-3 image-rendering-pixel opacity-50"}
+                />
+              </button>
+            )}
           </div>
 
           <div>
@@ -105,9 +116,7 @@ export default function ProfileContent({ user, hotel = "br" }) {
             <span className="font-bold">Último login:</span> {formatHabboDate(user.lastAccessTime)}
           </div>
 
-          <div>
-            {user.motto || "-"}
-          </div>
+          <div>{user.motto || "-"}</div>
 
           <div className="flex items-center gap-2">
             <img
@@ -120,9 +129,8 @@ export default function ProfileContent({ user, hotel = "br" }) {
           {selectedBadges.length > 0 ? (
             <div className="flex flex-wrap gap-2 pt-1">
               {selectedBadges.map((badge) => (
-                <div title={badge.name ? `${badge.name} - ${badge.code}` : badge.code}>
+                <div key={badge.code} title={badge.name ? `${badge.name} - ${badge.code}` : badge.code}>
                   <ImageWithFallback
-                    key={badge.code}
                     src={getHabboBadgeUrl(badge.code)}
                     alt={badge.name || badge.code}
                     className="w-8 h-8 image-rendering-pixel shrink-0"
@@ -152,14 +160,9 @@ export default function ProfileContent({ user, hotel = "br" }) {
                 <div className="w-10 h-10 border border-[#8a8a8a] bg-[rgba(255,255,255,0.05)] shrink-0" />
               }
             />
-
             <div className="min-w-0">
-              <div className="text-[12px] font-bold break-words">
-                {badge.name || badge.code}
-              </div>
-              <div className="text-[11px] text-[#d7d7d7] break-words">
-                {badge.description || "-"}
-              </div>
+              <div className="text-[12px] font-bold break-words">{badge.name || badge.code}</div>
+              <div className="text-[11px] text-[#d7d7d7] break-words">{badge.description || "-"}</div>
             </div>
           </div>
         ))}
@@ -172,13 +175,7 @@ export default function ProfileContent({ user, hotel = "br" }) {
             key={friend.uniqueId || friend.name}
             image={
               <ImageWithFallback
-                src={getHabboAvatarUrl({
-                  name: friend.name,
-                  hotel,
-                  size: "s",
-                  direction: 2,
-                  headDirection: 2,
-                })}
+                src={getHabboAvatarUrl({ name: friend.name, hotel, size: "s", direction: 2, headDirection: 2 })}
                 alt={friend.name}
                 className="w-12 h-12 object-contain image-rendering-pixel"
                 fallback={<span className="text-xl">👤</span>}
@@ -198,10 +195,7 @@ export default function ProfileContent({ user, hotel = "br" }) {
             key={group.id || group.badgeCode}
             image={
               <ImageWithFallback
-                src={getHabboGroupBadgeUrl({
-                  badgeCode: group.badgeCode,
-                  hotel,
-                })}
+                src={getHabboGroupBadgeUrl({ badgeCode: group.badgeCode, hotel })}
                 alt={group.name}
                 className="w-12 h-12 object-contain image-rendering-pixel"
                 fallback={<span className="text-[10px] text-[#cfcfcf]">grupo</span>}

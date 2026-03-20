@@ -21,7 +21,7 @@ export default function ToastMessage({ count = 1 }) {
           >
             <div className="rounded-[10px] border border-[#8a8a8a] bg-[rgba(0,0,0,0.08)] p-4">
               <div className="text-white text-[12px] leading-5 text-center">
-                Tentou sair, mas o Habbip trouxe você de volta {count > 1 && `${count} vezes.`}
+                Tentou sair, mas o Habbo Console trouxe você de volta {count > 1 && `${count} vezes.`}
               </div>
             </div>
           </div>
