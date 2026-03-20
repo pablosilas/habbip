@@ -1,4 +1,4 @@
-import React from "react"
+import Button from "../ui/Button"
 
 const MESSAGES = [
   {
@@ -21,7 +21,7 @@ const MESSAGES = [
   },
   {
     title: "Tá bom, respeito.",
-    body: "Mas saiba que o Habbolatorio vai sentir sua falta. Principalmente a feira. 🥺",
+    body: "Mas saiba que o Habbip vai sentir sua falta. Principalmente a feira. 🥺",
     confirm: "Meu coração amoleceu, vou ficar.",
     cancel: "Até logo, amigo.",
   },
@@ -62,23 +62,14 @@ export default function CloseJokeModal({ open, attempt, onClose, onConfirm }) {
               <div className="text-white text-[12px] leading-5 mb-4 text-center">
                 {message.body}
               </div>
-
               <div className="flex flex-col gap-2">
-                <button
-                  type="button"
-                  onClick={onClose}
-                  className="w-full h-9 rounded-[6px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[12px] font-bold cursor-pointer hover:brightness-110"
-                >
+                <Button onClick={onClose}>
                   {message.confirm}
-                </button>
+                </Button>
 
-                <button
-                  type="button"
-                  onClick={onConfirm}
-                  className="w-full h-9 rounded-[6px] border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] text-[#d0d0d0] text-[12px] font-bold cursor-pointer hover:brightness-110"
-                >
+                <Button variant="secondary" onClick={onConfirm}>
                   {message.cancel}
-                </button>
+                </Button>
               </div>
             </div>
           </div>

@@ -1,8 +1,8 @@
 import React from "react"
-import { getFurnitureImageUrl } from "../services/habboApi"
-import coinIcon from "../assets/coin.png"
-import flagBr from "../assets/flagbr.png"
-import flagCom from "../assets/flagcom.png"
+import { getFurnitureImageUrl } from "../../../services/habboApi"
+import coinIcon from "../../../assets/coin.png"
+import flagBr from "../../../assets/flagbr.png"
+import flagCom from "../../../assets/flagcom.png"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"

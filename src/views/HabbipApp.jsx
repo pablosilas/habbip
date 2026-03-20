@@ -3,28 +3,29 @@ import feiraIcon from "../assets/feira.png";
 import usuarioIcon from "../assets/usuario.png";
 import bgPattern from "../assets/bg.png";
 
-import HeaderCard from "../components/HeaderCard";
-import FairTab from "../components/FairTab";
-import UserTab from "../components/UserTab";
-import ConsoleTab from "../components/ConsoleTab";
-import LoginModal from "../components/LoginModal";
-import ProfileModal from "../components/ProfileModal";
+import HeaderCard from "../components/layout/HeaderCard";
+import FairTab from "../components/tabs/fair/FairTab";
+import UserTab from "../components/tabs/UserTab";
+import ConsoleTab from "../components/layout/ConsoleTab";
+import LoginModal from "../components/modals/LoginModal";
+import ProfileModal from "../components/modals/ProfileModal";
 
 import {
   fetchMarketHistory,
   fetchUserByName,
   fetchUserProfileById,
 } from "../services/habboApi";
-import InfoModal from "../components/InfoModal";
-import CloseJokeModal from "../components/CloseJokeModal";
-import ToastMessage from "../components/ToastMessage";
+import InfoModal from "../components/modals/InfoModal";
+import CloseJokeModal from "../components/modals/CloseJokeModal";
+import ToastMessage from "../components/layout/ToastMessage";
+import ConsoleCard from "../components/ui/ConsoleCard";
 
 const STORAGE_KEYS = {
-  loggedUser: "habbolatorio_logged_user",
-  anonymousSkipLogin: "habbolatorio_anonymous_skip_login",
+  loggedUser: "habbip_logged_user",
+  anonymousSkipLogin: "habbip_anonymous_skip_login",
 };
 
-export default function HabbolatorioApp() {
+export default function HabbipApp() {
   const [activeTab, setActiveTab] = React.useState("feira");
 
   const [mobiQuery, setMobiQuery] = React.useState("");
@@ -225,7 +226,6 @@ export default function HabbolatorioApp() {
       setTimeout(() => setShowToast(false), 4000)
     }, 1000)
   }
-
   return (
     <>
       <LoginModal
@@ -236,19 +236,16 @@ export default function HabbolatorioApp() {
         onContinueAnonymous={handleContinueAnonymous}
         onClose={() => handleContinueAnonymous({ doNotAskAgain: false })}
       />
-
       <ProfileModal
         open={profileModalOpen}
         user={loggedUser}
         onClose={() => setProfileModalOpen(false)}
         onLogout={handleLogout}
       />
-
       <InfoModal
         open={infoModalOpen}
         onClose={() => setInfoModalOpen(false)}
       />
-
       <CloseJokeModal
         open={closeModalOpen}
         attempt={closeAttempt}
@@ -264,134 +261,109 @@ export default function HabbolatorioApp() {
           backgroundRepeat: "repeat",
         }}
       >
-        <style>{`
-          body { font-family: Verdana, Arial, sans-serif; }
-        `}</style>
+        <style>{`body { font-family: Verdana, Arial, sans-serif; }`}</style>
 
         <div className="relative w-full h-full flex items-center justify-center">
-          <div
-            className="console-card w-full max-w-[720px] h-full max-h-[96vh] rounded-[23px] bg-[#ffca00] border-[1px] border-[#1D190D] shadow-[0_18px_40px_rgba(0,0,0,0.25)] overflow-hidden flex flex-col"
+          <ConsoleCard
+            title="Habbip"
+            expand
             style={{
               transform: upsideDown ? "rotate(180deg)" : "rotate(0deg)",
               transition: "transform 0.5s ease-in-out",
             }}
-          >
-            <div className="h-8 shrink-0 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden">
-              {/* Pontinhos lado esquerdo */}
-              <div className="absolute left-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-
-              {/* Pontinhos lado direito */}
-              <div className="absolute right-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-
-              {/* Título central */}
-              <div className="text-[12px] font-bold text-[#7c4e00] tracking-wide z-10">
-                Habbo Console
-              </div>
-
-              {/* Botões (fica por cima) */}
-              <div className="absolute right-4 flex gap-1 z-10">
-                <span
-                  onClick={handleCloseClick}
-                  className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
-                >
-                  X
-                </span>
-              </div>
-            </div>
-
-            <div className="flex-1 min-h-0 px-3 pb-3 bg-[#ffca00] overflow-hidden">
-              {showToast && (
-                <ToastMessage count={closeAttempt} />
-              )}
-              <div className="h-full min-h-0 rounded-[14px] border-[2px] border-[#1D190D] bg-[repeating-linear-gradient(180deg,#535353_0px,#535353_2px,#4b4b4b_2px,#4b4b4b_4px)] p-3 overflow-hidden"
-                style={{
-                  boxShadow: "inset 0 4px 6px rgba(0,0,0,0.4), inset 0 -4px 6px rgba(0,0,0,0.4), inset 4px 0 6px rgba(0,0,0,0.4), inset -4px 0 6px rgba(0,0,0,0.4)"
-                }}
+            className="w-full max-w-[720px] h-full max-h-[96vh] flex flex-col"
+            innerClassName="flex flex-col overflow-hidden"
+            headerRight={
+              <span
+                onClick={handleCloseClick}
+                className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
               >
-                <div className="h-full min-h-0 rounded-[10px] border border-[#8a8a8a] bg-[rgba(0,0,0,0.08)] p-3 flex flex-col overflow-hidden">
-                  <HeaderCard
-                    activeTab={activeTab}
-                    userData={loggedUser}
-                    onOpenProfile={() => setProfileModalOpen(true)}
-                    onOpenLogin={() => setLoginModalOpen(true)}
+                X
+              </span>
+            }
+            footer={
+              <div className="px-20 pt-5 pb-0">
+                <div className="rounded-t-[4px] h-[75px] flex overflow-hidden">
+                  <ConsoleTab
+                    label="Feira Livre"
+                    icon={
+                      <img
+                        src={feiraIcon}
+                        className="w-6 h-6 image-rendering-pixel icon-dark"
+                        alt="Feira"
+                      />
+                    }
+                    active={activeTab === "feira"}
+                    onClick={() => setActiveTab("feira")}
                   />
-
-                  <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-2 shrink-0" />
-
-                  <div className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1">
-                    {activeTab === "feira" ? (
-                      <FairTab
-                        mobiQuery={mobiQuery}
-                        setMobiQuery={setMobiQuery}
-                        fairHotel={fairHotel}
-                        setFairHotel={setFairHotel}
-                        fairDays={fairDays}
-                        setFairDays={setFairDays}
-                        onSearch={handleSearchFair}
-                        loading={fairLoading}
-                        error={fairError}
-                        results={fairResults}
+                  <ConsoleTab
+                    label="Buscar Usuário"
+                    icon={
+                      <img
+                        src={usuarioIcon}
+                        className="w-6 h-6 image-rendering-pixel icon-dark"
+                        alt="Usuário"
                       />
-                    ) : (
-                      <UserTab
-                        nickQuery={nickQuery}
-                        setNickQuery={setNickQuery}
-                        onSearch={handleSearchUser}
-                        loading={userLoading}
-                        error={userError}
-                        userData={searchedUser}
-                      />
-                    )}
-                  </div>
-
-                  <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-3 shrink-0" />
-
-                  <div className="shrink-0 space-y-1 text-[12px] text-white leading-5">
-                    <div>{processedResultsCount} resultados processados</div>
-                  </div>
+                    }
+                    active={activeTab === "usuario"}
+                    onClick={() => setActiveTab("usuario")}
+                  />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => setInfoModalOpen(true)}
+                  className="absolute bottom-4 right-6 w-6 h-6 rounded-full border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[11px] font-bold flex items-center justify-center cursor-pointer hover:brightness-110 z-10"
+                >
+                  ?
+                </button>
               </div>
+            }
+          >
+            {showToast && <ToastMessage count={closeAttempt} />}
+
+            <HeaderCard
+              activeTab={activeTab}
+              userData={loggedUser}
+              onOpenProfile={() => setProfileModalOpen(true)}
+              onOpenLogin={() => setLoginModalOpen(true)}
+            />
+
+            <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-2 shrink-0" />
+
+            <div className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1">
+              {activeTab === "feira" ? (
+                <FairTab
+                  mobiQuery={mobiQuery}
+                  setMobiQuery={setMobiQuery}
+                  fairHotel={fairHotel}
+                  setFairHotel={setFairHotel}
+                  fairDays={fairDays}
+                  setFairDays={setFairDays}
+                  onSearch={handleSearchFair}
+                  loading={fairLoading}
+                  error={fairError}
+                  results={fairResults}
+                />
+              ) : (
+                <UserTab
+                  nickQuery={nickQuery}
+                  setNickQuery={setNickQuery}
+                  onSearch={handleSearchUser}
+                  loading={userLoading}
+                  error={userError}
+                  userData={searchedUser}
+                />
+              )}
             </div>
 
-            <div className="shrink-0 bg-[#ffca00] px-20 pt-5 pb-0">
-              <div className="rounded-t-[4px] h-[75px] flex overflow-hidden">
-                <ConsoleTab
-                  label="Feira Livre"
-                  icon={
-                    <img
-                      src={feiraIcon}
-                      className="w-6 h-6 image-rendering-pixel icon-dark"
-                      alt="Feira"
-                    />
-                  }
-                  active={activeTab === "feira"}
-                  onClick={() => setActiveTab("feira")}
-                />
+            <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-3 shrink-0" />
 
-                <ConsoleTab
-                  label="Buscar Usuário"
-                  icon={
-                    <img
-                      src={usuarioIcon}
-                      className="w-6 h-6 image-rendering-pixel icon-dark"
-                      alt="Usuário"
-                    />
-                  }
-                  active={activeTab === "usuario"}
-                  onClick={() => setActiveTab("usuario")}
-                />
-              </div>
-              <button
-                type="button"
-                onClick={() => setInfoModalOpen(true)}
-                className="absolute bottom-4 right-6 w-6 h-6 rounded-full border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[11px] font-bold flex items-center justify-center cursor-pointer hover:brightness-110 z-10"
-              >
-                ?
-              </button>
+            <div className="shrink-0 space-y-1 text-[12px] text-white leading-5">
+              <div>{processedResultsCount} resultados processados</div>
             </div>
-          </div>
+          </ConsoleCard>
         </div>
-      </div >
+      </div>
     </>
   );
 }

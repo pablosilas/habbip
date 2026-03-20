@@ -1,9 +1,8 @@
-import React from "react"
-import HabbolatorioApp from "./views/HabbolatorioApp"
+import HabbipApp from "./views/HabbipApp"
 
 export default function App() {
 
   return (
-    <HabbolatorioApp />
+    <HabbipApp />
   )
 }

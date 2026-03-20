@@ -1,5 +1,6 @@
 import React from "react"
-import ProfileContent from "./ProfileContent"
+import ProfileContent from "../profile/ProfileContent"
+import Button from "../ui/Button"
 
 export default function UserTab({
   nickQuery,
@@ -43,21 +44,13 @@ export default function UserTab({
           />
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              onClick={onSearch}
-              disabled={loading}
-              className="w-full h-9 border border-[#b98d14] bg-[linear-gradient(180deg,#ffd64d_0%,#e6b21b_100%)] text-[#6f4700] font-bold text-[12px] disabled:opacity-70 cursor-pointer"
-            >
+            <Button onClick={onSearch} disabled={loading}>
               {loading ? "Buscando..." : "Buscar usuário"}
-            </button>
+            </Button>
 
-            <button
-              onClick={() => setNickQuery("")}
-              type="button"
-              className="w-full h-9 border border-[#6d6d6d] bg-[linear-gradient(180deg,#5a5a63_0%,#44454e_100%)] text-white font-bold text-[12px] cursor-pointer"
-            >
+            <Button variant="secondary" onClick={() => setNickQuery("")}>
               Limpar
-            </button>
+            </Button>
           </div>
         </>
       )}

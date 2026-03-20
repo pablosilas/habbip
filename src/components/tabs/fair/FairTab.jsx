@@ -1,5 +1,6 @@
 import React from "react"
-import FairResultCard from "./FairResultCard"
+import FairResultCard from "../fair/FairResultCard"
+import Button from "../../ui/Button"
 
 export default function FairTab({
   mobiQuery,
@@ -74,23 +75,14 @@ export default function FairTab({
               <option value="90" className="text-black">90 dias</option>
             </select>
           </div>
-
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <button
-              onClick={onSearch}
-              disabled={loading}
-              className="w-full h-9 border border-[#b98d14] bg-[linear-gradient(180deg,#ffd64d_0%,#e6b21b_100%)] text-[#6f4700] font-bold text-[12px] disabled:opacity-70 cursor-pointer"
-            >
+            <Button onClick={onSearch} disabled={loading}>
               {loading ? "Consultando..." : "Consultar feira"}
-            </button>
+            </Button>
 
-            <button
-              onClick={() => setMobiQuery("")}
-              type="button"
-              className="w-full h-9 border border-[#6d6d6d] bg-[linear-gradient(180deg,#5a5a63_0%,#44454e_100%)] text-white font-bold text-[12px] cursor-pointer"
-            >
+            <Button variant="secondary" onClick={() => setMobiQuery("")}>
               Limpar
-            </button>
+            </Button>
           </div>
         </>
       )}

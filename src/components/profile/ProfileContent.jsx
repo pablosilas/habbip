@@ -1,7 +1,7 @@
 import React from "react"
-import roomPlaceholder from "../assets/room.png"
-import onlineIcon from "../assets/online.png"
-import offlineIcon from "../assets/offline.png"
+import roomPlaceholder from "../../assets/room.png"
+import onlineIcon from "../../assets/online.png"
+import offlineIcon from "../../assets/offline.png"
 
 import {
   formatHabboDate,
@@ -10,7 +10,7 @@ import {
   getHabboGroupBadgeUrl,
   getHabboProfileUrl,
   getHabboRoomUrl,
-} from "../services/habboApi"
+} from "../../services/habboApi"
 import ProfileListCard from "./ProfileListCard"
 
 function SectionTitle({ children, count }) {

@@ -1,9 +1,8 @@
-import React from "react"
 import {
   getHabboAvatarHeadUrl,
   getHabboBadgeUrl,
-} from "../services/habboApi"
-import noUser from "../assets/no_user.png"
+} from "../../services/habboApi"
+import noUser from "../../assets/no_user.png"
 
 export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenLogin }) {
   const isLogged = !!userData?.name
