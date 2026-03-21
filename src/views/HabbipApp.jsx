@@ -189,6 +189,8 @@ export default function HabboDeskApp() {
   const cardStyle = React.useMemo(() => ({
     transform: closeJoke.upsideDown ? "rotate(180deg)" : "rotate(0deg)",
     transition: "transform 0.5s ease-in-out",
+    height: "calc(var(--vh, 1dvh) * 96)",
+    maxHeight: "calc(var(--vh, 1dvh) * 96)",
   }), [closeJoke.upsideDown])
 
   React.useEffect(() => {
@@ -198,6 +200,21 @@ export default function HabboDeskApp() {
   React.useEffect(() => {
     if (user.searchedUser) setUserExpanded(false)
   }, [user.searchedUser])
+
+  React.useEffect(() => {
+    function setVh() {
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        const vh = window.innerHeight * 0.01
+        document.documentElement.style.setProperty("--vh", `${vh}px`)
+      } else {
+        document.documentElement.style.removeProperty("--vh")
+      }
+    }
+    setVh()
+    window.addEventListener("resize", setVh)
+    return () => window.removeEventListener("resize", setVh)
+  }, [])
 
   return (
     <>
@@ -239,6 +256,7 @@ export default function HabboDeskApp() {
       <div
         className="h-screen overflow-hidden flex items-center justify-center py-0 px-2 sm:p-2"
         style={{
+          height: "calc(var(--vh, 1vh) * 100)",
           backgroundColor: "#dfe5e8",
           backgroundImage: `url(${BG_OPTIONS[bgIndex]})`,
           backgroundRepeat: "repeat",
