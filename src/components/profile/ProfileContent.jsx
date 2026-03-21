@@ -4,6 +4,7 @@ import onlineIcon from "../../assets/online.png"
 import offlineIcon from "../../assets/offline.png"
 import starOn from "../../assets/star_on.png"
 import starOff from "../../assets/star_off.png"
+import boxIcon from "../../assets/box.png"
 
 import {
   formatHabboDate,
@@ -25,23 +26,39 @@ function SectionTitle({ children, count }) {
 }
 
 function ImageWithFallback({ src, alt, className, fallback }) {
-  const [hasError, setHasError] = React.useState(false)
+  const [status, setStatus] = React.useState("loading") // "loading" | "ok" | "error"
 
-  if (!src || hasError) {
+  // Reseta o status quando o src muda
+  React.useEffect(() => { setStatus(src ? "loading" : "error") }, [src])
+
+  if (!src || status === "error") {
     return fallback || (
-      <div className={`${className} flex items-center justify-center text-[10px] text-[#cfcfcf]`}>
-        sem imagem
-      </div>
+      <img
+        src={boxIcon}
+        alt="sem imagem"
+        className={`${className} object-contain image-rendering-pixel opacity-60`}
+      />
     )
   }
 
   return (
-    <img
-      src={src}
-      alt={alt}
-      className={className}
-      onError={() => setHasError(true)}
-    />
+    <div className="relative inline-flex items-center justify-center">
+      {/* box.png pulsando enquanto carrega */}
+      {status === "loading" && (
+        <img
+          src={boxIcon}
+          alt="carregando"
+          className={`${className} object-contain image-rendering-pixel opacity-40 animate-pulse absolute`}
+        />
+      )}
+      <img
+        src={src}
+        alt={alt}
+        className={`${className} ${status === "ok" ? "opacity-100" : "opacity-0"} transition-opacity duration-200`}
+        onLoad={() => setStatus("ok")}
+        onError={() => setStatus("error")}
+      />
+    </div>
   )
 }
 

@@ -1,8 +1,16 @@
 import React from "react"
 import { getFurnitureImageUrl } from "../../../services/habboApi"
 import coinIcon from "../../../assets/coin.png"
+import boxIcon from "../../../assets/box.png"
 import flagBr from "../../../assets/flagbr.png"
 import flagCom from "../../../assets/flagcom.png"
+import flagDe from "../../../assets/flagde.png"
+import flagEs from "../../../assets/flages.png"
+import flagFi from "../../../assets/flagfi.png"
+import flagFr from "../../../assets/flagfr.png"
+import flagIt from "../../../assets/flagit.png"
+import flagNl from "../../../assets/flagnl.png"
+import flagTr from "../../../assets/flagtr.png"
 import starOn from "../../../assets/star_on.png"
 import starOff from "../../../assets/star_off.png"
 
@@ -99,6 +107,13 @@ function getTrendInfo(history = []) {
 function getHotelFlag(hotel) {
   if (hotel === "br") return flagBr
   if (hotel === "com") return flagCom
+  if (hotel === "de") return flagDe
+  if (hotel === "es") return flagEs
+  if (hotel === "fi") return flagFi
+  if (hotel === "fr") return flagFr
+  if (hotel === "it") return flagIt
+  if (hotel === "nl") return flagNl
+  if (hotel === "tr") return flagTr
   return null
 }
 
@@ -237,20 +252,31 @@ function HistoryTimeline({ history = [] }) {
 }
 
 function FurnitureImage({ classname, furniName, size = "small" }) {
-  const [hasError, setHasError] = React.useState(false)
+  const [status, setStatus] = React.useState("loading") // "loading" | "ok" | "error"
   const imageUrl = getFurnitureImageUrl(classname)
   const sizeClass = size === "large" ? "w-[88px] h-[88px]" : "w-[44px] h-[44px]"
+
+  // Reseta o status quando o classname muda
+  React.useEffect(() => { setStatus("loading") }, [classname])
+
   return (
     <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden`}>
-      {!hasError && imageUrl ? (
+      {/* box.png aparece enquanto carrega e também como fallback de erro */}
+      {(status === "loading" || status === "error" || !imageUrl) && (
+        <img
+          src={boxIcon}
+          alt="carregando"
+          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
+        />
+      )}
+      {imageUrl && (
         <img
           src={imageUrl}
           alt={furniName || "Mobi"}
-          className="max-w-full max-h-full object-contain image-rendering-pixel"
-          onError={() => setHasError(true)}
+          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
+          onLoad={() => setStatus("ok")}
+          onError={() => setStatus("error")}
         />
-      ) : (
-        <div className="text-[10px] text-[#bdbdbd] text-center leading-tight">sem imagem</div>
       )}
     </div>
   )
@@ -484,7 +510,7 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
       </div>
 
       {/* ── Métricas ── */}
-      <div className="grid grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-2 xs:grid-cols-3 gap-3 mb-3">
         <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
           <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
             {trendInfo.icon} {trendInfo.label}
