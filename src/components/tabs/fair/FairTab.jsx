@@ -37,10 +37,6 @@ export default function FairTab({
   // Guarda o último termo buscado para associar ao classname quando results chegar
   const lastSearchedTermRef = React.useRef(null)
 
-  React.useEffect(() => {
-    if (hasResults) setExpanded(false)
-  }, [hasResults])
-
   // Quando results chega, atualiza o histórico com o classname do primeiro resultado
   React.useEffect(() => {
     if (results.length > 0 && lastSearchedTermRef.current) {

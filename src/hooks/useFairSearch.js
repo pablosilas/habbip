@@ -104,6 +104,7 @@ export function useFairSearch() {
     setDays,
     loading,
     error,
+    setError,
     results,
     setResults,
     handleSearch,

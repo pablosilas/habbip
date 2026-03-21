@@ -59,6 +59,7 @@ export function useUserSearch() {
     setNickQuery,
     loading,
     error,
+    setError,
     searchedUser,
     setSearchedUser,
     handleSearch,

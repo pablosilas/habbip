@@ -55,8 +55,13 @@ export default function HabbipApp() {
     transition: "transform 0.5s ease-in-out",
   }), [closeJoke.upsideDown])
 
-  console.log(userExpanded, 'userExpanded')
-  console.log(fairExpanded, 'fairExpanded')
+  React.useEffect(() => {
+    if (fair.results.length > 0) setFairExpanded(false)
+  }, [fair.results])
+
+  React.useEffect(() => {
+    if (user.searchedUser) setUserExpanded(false)
+  }, [user.searchedUser])
 
   return (
     <>

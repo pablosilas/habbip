@@ -28,10 +28,6 @@ export default function UserTab({
     isFavorite,
   } = useUserHistory(loggedUserName)
 
-  React.useEffect(() => {
-    if (hasResult) setExpanded(false)
-  }, [hasResult])
-
   function handleSearch() {
     if (nickQuery.trim()) addToHistory(nickQuery.trim())
     onSearch()
