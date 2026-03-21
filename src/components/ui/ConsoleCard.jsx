@@ -34,18 +34,18 @@ export default function ConsoleCard({
   children,
 }) {
   // O slot direito do header: prioriza `headerRight`, depois botão X, depois nada
-  const rightSlot = headerRight ?? (
-    onClose ? (
+  const rightSlot =
+    headerRight ??
+    (onClose ? (
       <button
         type="button"
         onClick={onClose}
-        className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
+        className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
         aria-label="Fechar"
       >
         X
       </button>
-    ) : null
-  )
+    ) : null);
 
   return (
     <div
@@ -53,7 +53,10 @@ export default function ConsoleCard({
       style={style}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div className="h-8 shrink-0 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden">
+      <div
+        className="h-8 shrink-0 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden"
+        style={{ boxShadow: "inset -3px 0 0 rgba(0,0,0,0.2)" }}
+      >
         {/* Pontinhos esquerda */}
         <div className="absolute left-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
         {/* Pontinhos direita */}
@@ -68,9 +71,7 @@ export default function ConsoleCard({
 
         {/* Slot direito */}
         {rightSlot && (
-          <div className="absolute right-4 flex gap-1 z-10">
-            {rightSlot}
-          </div>
+          <div className="absolute right-4 flex gap-1 z-10">{rightSlot}</div>
         )}
       </div>
 
@@ -81,13 +82,15 @@ export default function ConsoleCard({
                                h-full min-h-0 overflow-hidden no bezel,
                                h-full min-h-0 no inner.
       */}
-      <div className={`px-3 pb-3 bg-[#ffca00] ${expand ? "flex-1 min-h-0 overflow-hidden" : ""} ${bodyClassName}`}>
+      <div
+        className={`px-3 pb-3 bg-[#ffca00] ${expand ? "flex-1 min-h-0 overflow-hidden" : ""} ${bodyClassName}`}
+        style={{ boxShadow: "inset -3px 0 0 rgba(0,0,0,0.2)" }}
+      >
         {/* Bezel escuro estilo CRT */}
         <div
-          className={`rounded-[14px] border-[2px] border-[#1D190D] bg-[repeating-linear-gradient(180deg,#535353_0px,#535353_2px,#4b4b4b_2px,#4b4b4b_4px)] p-3 ${expand ? "h-full min-h-0 overflow-hidden" : ""}`}
+          className={`effect-console mt-1 rounded-[14px] border-[2px] border-[#1D190D] bg-[repeating-linear-gradient(180deg,#535353_0px,#535353_2px,#4b4b4b_2px,#4b4b4b_4px)] p-3 ${expand ? "h-full min-h-0 overflow-hidden" : ""}`}
           style={{
-            boxShadow:
-              "inset 0 4px 6px rgba(0,0,0,0.4), inset 0 -4px 6px rgba(0,0,0,0.4), inset 4px 0 6px rgba(0,0,0,0.4), inset -4px 0 6px rgba(0,0,0,0.4)",
+            boxShadow: `-3px -3px 0 rgba(0,0,0,0.3), inset 0 8px 0 rgba(0,0,0,0.3), inset 0 -5px 0 rgba(0,0,0,0.3), inset 8px 0 0 rgba(0,0,0,0.3), inset -8px 0 0 rgba(0,0,0,0.3)`,
           }}
         >
           {/* Área interna semitransparente */}
@@ -105,10 +108,15 @@ export default function ConsoleCard({
         expand=true. Deve ser filho direto do flex-col do card (className do wrapper).
       */}
       {footer && (
-        <div className="shrink-0 bg-[#ffca00]">
+        <div
+          className="shrink-0 bg-[#ffca00] rounded-b-[23px]"
+          style={{
+            boxShadow: `inset -3px 0 0 rgba(0,0,0,0.2), inset 0 -3px 0 rgba(0,0,0,0.2)`,
+          }}
+        >
           {footer}
         </div>
       )}
     </div>
-  )
+  );
 }

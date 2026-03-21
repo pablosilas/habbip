@@ -4,6 +4,7 @@ export default function ConsoleTab({ label, icon, active, onClick }) {
       onClick={onClick}
       type="button"
       className={`
+        effect-button
         relative
         flex-1
         h-full
@@ -16,13 +17,13 @@ export default function ConsoleTab({ label, icon, active, onClick }) {
         pb-[10px]
         border-l-[2px] border-t-[2px]
         last:border-r-[2px]
-        ${active ? "border-[#7B4001]" : "border-[#8B5500]"}
+        ${active ? "border-[#7B4001] effect-button--active" : "border-[#8B5500]"}
         cursor-pointer
         transition-all
         duration-150
         overflow-hidden
-       ${active
-          ? "bg-[#BD8F1C] shadow-[inset_0_2px_4px_rgba(0,0,0,0.2)]"
+        ${active
+          ? "bg-[#BD8F1C] shadow-[inset_0_4px_8px_rgba(0,0,0,0.35),inset_0_2px_3px_rgba(0,0,0,0.25)]"
           : "bg-[#E2B402]"
         }
       `}

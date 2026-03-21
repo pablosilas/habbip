@@ -27,7 +27,7 @@ import { useCloseJoke } from "../hooks/useCloseJoke"
 import { useInventory } from "../hooks/useInventory"
 import { useCreditConverter } from "../hooks/useCreditConverter"
 
-const BG_OPTIONS = [bgPattern, bg2, bg3]
+const BG_OPTIONS = [bg3, bg2, bgPattern]
 
 function resolveBgKey(loggedUserName) {
   if (!loggedUserName?.trim()) return "habbodesk:anonymous:bg"
@@ -262,7 +262,7 @@ export default function HabboDeskApp() {
                 />
                 <span
                   onClick={closeJoke.handleCloseClick}
-                  className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
+                  className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
                 >
                   X
                 </span>
@@ -311,7 +311,8 @@ export default function HabboDeskApp() {
                 <button
                   type="button"
                   onClick={() => setInfoModalOpen(true)}
-                  className="absolute bottom-4 right-6 w-6 h-6 rounded-full border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[11px] font-bold flex items-center justify-center cursor-pointer hover:brightness-110 z-10"
+                  className="absolute bottom-4 right-6 w-6 h-6 rounded-full border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[11px] font-bold flex items-center justify-center cursor-pointer hover:brightness-105 transform transition duration-150 hover:scale-105 z-10"
+                  style={{ boxShadow: "1px 1px 0 rgba(0,0,0,0.3)" }}
                 >
                   ?
                 </button>

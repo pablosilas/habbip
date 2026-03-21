@@ -33,12 +33,12 @@ export default function Button({
   className = "",
   children,
 }) {
-  const base = "w-full h-9 font-bold text-[12px] cursor-pointer disabled:opacity-70"
+  const base = "w-full h-9 font-bold text-[12px] cursor-pointer disabled:opacity-70 transition duration-150"
 
   const variants = {
-    primary: "border border-[#b98d14] bg-[linear-gradient(180deg,#ffd64d_0%,#e6b21b_100%)] text-[#6f4700]",
-    secondary: "border border-[#6d6d6d] bg-[linear-gradient(180deg,#5a5a63_0%,#44454e_100%)] text-white",
-    danger: "border border-[#8b1a1a] bg-[linear-gradient(180deg,#d94444_0%,#b02020_100%)] text-white",
+    primary: "border border-[#b98d14] bg-[linear-gradient(180deg,#ffd64d_0%,#e6b21b_100%)] text-[#6f4700] hover:brightness-110",
+    secondary: "border border-[#6d6d6d] bg-[linear-gradient(180deg,#5a5a63_0%,#44454e_100%)] text-white hover:brightness-105",
+    danger: "border border-[#8b1a1a] bg-[linear-gradient(180deg,#d94444_0%,#b02020_100%)] text-white hover:brightness-110",
   }
 
   return (

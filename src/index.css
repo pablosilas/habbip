@@ -115,16 +115,59 @@ h2 {
 p {
   margin: 0;
 }
+
+.effect-button {
+  position: relative;
+}
+
+.effect-button::before {
+  content: "";
+  position: absolute;
+  inset: 1px;
+  /* border-radius: 20px; */
+  border-top: 2px solid #fbc900;
+  border-left: 2px solid #fbc900;
+  border-right: none;
+  border-bottom: none;
+  pointer-events: none;
+  opacity: 80%;
+  z-index: 10;
+}
+
+.effect-button--active::before {
+  inset: 0px;
+  border-top: 3px solid #d09d0b;
+  border-left: none;
+}
+
+.effect-console {
+  position: relative;
+   overflow: visible;
+}
+.effect-console::after {
+  content: "";
+  position: absolute;
+  inset:-3px;
+  border-radius: 14px;
+  border-top: none;
+  border-left: none;
+  border-right: 2px solid rgba(255, 255, 255, 0.9);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.9);
+  pointer-events: none;
+  opacity: 80%;
+  z-index: 10;
+}
+
 .console-card {
   position: relative;
 }
 .console-card::before {
-  content: '';
+  content: "";
   position: absolute;
   inset: 1px;
   border-radius: 20px;
-  border-top: 2px solid rgba(255,255,255,0.9);
-  border-left: 2px solid rgba(255,255,255,0.9);
+  border-top: 2px solid rgba(255, 255, 255, 0.9);
+  border-left: 2px solid rgba(255, 255, 255, 0.9);
   border-right: none;
   border-bottom: none;
   pointer-events: none;
