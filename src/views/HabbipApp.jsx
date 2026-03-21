@@ -248,7 +248,7 @@ export default function HabboDeskApp() {
 
         <div className="relative w-full h-full flex items-center justify-center">
           <ConsoleCard
-            title="Habbo Desk"
+            title="Habbip"
             expand
             style={cardStyle}
             className="w-full max-w-[720px] h-full max-h-[96vh] flex flex-col"
@@ -270,7 +270,7 @@ export default function HabboDeskApp() {
             }
             footer={
               <div className="px-20 pt-5 pb-0">
-                <div className="rounded-t-[4px] h-[75px] flex overflow-hidden">
+                <div className="rounded-t-[4px] h-[80px] flex overflow-hidden">
                   <ConsoleTab
                     label="Feira Livre"
                     icon={

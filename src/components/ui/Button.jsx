@@ -1,7 +1,7 @@
 /**
  * Button
  *
- * Componente reutilizável de botão com variantes visuais do Habbo Desk.
+ * Componente reutilizável de botão com variantes visuais do Habbip.
  *
  * Props:
  *   variant   {"primary" | "secondary" | "danger"}   Estilo visual do botão (padrão: "primary")

@@ -70,7 +70,7 @@ export default function FairTab({
       >
         <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">
-            Buscar mobi
+            Feira Livre
           </div>
 
           <div className="text-[#d2d2d2] text-[11px] leading-4">

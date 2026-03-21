@@ -2,7 +2,7 @@
  * ConsoleCard
  *
  * Componente reutilizável que encapsula o padrão visual do card amarelo
- * usado em Habbo Desk, InfoModal, LoginModal, ProfileModal e ToastMessage.
+ * usado em Habbip, InfoModal, LoginModal, ProfileModal e ToastMessage.
  *
  * Props:
  *   title          {string}    Texto do header central
