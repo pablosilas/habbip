@@ -251,7 +251,7 @@ export default function HabboDeskApp() {
             title="Habbip"
             expand
             style={cardStyle}
-            className="w-full max-w-[720px] h-full max-h-[96vh] flex flex-col"
+            className="w-full max-w-[720px] h-full max-h-[96dvh] flex flex-col"
             innerClassName="flex flex-col overflow-hidden"
             headerRight={
               <div className="flex items-center gap-[6px]">
@@ -269,7 +269,7 @@ export default function HabboDeskApp() {
               </div>
             }
             footer={
-              <div className="px-20 pt-5 pb-0">
+              <div className="px-15 sm:px-20 pt-5 pb-0">
                 <div className="rounded-t-[4px] h-[80px] flex overflow-hidden">
                   <ConsoleTab
                     label="Feira Livre"

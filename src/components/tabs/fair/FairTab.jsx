@@ -35,10 +35,8 @@ export default function FairTab({
     isFavorite,
   } = useMobiHistory(loggedUserName)
 
-  // Guarda o último termo buscado para associar ao classname quando results chegar
   const lastSearchedTermRef = React.useRef(null)
 
-  // Quando results chega, atualiza o histórico com o classname do primeiro resultado
   React.useEffect(() => {
     if (results.length > 0 && lastSearchedTermRef.current) {
       const firstClassname = results[0]?.ClassName || null
@@ -72,8 +70,9 @@ export default function FairTab({
           <div className="text-[#f4f4f4] font-bold text-[13px]">
             Feira Livre
           </div>
-
-          <div className="text-[#d2d2d2] text-[11px] leading-4">
+          <div className="text-[#d2d2d2] text-[11px] leading-4"
+            title="Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas."
+          >
             Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.
           </div>
         </div>
@@ -83,17 +82,14 @@ export default function FairTab({
       </div>
 
       {expanded && (
-        <>
+        <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
           {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
               ref={inputRef}
               value={mobiQuery}
               onChange={(e) => setMobiQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch()
-                if (e.key === "Escape") setShowDropdown(false)
-              }}
+              onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nome do mobi"
@@ -143,22 +139,21 @@ export default function FairTab({
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button onClick={handleSearch} disabled={loading}>
+            <Button type="submit" disabled={loading}>
               {loading ? "Consultando..." : "Consultar feira"}
             </Button>
 
-            <Button variant="secondary" onClick={() => setMobiQuery("")}>
+            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>
               Limpar
             </Button>
           </div>
-        </>
+        </form>
       )}
 
       {error ? (
         <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>
       ) : null}
 
-      {/* Seletor de ordenação */}
       {results.length > 1 && (
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
