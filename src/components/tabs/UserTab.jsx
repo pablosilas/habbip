@@ -12,9 +12,10 @@ export default function UserTab({
   error,
   userData,
   loggedUserName,
+  expanded,
+  setExpanded
 }) {
   const hasResult = !!userData
-  const [expanded, setExpanded] = React.useState(true)
   const [showDropdown, setShowDropdown] = React.useState(false)
 
   const {

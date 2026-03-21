@@ -12,6 +12,12 @@ function formatDateLabel(timestampInSeconds) {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit", year: "numeric" }).format(date)
 }
 
+function formatDateShort(timestampInSeconds) {
+  if (!timestampInSeconds) return "-"
+  const date = new Date(timestampInSeconds * 1000)
+  return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(date)
+}
+
 function formatLastUpdatedDate(lastUpdated) {
   if (!lastUpdated) return "-"
   const [datePart] = lastUpdated.split(" at ")
@@ -57,9 +63,9 @@ function getTimeAgoColor(lastUpdated) {
   const date = new Date(`${year}-${month}-${day}`)
   if (isNaN(date.getTime())) return "text-[#888]"
   const diffD = Math.floor((Date.now() - date.getTime()) / 86400000)
-  if (diffD <= 1) return "text-[#7CFC8A]"   // fresco — verde
-  if (diffD <= 7) return "text-[#f1d97a]"   // recente — amarelo
-  return "text-[#FF8A8A]"                   // defasado — vermelho
+  if (diffD <= 1) return "text-[#7CFC8A]"
+  if (diffD <= 7) return "text-[#f1d97a]"
+  return "text-[#FF8A8A]"
 }
 
 function getLatestHistoryEntry(history = []) {
@@ -90,28 +96,6 @@ function getTrendInfo(history = []) {
   return { label: "Estável", icon: "•", colorClass: "text-[#f1d97a]" }
 }
 
-function findHistoryByDaysWithTolerance(history = [], targetDaysAgo, toleranceInDays = 0) {
-  if (!Array.isArray(history) || history.length === 0) return null
-  const now = new Date()
-  now.setHours(0, 0, 0, 0)
-  const targetDate = new Date(now)
-  targetDate.setDate(targetDate.getDate() - targetDaysAgo)
-  let closest = null
-  let closestDiff = Infinity
-  for (const entry of history) {
-    const timestamp = entry?.[4]
-    if (!timestamp) continue
-    const entryDate = new Date(timestamp * 1000)
-    entryDate.setHours(0, 0, 0, 0)
-    const diffInDays = Math.abs((entryDate.getTime() - targetDate.getTime()) / (1000 * 60 * 60 * 24))
-    if (diffInDays <= toleranceInDays && diffInDays < closestDiff) {
-      closest = entry
-      closestDiff = diffInDays
-    }
-  }
-  return closest
-}
-
 function getHotelFlag(hotel) {
   if (hotel === "br") return flagBr
   if (hotel === "com") return flagCom
@@ -131,20 +115,122 @@ function MetricBlock({ label, value, showCoin = false, coinIcon, children }) {
   )
 }
 
-function HistoryInfo({ title, entry, coinIcon }) {
-  const soldItems = entry?.[1] ?? 0
-  const averagePrice = entry?.[0] ?? "-"
-  const timestamp = entry?.[4]
+/**
+ * HistoryTimeline
+ *
+ * Exibe todos os registros do histórico em uma linha do tempo compacta,
+ * do mais antigo ao mais recente. Cada linha mostra:
+ *   • data (dd/mm)
+ *   • barra proporcional à quantidade vendida
+ *   • quantidade vendida (un.)
+ *   • preço médio com ícone de moeda
+ *   • ofertas abertas (se disponível)
+ */
+function HistoryTimeline({ history = [] }) {
+  const [expanded, setExpanded] = React.useState(false)
+
+  // Filtra entradas com pelo menos 1 item vendido e com timestamp válido,
+  // ordena do mais recente ao mais antigo
+  const entries = history
+    .filter((e) => (e?.[1] ?? 0) > 0 && e?.[4])
+    .sort((a, b) => b[4] - a[4])
+
+  if (entries.length === 0) return null
+
+  const maxSold = Math.max(...entries.map((e) => e[1] ?? 0))
+
+  // Mostra apenas os 4 mais recentes quando recolhido (já estão no início do array)
+  const COLLAPSED_LIMIT = 4
+  const visible = expanded ? entries : entries.slice(0, COLLAPSED_LIMIT)
+  const hasMore = entries.length > COLLAPSED_LIMIT
+
+  // O mais recente é sempre o primeiro do array completo
+  const latestTimestamp = entries[0]?.[4]
+
   return (
-    <div className="bg-[rgba(255,255,255,0.06)] px-2 py-1 rounded">
-      <div className="text-[11px] font-bold text-white">{title}</div>
-      <div className="text-[11px] text-[#e6e6e6] flex items-center gap-1 flex-wrap">
-        {soldItems} un. por
-        <img src={coinIcon} alt="coin" className="w-3 h-3" />
-        {averagePrice}
-        {timestamp && (
-          <span className="text-[#bdbdbd] ml-1">• {formatDateLabel(timestamp)}</span>
+    <div className="mb-3">
+      {/* Cabeçalho */}
+      <div
+        className={`flex items-center justify-between mb-[6px] ${hasMore ? "cursor-pointer group" : ""}`}
+        onClick={hasMore ? () => setExpanded((v) => !v) : undefined}
+      >
+        <span className="text-[9px] font-bold text-[#aaa] uppercase tracking-wider group-hover:text-[#ccc] transition-colors">
+          Vendas por dia
+        </span>
+        {hasMore && (
+          <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
+            {expanded ? `▲ recolher` : `▼ ver todos (${entries.length})`}
+          </span>
         )}
+      </div>
+
+      {/* Linhas */}
+      <div className="space-y-[3px]">
+        {visible.map((entry, i) => {
+          const price = entry[0] ?? 0
+          const sold = entry[1] ?? 0
+          const openOffers = entry[3]
+          const timestamp = entry[4]
+          const barPct = maxSold > 0 ? (sold / maxSold) * 100 : 0
+
+          // Destaca a entrada mais recente — sempre o maior timestamp, independente de expandido
+          const isLatest = timestamp === latestTimestamp
+
+          return (
+            <div
+              key={timestamp ?? i}
+              className={`flex items-center gap-2 px-2 py-[3px] rounded transition-colors ${isLatest
+                  ? "bg-[rgba(255,255,255,0.08)]"
+                  : "bg-[rgba(255,255,255,0.03)]"
+                }`}
+            >
+              {/* Data */}
+              <span
+                className={`text-[10px] shrink-0 w-[30px] text-right tabular-nums ${isLatest ? "text-[#e0e0e0] font-bold" : "text-[#888]"
+                  }`}
+              >
+                {formatDateShort(timestamp)}
+              </span>
+
+              {/* Barra de quantidade */}
+              <div className="flex-1 h-[6px] rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden min-w-0">
+                <div
+                  className="h-full rounded-full transition-all"
+                  style={{
+                    width: `${barPct}%`,
+                    backgroundColor: isLatest ? "#ffd64d" : "rgba(255,214,77,0.45)",
+                  }}
+                />
+              </div>
+
+              {/* Vendas */}
+              <span
+                className={`text-[10px] shrink-0 w-[32px] tabular-nums ${isLatest ? "text-[#ffd64d] font-bold" : "text-[#b0b0b0]"
+                  }`}
+              >
+                {sold} un.
+              </span>
+
+              {/* Preço médio */}
+              <div className="flex items-center gap-[3px] shrink-0">
+                <img src={coinIcon} alt="coin" className="w-3 h-3" />
+                <span
+                  className={`text-[10px] tabular-nums ${isLatest ? "text-[#f1f1f1] font-bold" : "text-[#c0c0c0]"
+                    }`}
+                >
+                  {price}
+                </span>
+              </div>
+
+              {/* Ofertas abertas (opcional) */}
+              {openOffers != null && openOffers > 0 && (
+                <span className="text-[9px] text-[#666] shrink-0">
+                  {openOffers} of.
+                </span>
+              )}
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -180,7 +266,6 @@ function PriceSparkline({ history = [] }) {
   const [tooltip, setTooltip] = React.useState(null)
   const [expanded, setExpanded] = React.useState(true)
 
-  // Filtra entradas com preço válido, do ano vigente, e ordena por timestamp
   const currentYear = new Date().getFullYear()
   const points = history
     .filter((e) => {
@@ -231,7 +316,6 @@ function PriceSparkline({ history = [] }) {
 
   return (
     <div className="mt-2 mb-3">
-      {/* Cabeçalho clicável */}
       <div
         className="flex items-center justify-between mb-1 cursor-pointer group"
         onClick={() => setExpanded((v) => !v)}
@@ -258,7 +342,6 @@ function PriceSparkline({ history = [] }) {
               style={{ height: "90px", overflow: "visible" }}
               onMouseLeave={() => setTooltip(null)}
             >
-              {/* Linhas de grade */}
               {[0.25, 0.5, 0.75].map((t) => (
                 <line
                   key={t}
@@ -271,10 +354,8 @@ function PriceSparkline({ history = [] }) {
                 />
               ))}
 
-              {/* Área preenchida */}
               <path d={areaPath} fill={areaColor} />
 
-              {/* Linha principal */}
               <path
                 d={linePath}
                 fill="none"
@@ -284,10 +365,8 @@ function PriceSparkline({ history = [] }) {
                 strokeLinecap="round"
               />
 
-              {/* Pontos interativos invisíveis com hitbox maior */}
               {coords.map((c, i) => (
                 <g key={i}>
-                  {/* Ponto visível */}
                   <circle
                     cx={c.x}
                     cy={c.y}
@@ -296,7 +375,6 @@ function PriceSparkline({ history = [] }) {
                     stroke="#1a1a1a"
                     strokeWidth="1"
                   />
-                  {/* Área de hover maior */}
                   <circle
                     cx={c.x}
                     cy={c.y}
@@ -309,12 +387,8 @@ function PriceSparkline({ history = [] }) {
               ))}
             </svg>
 
-            {/* Tooltip posicionado acima do ponto — ajusta para não vazar nas bordas */}
             {tooltip && (() => {
-              const pct = tooltip.x / W  // 0..1
-              // Se o ponto está no 1º terço: ancora à esquerda
-              // Se está no último terço: ancora à direita
-              // Caso contrário: centraliza
+              const pct = tooltip.x / W
               const anchor =
                 pct < 0.2 ? "left" :
                   pct > 0.8 ? "right" :
@@ -343,7 +417,6 @@ function PriceSparkline({ history = [] }) {
             })()}
           </div>
 
-          {/* Min / Max */}
           <div className="flex justify-between mt-[2px]">
             <span className="text-[9px] text-[#aaa]">mín {minPrice}</span>
             <span className="text-[9px] text-[#aaa]">máx {maxPrice}</span>
@@ -365,26 +438,15 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
-  const priceNow = latestEntry?.[0] ?? item?.marketData?.averagePrice ?? "-"
+  const priceNow = item?.marketData?.currentPrice ?? latestEntry?.[0] ?? item?.marketData?.averagePrice ?? "-"
   const averagePrice = item?.marketData?.averagePrice ?? "-"
-  const openOffers = latestEntry?.[3] ?? "-"
-  const soldToday = findHistoryByDaysWithTolerance(history, 0, 0)
-  const sold2Days = findHistoryByDaysWithTolerance(history, 2, 1)
-  const sold20Days = findHistoryByDaysWithTolerance(history, 20, 2)
-  const sold30Days = findHistoryByDaysWithTolerance(history, 30, 3)
+  const openOffers = item?.marketData?.currentOpenOffers ?? latestEntry?.[3] ?? "-"
 
   const trendInfo = getTrendInfo(history)
   const timeAgoLabel = timeAgo(item?.marketData?.lastUpdated)
   const timeAgoColor = getTimeAgoColor(item?.marketData?.lastUpdated)
   const flag = getHotelFlag(item.hotel_domain)
   const formattedDate = formatLastUpdatedDate(item?.marketData?.lastUpdated)
-
-  const historyCards = [
-    { title: "Itens vendidos hoje", entry: soldToday },
-    { title: "Vendidos há 2 dias", entry: sold2Days },
-    { title: "Vendidos há 20 dias", entry: sold20Days },
-    { title: "Vendidos há um mês", entry: sold30Days },
-  ].filter(({ entry }) => entry && (entry[1] ?? 0) > 0)
 
   return (
     <div className="border border-[#8a8a8a] rounded-md px-3 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
@@ -432,19 +494,8 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
         <MetricBlock label="Ofertas" value={openOffers} />
       </div>
 
-      {/* ── Cards de vendas por período ── */}
-      {historyCards.length > 0 ? (
-        <div className="grid grid-cols-2 gap-2 mb-3">
-          {historyCards.map((historyItem) => (
-            <HistoryInfo
-              key={historyItem.title}
-              title={historyItem.title}
-              entry={historyItem.entry}
-              coinIcon={coinIcon}
-            />
-          ))}
-        </div>
-      ) : null}
+      {/* ── Linha do tempo de vendas ── */}
+      <HistoryTimeline history={history} />
 
       {/* ── Gráfico de histórico de preços ── */}
       <PriceSparkline history={history} />

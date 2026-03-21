@@ -27,6 +27,9 @@ export default function HabbipApp() {
   const [profileModalOpen, setProfileModalOpen] = React.useState(false)
   const [infoModalOpen, setInfoModalOpen] = React.useState(false)
 
+  const [fairExpanded, setFairExpanded] = React.useState(true)
+  const [userExpanded, setUserExpanded] = React.useState(true)
+
   const BG_OPTIONS = [bgPattern, bg2, bg3]
   const [bgIndex, setBgIndex] = React.useState(() => {
     const saved = localStorage.getItem("habbip:bg")
@@ -52,6 +55,9 @@ export default function HabbipApp() {
     transition: "transform 0.5s ease-in-out",
   }), [closeJoke.upsideDown])
 
+  console.log(userExpanded, 'userExpanded')
+  console.log(fairExpanded, 'fairExpanded')
+
   return (
     <>
       <LoginModal
@@ -66,7 +72,17 @@ export default function HabbipApp() {
         open={profileModalOpen}
         user={auth.loggedUser}
         onClose={() => setProfileModalOpen(false)}
-        onLogout={() => auth.handleLogout(() => setProfileModalOpen(false))}
+        onLogout={() => auth.handleLogout(() => {
+          setProfileModalOpen(false)
+          fair.setMobiQuery("")
+          fair.setResults([])
+          fair.setError(null)
+          user.setNickQuery("")
+          user.setSearchedUser(null)
+          user.setError(null)
+          setFairExpanded(true)
+          setUserExpanded(true)
+        })}
       />
       <InfoModal
         open={infoModalOpen}
@@ -184,6 +200,8 @@ export default function HabbipApp() {
                   loading={fair.loading}
                   error={fair.error}
                   results={fair.results}
+                  expanded={fairExpanded}
+                  setExpanded={setFairExpanded}
                 />
               ) : (
                 <UserTab
@@ -193,6 +211,9 @@ export default function HabbipApp() {
                   loading={user.loading}
                   error={user.error}
                   userData={user.searchedUser}
+                  expanded={userExpanded}
+                  setExpanded={setUserExpanded}
+                  loggedUserName={auth.loggedUser?.name}
                 />
               )}
             </div>

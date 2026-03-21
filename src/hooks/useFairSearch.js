@@ -1,5 +1,9 @@
 import React from "react"
-import { fetchMarketHistory } from "../services/habboApi"
+import {
+  fetchMarketHistory,
+  fetchOfficialMarketBatch,
+  mergeOfficialMarketData,
+} from "../services/habboApi"
 
 export function useFairSearch() {
   const [mobiQuery, setMobiQuery] = React.useState("")
@@ -34,22 +38,53 @@ export function useFairSearch() {
     setResults([])
 
     try {
+      // ── Etapa 1: busca na API legada para descobrir classnames e FurniType ──
       const searchParam = isClassname(query)
         ? { classname: query, hotel, days }
         : { name: query, hotel, days }
 
-      const data = await fetchMarketHistory(searchParam)
+      const legacyData = await fetchMarketHistory(searchParam)
 
-      const filtered = (Array.isArray(data) ? data : []).filter((item) => {
+      const legacyItems = (Array.isArray(legacyData) ? legacyData : []).filter((item) => {
+        // Mantém apenas itens que tenham ao menos ClassName para a próxima etapa
+        return !!item?.ClassName?.trim()
+      })
+
+      if (legacyItems.length === 0) {
+        setResults([])
+        return
+      }
+
+      // ── Etapa 2: monta o batch com classnames + FurniType e consulta a API oficial ──
+      const batchItems = legacyItems.map((item) => ({
+        classname: item.ClassName,
+        // FurniType vindo da API legada: "wallItem" ou "roomItem"
+        furniType: item.FurniType === "wallItem" ? "wallItem" : "roomItem",
+      }))
+
+      let officialBatch = null
+      try {
+        officialBatch = await fetchOfficialMarketBatch(batchItems, hotel)
+      } catch {
+        // Se a API oficial falhar, continua com os dados legados
+      }
+
+      // ── Etapa 3: mescla os dados oficiais nos itens legados ──
+      const merged = officialBatch
+        ? mergeOfficialMarketData(legacyItems, officialBatch)
+        : legacyItems
+
+      // ── Etapa 4: filtra itens sem dados úteis de mercado ──
+      const filtered = merged.filter((item) => {
         const history = item?.marketData?.history
         const averagePrice = item?.marketData?.averagePrice
 
-        if (!Array.isArray(history) || history.length === 0) return false
+        if (Array.isArray(history) && history.length > 0) {
+          const hasValidHistory = history.some((entry) => (entry?.[0] ?? 0) > 0)
+          if (hasValidHistory) return true
+        }
 
-        const hasValidHistory = history.some((entry) => entry?.[0] > 0)
-        const hasAverage = averagePrice && averagePrice > 0
-
-        return hasValidHistory || hasAverage
+        return averagePrice && averagePrice > 0
       })
 
       setResults(filtered)
@@ -70,6 +105,7 @@ export function useFairSearch() {
     loading,
     error,
     results,
+    setResults,
     handleSearch,
   }
 }

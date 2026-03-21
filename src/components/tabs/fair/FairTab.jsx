@@ -16,9 +16,10 @@ export default function FairTab({
   error,
   results,
   loggedUserName,
+  expanded,
+  setExpanded
 }) {
   const hasResults = results.length > 0
-  const [expanded, setExpanded] = React.useState(true)
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
   const inputRef = React.useRef(null)
@@ -170,8 +171,8 @@ export default function FairTab({
                 type="button"
                 onClick={() => setSortBy(value)}
                 className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value
-                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
+                  ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                  : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
                   }`}
               >
                 {label}
