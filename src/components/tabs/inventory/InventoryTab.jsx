@@ -95,7 +95,6 @@ export default function InventoryTab({
 
   const lastSearchedTermRef = React.useRef(null)
 
-  // Quando searchResults chega, registra no histórico com classname do primeiro resultado
   React.useEffect(() => {
     if (searchResults.length > 0 && lastSearchedTermRef.current) {
       const firstClassname = searchResults[0]?.ClassName || null
@@ -118,14 +117,6 @@ export default function InventoryTab({
     setShowDropdown(false)
     lastSearchedTermRef.current = term
     onSearch(term)
-  }
-
-  function handleKeyDown(e) {
-    if (e.key === "Enter" && query.trim() && !loading) handleSearch()
-    if (e.key === "Escape") {
-      if (hasResults) onCancelSearch()
-      setShowDropdown(false)
-    }
   }
 
   React.useEffect(() => {
@@ -162,13 +153,18 @@ export default function InventoryTab({
       </div>
 
       {expanded && (
-        <>
+        <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
           {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={handleKeyDown}
+              onKeyDown={(e) => {
+                if (e.key === "Escape") {
+                  if (hasResults) onCancelSearch()
+                  setShowDropdown(false)
+                }
+              }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Nome ou classname do mobi"
@@ -205,11 +201,11 @@ export default function InventoryTab({
               <option value="tr" className="text-black">TR</option>
             </select>
 
-            <Button onClick={handleSearch} disabled={!query.trim() || loading}>
+            <Button type="submit" disabled={!query.trim() || loading}>
               {loading ? "Buscando..." : "Buscar"}
             </Button>
           </div>
-        </>
+        </form>
       )}
 
       {error && (
@@ -299,7 +295,6 @@ export default function InventoryTab({
         <>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
           <div className="shrink-0 space-y-2">
-
             <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
               <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
               <div className="flex items-center gap-3">

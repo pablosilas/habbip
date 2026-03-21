@@ -53,26 +53,25 @@ export default function UserTab({
           <div className="text-[#f4f4f4] font-bold text-[13px]">
             Buscar Usuário
           </div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4">
+          <div
+            className="text-[#d2d2d2] text-[11px] leading-4 truncate"
+            title="Encontre usuários, veja perfis e salve seus favoritos."
+          >
             Encontre usuários, veja perfis e salve seus favoritos.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
+        <span className="text-[#d2d2d2] text-[11px] shrink-0">
           {expanded ? "▲ recolher" : "▼ expandir"}
         </span>
       </div>
 
       {expanded && (
-        <>
-          {/* Input com dropdown de histórico */}
+        <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
           <div className="relative mb-2">
             <input
               value={nickQuery}
               onChange={(e) => setNickQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Enter") handleSearch()
-                if (e.key === "Escape") setShowDropdown(false)
-              }}
+              onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nick do usuário"
@@ -94,15 +93,15 @@ export default function UserTab({
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button onClick={handleSearch} disabled={loading}>
+            <Button type="submit" disabled={loading}>
               {loading ? "Buscando..." : "Buscar usuário"}
             </Button>
 
-            <Button variant="secondary" onClick={() => setNickQuery("")}>
+            <Button variant="secondary" type="button" onClick={() => setNickQuery("")}>
               Limpar
             </Button>
           </div>
-        </>
+        </form>
       )}
 
       {error ? (
