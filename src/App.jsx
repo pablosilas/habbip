@@ -1,8 +1,8 @@
-import HabbipApp from "./views/HabbipApp"
+import HabboDeskApp from "./views/HabbipApp"
 
 export default function App() {
 
   return (
-    <HabbipApp />
+    <HabboDeskApp />
   )
 }

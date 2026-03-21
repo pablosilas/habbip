@@ -9,8 +9,8 @@ function resolveUserKey(loggedUserName) {
 
 function buildKeys(type, userKey) {
   return {
-    historyKey: `habbip:${userKey}:history:${type}`,
-    favoritesKey: `habbip:${userKey}:favorites:${type}`,
+    historyKey: `habbodesk:${userKey}:history:${type}`,
+    favoritesKey: `habbodesk:${userKey}:favorites:${type}`,
   }
 }
 

@@ -2,7 +2,7 @@
  * ConsoleCard
  *
  * Componente reutilizável que encapsula o padrão visual do card amarelo
- * usado em HabbipApp, InfoModal, LoginModal, ProfileModal e ToastMessage.
+ * usado em Habbo Desk, InfoModal, LoginModal, ProfileModal e ToastMessage.
  *
  * Props:
  *   title          {string}    Texto do header central
@@ -11,7 +11,7 @@
  *                              (sobrescreve o botão X padrão se fornecido)
  *   expand         {boolean}   Ativa modo altura total (flex-col com altura fixa).
  *                              Necessário quando o card tem h-[X] definido no className,
- *                              ex: ProfileModal (h-[90vh]) e HabbipApp (h-full).
+ *                              ex: ProfileModal (h-[90vh]) e HabboDeskApp (h-full).
  *                              Faz o body crescer com flex-1 min-h-0 overflow-hidden,
  *                              o bezel com h-full min-h-0 overflow-hidden, e o inner com h-full.
  *   style          {object}    Estilos inline para o wrapper externo (ex: transform para rotate)

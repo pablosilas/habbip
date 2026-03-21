@@ -21,7 +21,7 @@ const MESSAGES = [
   },
   {
     title: "Tá bom, respeito.",
-    body: "Mas saiba que o Habbo Console vai sentir sua falta.",
+    body: "Mas saiba que o Habbo Desk vai sentir sua falta.",
     confirm: "Meu coração amoleceu, vou ficar.",
     cancel: "Até logo, amigo.",
   },

@@ -26,8 +26,8 @@ import { useCloseJoke } from "../hooks/useCloseJoke"
 const BG_OPTIONS = [bgPattern, bg2, bg3]
 
 function resolveBgKey(loggedUserName) {
-  if (!loggedUserName?.trim()) return "habbip:anonymous:bg"
-  return `habbip:${loggedUserName.trim().toLowerCase().replace(/\s+/g, "_")}:bg`
+  if (!loggedUserName?.trim()) return "habbodesk:anonymous:bg"
+  return `habbodesk:${loggedUserName.trim().toLowerCase().replace(/\s+/g, "_")}:bg`
 }
 
 function loadBgIndex(loggedUserName) {
@@ -146,7 +146,7 @@ function BgSelector({ bgIndex, onBgChange, bgs }) {
   )
 }
 
-export default function HabbipApp() {
+export default function HabboDeskApp() {
   const [activeTab, setActiveTab] = React.useState("feira")
   const [profileModalOpen, setProfileModalOpen] = React.useState(false)
   const [infoModalOpen, setInfoModalOpen] = React.useState(false)
@@ -237,7 +237,7 @@ export default function HabbipApp() {
 
         <div className="relative w-full h-full flex items-center justify-center">
           <ConsoleCard
-            title="Habbo Console"
+            title="Habbo Desk"
             expand
             style={cardStyle}
             className="w-full max-w-[720px] h-full max-h-[96vh] flex flex-col"

@@ -1,8 +1,8 @@
 import React from "react"
 
 const STORAGE_KEYS = {
-  loggedUser: "habbip_logged_user",
-  anonymousSkipLogin: "habbip_anonymous_skip_login",
+  loggedUser: "habbodesk_logged_user",
+  anonymousSkipLogin: "habbodesk_anonymous_skip_login",
 }
 
 export function useAuth(buildFullUserProfile) {
