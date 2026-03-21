@@ -484,7 +484,7 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
       </div>
 
       {/* ── Métricas ── */}
-      <div className="grid grid-cols-2 xs:grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-3 gap-3 mb-3">
         <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
           <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
             {trendInfo.icon} {trendInfo.label}

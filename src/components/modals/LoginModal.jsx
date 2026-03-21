@@ -1,6 +1,14 @@
 import React from "react"
 import ConsoleCard from "../ui/ConsoleCard"
 import Button from "../ui/Button"
+import messageSound from "../../assets/message.mp3"
+
+function playMessageSound() {
+  try {
+    const audio = new Audio(messageSound)
+    audio.play()
+  } catch { /* silencia erros de autoplay bloqueado */ }
+}
 
 export default function LoginModal({
   open,
@@ -26,6 +34,7 @@ export default function LoginModal({
           onChange={(e) => setNick(e.target.value)}
           onKeyDown={(e) => {
             if (e.key === "Enter" && nick.trim() && !loading) {
+              playMessageSound()
               onLogin(nick.trim())
             }
           }}
@@ -38,11 +47,18 @@ export default function LoginModal({
         ) : null}
 
         <div className="flex flex-col gap-2 mb-3">
-          <Button onClick={() => onLogin(nick.trim())} disabled={!nick.trim() || loading}>
+          <Button
+            onClick={() => { playMessageSound(); onLogin(nick.trim()) }}
+            disabled={!nick.trim() || loading}
+          >
             {loading ? "Entrando..." : "Entrar"}
           </Button>
 
-          <Button variant="secondary" onClick={() => onContinueAnonymous({ doNotAskAgain })} disabled={loading}>
+          <Button
+            variant="secondary"
+            onClick={() => { playMessageSound(); onContinueAnonymous({ doNotAskAgain }) }}
+            disabled={loading}
+          >
             Entrar como anônimo
           </Button>
         </div>
@@ -54,7 +70,7 @@ export default function LoginModal({
           />
           Não perguntar novamente
         </label>
-      </ConsoleCard >
-    </div >
+      </ConsoleCard>
+    </div>
   )
 }
