@@ -180,8 +180,8 @@ function HistoryTimeline({ history = [] }) {
             <div
               key={timestamp ?? i}
               className={`flex items-center gap-2 px-2 py-[3px] rounded transition-colors ${isLatest
-                  ? "bg-[rgba(255,255,255,0.08)]"
-                  : "bg-[rgba(255,255,255,0.03)]"
+                ? "bg-[rgba(255,255,255,0.08)]"
+                : "bg-[rgba(255,255,255,0.03)]"
                 }`}
             >
               {/* Data */}
@@ -484,7 +484,7 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
       </div>
 
       {/* ── Métricas ── */}
-      <div className="grid grid-cols-3 gap-4 mb-3">
+      <div className="grid grid-cols-2 xs:grid-cols-3 gap-3 mb-3">
         <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
           <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
             {trendInfo.icon} {trendInfo.label}
@@ -504,7 +504,7 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
       <div className="flex items-end justify-between gap-3">
         <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="large" />
         <div className="flex-1 text-right">
-          <div className="flex items-center justify-end gap-1 text-[11px] text-[#d6d6d6]">
+          <div className="flex items-center justify-end flex-wrap gap-1 text-[11px] text-[#d6d6d6]">
             {flag && <img src={flag} alt={item.hotel_domain} className="w-4 h-4" />}
             <span>{item.hotel_domain?.toUpperCase()}</span>
             <span>•</span>

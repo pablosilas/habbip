@@ -1,4 +1,5 @@
 import React from "react"
+import { createPortal } from "react-dom"
 import feiraIcon from "../assets/feira.png"
 import usuarioIcon from "../assets/usuario.png"
 import bgPattern from "../assets/bg.png"
@@ -22,6 +23,129 @@ import { useUserSearch } from "../hooks/useUserSearch"
 import { useAuth } from "../hooks/useAuth"
 import { useCloseJoke } from "../hooks/useCloseJoke"
 
+const BG_OPTIONS = [bgPattern, bg2, bg3]
+
+function resolveBgKey(loggedUserName) {
+  if (!loggedUserName?.trim()) return "habbip:anonymous:bg"
+  return `habbip:${loggedUserName.trim().toLowerCase().replace(/\s+/g, "_")}:bg`
+}
+
+function loadBgIndex(loggedUserName) {
+  try {
+    const saved = localStorage.getItem(resolveBgKey(loggedUserName))
+    const n = Number(saved)
+    return Number.isFinite(n) && n >= 0 && n < BG_OPTIONS.length ? n : 0
+  } catch {
+    return 0
+  }
+}
+
+function GearIcon() {
+  return (
+    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 5.754a2.246 2.246 0 1 1 0 4.492 2.246 2.246 0 0 1 0-4.492z" />
+    </svg>
+  )
+}
+
+/**
+ * BgSelector
+ *
+ * Usa position:fixed calculado via getBoundingClientRect para escapar
+ * do overflow:hidden do header do ConsoleCard.
+ */
+function BgSelector({ bgIndex, onBgChange, bgs }) {
+  const [open, setOpen] = React.useState(false)
+  const [dropdownPos, setDropdownPos] = React.useState({ top: 0, left: 0 })
+  const btnRef = React.useRef(null)
+  const dropdownRef = React.useRef(null)
+
+  function handleToggle() {
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+
+      setDropdownPos({
+        top: rect.bottom + 6,
+        left: rect.right - 110, // ajusta para alinhar melhor à direita do botão
+      })
+    }
+
+    setOpen((v) => !v)
+  }
+
+  React.useEffect(() => {
+    if (!open) return
+
+    function handleClickOutside(e) {
+      const clickedButton = btnRef.current?.contains(e.target)
+      const clickedDropdown = dropdownRef.current?.contains(e.target)
+
+      if (!clickedButton && !clickedDropdown) {
+        setOpen(false)
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => document.removeEventListener("mousedown", handleClickOutside)
+  }, [open])
+
+  const dropdown = open ? (
+    <div
+      ref={dropdownRef}
+      style={{
+        position: "fixed",
+        top: dropdownPos.top,
+        left: dropdownPos.left,
+        zIndex: 99999,
+      }}
+      className="bg-[#2a2306] border border-[#7B4001] rounded-[6px] shadow-[0_6px_20px_rgba(0,0,0,0.6)] p-2 flex flex-col gap-[6px]"
+    >
+      <div className="text-[9px] font-bold text-[#c9982a] uppercase tracking-wider text-center whitespace-nowrap">
+        Fundo
+      </div>
+
+      <div className="flex gap-[6px] justify-center">
+        {bgs.map((bg, i) => (
+          <button
+            key={i}
+            type="button"
+            title={`Fundo ${i + 1}`}
+            onClick={() => {
+              onBgChange(i)
+              setOpen(false)
+            }}
+            className="w-6 h-6 rounded-sm border-2 overflow-hidden cursor-pointer transition-transform hover:scale-110 shrink-0"
+            style={{
+              backgroundImage: `url(${bg})`,
+              backgroundSize: "cover",
+              backgroundPosition: "center",
+              borderColor: bgIndex === i ? "#ffca00" : "#555",
+              boxShadow: bgIndex === i ? "0 0 0 1px #ffca00" : "none",
+            }}
+          />
+        ))}
+      </div>
+    </div>
+  ) : null
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        title="Escolher fundo"
+        onClick={handleToggle}
+        className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
+        aria-label="Escolher fundo"
+      >
+        <GearIcon />
+      </button>
+
+      {typeof document !== "undefined" ? createPortal(dropdown, document.body) : null}
+    </>
+  )
+}
+
 export default function HabbipApp() {
   const [activeTab, setActiveTab] = React.useState("feira")
   const [profileModalOpen, setProfileModalOpen] = React.useState(false)
@@ -30,22 +154,23 @@ export default function HabbipApp() {
   const [fairExpanded, setFairExpanded] = React.useState(true)
   const [userExpanded, setUserExpanded] = React.useState(true)
 
-  const BG_OPTIONS = [bgPattern, bg2, bg3]
-  const [bgIndex, setBgIndex] = React.useState(() => {
-    const saved = localStorage.getItem("habbip:bg")
-    const n = Number(saved)
-    return Number.isFinite(n) && n >= 0 && n < 3 ? n : 0
-  })
-
-  function handleBgChange(index) {
-    setBgIndex(index)
-    localStorage.setItem("habbip:bg", String(index))
-  }
+  const [bgIndex, setBgIndex] = React.useState(() => loadBgIndex(null))
 
   const fair = useFairSearch()
   const user = useUserSearch()
   const closeJoke = useCloseJoke()
   const auth = useAuth(user.buildFullUserProfile)
+
+  React.useEffect(() => {
+    setBgIndex(loadBgIndex(auth.loggedUser?.name ?? null))
+  }, [auth.loggedUser?.name])
+
+  function handleBgChange(index) {
+    setBgIndex(index)
+    try {
+      localStorage.setItem(resolveBgKey(auth.loggedUser?.name ?? null), String(index))
+    } catch { /* empty */ }
+  }
 
   const processedResultsCount =
     activeTab === "feira" ? fair.results.length : user.searchedUser ? 1 : 0
@@ -111,24 +236,6 @@ export default function HabbipApp() {
         <style>{`body { font-family: Verdana, Arial, sans-serif; }`}</style>
 
         <div className="relative w-full h-full flex items-center justify-center">
-          {/* Seletor de fundo */}
-          <div className="absolute top-3 right-3 flex gap-[6px] z-10">
-            {BG_OPTIONS.map((bg, i) => (
-              <button
-                key={i}
-                type="button"
-                title={`Fundo ${i + 1}`}
-                onClick={() => handleBgChange(i)}
-                className="w-6 h-6 rounded-sm border-2 overflow-hidden cursor-pointer transition-transform hover:scale-110"
-                style={{
-                  backgroundImage: `url(${bg})`,
-                  backgroundSize: "cover",
-                  borderColor: bgIndex === i ? "#ffca00" : "#555",
-                  boxShadow: bgIndex === i ? "0 0 0 1px #ffca00" : "none",
-                }}
-              />
-            ))}
-          </div>
           <ConsoleCard
             title="Habbo Console"
             expand
@@ -136,12 +243,19 @@ export default function HabbipApp() {
             className="w-full max-w-[720px] h-full max-h-[96vh] flex flex-col"
             innerClassName="flex flex-col overflow-hidden"
             headerRight={
-              <span
-                onClick={closeJoke.handleCloseClick}
-                className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
-              >
-                X
-              </span>
+              <div className="flex items-center gap-[6px]">
+                <BgSelector
+                  bgIndex={bgIndex}
+                  onBgChange={handleBgChange}
+                  bgs={BG_OPTIONS}
+                />
+                <span
+                  onClick={closeJoke.handleCloseClick}
+                  className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer"
+                >
+                  X
+                </span>
+              </div>
             }
             footer={
               <div className="px-20 pt-5 pb-0">
