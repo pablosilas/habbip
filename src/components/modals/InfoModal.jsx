@@ -10,7 +10,7 @@ export default function InfoModal({ open, onClose }) {
 
   return (
     <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
-      <ConsoleCard title="Sobre o Habbip" onClose={onClose} className="w-full max-w-[420px]">
+      <ConsoleCard title="Sobre o Habbip" onClose={onClose} className="w-full max-w-[600px]">
         <>
           <div>
             <div className="text-[#fff2c1] font-bold text-[12px] mb-1">O que é?</div>
