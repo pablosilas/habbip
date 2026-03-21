@@ -237,7 +237,7 @@ export default function HabboDeskApp() {
       />
 
       <div
-        className="h-screen overflow-hidden flex items-center justify-center p-2"
+        className="h-screen overflow-hidden flex items-center justify-center py-0 px-2 sm:p-2"
         style={{
           backgroundColor: "#dfe5e8",
           backgroundImage: `url(${BG_OPTIONS[bgIndex]})`,
