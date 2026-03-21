@@ -19,7 +19,6 @@ export default function FairTab({
   expanded,
   setExpanded
 }) {
-  const hasResults = results.length > 0
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
   const inputRef = React.useRef(null)
@@ -67,8 +66,14 @@ export default function FairTab({
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="text-[#f4f4f4] font-bold text-[13px]">
-          Buscar mobi
+        <div>
+          <div className="text-[#f4f4f4] font-bold text-[13px]">
+            Buscar mobi
+          </div>
+
+          <div className="text-[#d2d2d2] text-[11px] leading-4">
+            Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.
+          </div>
         </div>
         <span className="text-[#d2d2d2] text-[11px]">
           {expanded ? "▲ recolher" : "▼ expandir"}

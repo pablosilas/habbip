@@ -2,6 +2,7 @@ import React from "react"
 import { createPortal } from "react-dom"
 import feiraIcon from "../assets/feira.png"
 import usuarioIcon from "../assets/usuario.png"
+import inventarioIcon from "../assets/inventario.png"
 import bgPattern from "../assets/bg.png"
 import bg2 from "../assets/bg_2.png"
 import bg3 from "../assets/bg_3.png"
@@ -9,6 +10,7 @@ import bg3 from "../assets/bg_3.png"
 import HeaderCard from "../components/layout/HeaderCard"
 import FairTab from "../components/tabs/fair/FairTab"
 import UserTab from "../components/tabs/UserTab"
+import InventoryTab from "../components/tabs/inventory/InventoryTab"
 import ConsoleTab from "../components/layout/ConsoleTab"
 import ConsoleCard from "../components/ui/ConsoleCard"
 import ToastMessage from "../components/layout/ToastMessage"
@@ -22,6 +24,7 @@ import { useFairSearch } from "../hooks/useFairSearch"
 import { useUserSearch } from "../hooks/useUserSearch"
 import { useAuth } from "../hooks/useAuth"
 import { useCloseJoke } from "../hooks/useCloseJoke"
+import { useInventory } from "../hooks/useInventory"
 
 const BG_OPTIONS = [bgPattern, bg2, bg3]
 
@@ -160,7 +163,9 @@ export default function HabboDeskApp() {
   const user = useUserSearch()
   const closeJoke = useCloseJoke()
   const auth = useAuth(user.buildFullUserProfile)
+  const inventory = useInventory(auth.loggedUser?.name)
 
+  // Quando o usuário logado mudar (login/logout), carrega a preferência de bg dele
   React.useEffect(() => {
     setBgIndex(loadBgIndex(auth.loggedUser?.name ?? null))
   }, [auth.loggedUser?.name])
@@ -173,7 +178,11 @@ export default function HabboDeskApp() {
   }
 
   const processedResultsCount =
-    activeTab === "feira" ? fair.results.length : user.searchedUser ? 1 : 0
+    activeTab === "feira"
+      ? fair.results.length
+      : activeTab === "usuario"
+        ? user.searchedUser ? 1 : 0
+        : inventory.totalUnits
 
   const cardStyle = React.useMemo(() => ({
     transform: closeJoke.upsideDown ? "rotate(180deg)" : "rotate(0deg)",
@@ -284,6 +293,18 @@ export default function HabboDeskApp() {
                     active={activeTab === "usuario"}
                     onClick={() => setActiveTab("usuario")}
                   />
+                  <ConsoleTab
+                    label="Somar Inventário"
+                    icon={
+                      <img
+                        src={inventarioIcon}
+                        className="w-7 h-6 image-rendering-pixel icon-dark"
+                        alt="Somar Inventário"
+                      />
+                    }
+                    active={activeTab === "inventario"}
+                    onClick={() => setActiveTab("inventario")}
+                  />
                 </div>
                 <button
                   type="button"
@@ -322,7 +343,7 @@ export default function HabboDeskApp() {
                   expanded={fairExpanded}
                   setExpanded={setFairExpanded}
                 />
-              ) : (
+              ) : activeTab === "usuario" ? (
                 <UserTab
                   nickQuery={user.nickQuery}
                   setNickQuery={user.setNickQuery}
@@ -333,6 +354,27 @@ export default function HabboDeskApp() {
                   expanded={userExpanded}
                   setExpanded={setUserExpanded}
                   loggedUserName={auth.loggedUser?.name}
+                />
+              ) : (
+                <InventoryTab
+                  items={inventory.items}
+                  query={inventory.query}
+                  setQuery={inventory.setQuery}
+                  hotel={inventory.hotel}
+                  setHotel={inventory.setHotel}
+                  loading={inventory.loading}
+                  error={inventory.error}
+                  searchResults={inventory.searchResults}
+                  onSearch={inventory.handleSearch}
+                  onAddItem={inventory.addToInventory}
+                  onCancelSearch={inventory.cancelSearch}
+                  onUpdateQty={inventory.updateQty}
+                  onSetQty={inventory.setQty}
+                  onRemove={inventory.removeItem}
+                  onClear={inventory.clearInventory}
+                  totalItems={inventory.totalItems}
+                  totalUnits={inventory.totalUnits}
+                  totalValue={inventory.totalValue}
                 />
               )}
             </div>

@@ -49,8 +49,13 @@ export default function UserTab({
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div className="text-[#f4f4f4] font-bold text-[13px]">
-          Buscar usuário
+        <div>
+          <div className="text-[#f4f4f4] font-bold text-[13px]">
+            Buscar usuário
+          </div>
+          <div className="text-[#d2d2d2] text-[11px] leading-4">
+            Encontre usuários, veja perfis e salve seus favoritos.
+          </div>
         </div>
         <span className="text-[#d2d2d2] text-[11px]">
           {expanded ? "▲ recolher" : "▼ expandir"}

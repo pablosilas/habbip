@@ -1,0 +1,230 @@
+import React from "react"
+import InventoryItemCard from "../inventory/InventoryItemCard"
+import Button from "../../ui/Button"
+import coinIcon from "../../../assets/coin.png"
+import boxIcon from "../../../assets/box.png"
+import { getFurnitureImageUrl } from "../../../services/habboApi"
+
+// Mini card de resultado para seleção
+function SearchResultOption({ item, onSelect }) {
+  const [imgStatus, setImgStatus] = React.useState("loading")
+  const imageUrl = getFurnitureImageUrl(item.ClassName)
+  const history = item?.marketData?.history || []
+  const price =
+    item?.marketData?.currentPrice ??
+    (history.length > 0 ? history[history.length - 1]?.[0] : null) ??
+    item?.marketData?.averagePrice ??
+    "-"
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(item)}
+      className="w-full flex items-center gap-3 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md px-3 py-2 text-left transition-colors cursor-pointer"
+    >
+      {/* Imagem */}
+      <div className="w-9 h-9 shrink-0 flex items-center justify-center overflow-hidden">
+        {(imgStatus === "loading" || imgStatus === "error" || !imageUrl) && (
+          <img
+            src={boxIcon}
+            alt=""
+            className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
+          />
+        )}
+        {imageUrl && (
+          <img
+            src={imageUrl}
+            alt={item.FurniName}
+            className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "ok" ? "block" : "hidden"}`}
+            onLoad={() => setImgStatus("ok")}
+            onError={() => setImgStatus("error")}
+          />
+        )}
+      </div>
+
+      {/* Info */}
+      <div className="flex-1 min-w-0">
+        <div className="text-white text-[12px] font-bold truncate">{item.FurniName || "-"}</div>
+        <div className="text-[#888] text-[10px] truncate">{item.ClassName || "-"}</div>
+      </div>
+
+      {/* Preço */}
+      <div className="flex items-center gap-1 shrink-0">
+        <img src={coinIcon} alt="coin" className="w-3 h-3" />
+        <span className="text-[12px] text-[#ffd64d] font-bold">{price}</span>
+      </div>
+    </button>
+  )
+}
+
+export default function InventoryTab({
+  items,
+  query,
+  setQuery,
+  hotel,
+  setHotel,
+  loading,
+  error,
+  searchResults,
+  onSearch,
+  onAddItem,
+  onCancelSearch,
+  onUpdateQty,
+  onSetQty,
+  onRemove,
+  onClear,
+  totalItems,
+  totalUnits,
+  totalValue,
+}) {
+  const [expanded, setExpanded] = React.useState(true)
+  const hasResults = searchResults.length > 0
+
+  function handleKeyDown(e) {
+    if (e.key === "Enter" && query.trim() && !loading) onSearch()
+    if (e.key === "Escape" && hasResults) onCancelSearch()
+  }
+
+  React.useEffect(() => {
+    if (items.length > 0) setExpanded(false)
+  }, [items.length])
+
+  return (
+    <div className="h-full flex flex-col">
+
+      {/* ── Cabeçalho expansível ── */}
+      <div
+        className="flex items-center justify-between mb-2 cursor-pointer"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        <div>
+
+          <div className="text-[#f4f4f4] font-bold text-[13px]">Somar Inventário</div>
+          <div className="text-[#d2d2d2] text-[11px]">
+            Monte seu inventário e calcule o valor total baseado na feira livre.
+          </div>
+        </div>
+        <span className="text-[#d2d2d2] text-[11px]">
+          {expanded ? "▲ recolher" : "▼ expandir"}
+        </span>
+      </div>
+
+      {expanded && (
+        <>
+          <div className="relative mb-2">
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              onKeyDown={handleKeyDown}
+              placeholder="Nome ou classname do mobi"
+              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
+            <select
+              value={hotel}
+              onChange={(e) => setHotel(e.target.value)}
+              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
+            >
+              <option value="br" className="text-black">BR</option>
+              <option value="com" className="text-black">COM</option>
+              <option value="de" className="text-black">DE</option>
+              <option value="es" className="text-black">ES</option>
+              <option value="fi" className="text-black">FI</option>
+              <option value="fr" className="text-black">FR</option>
+              <option value="it" className="text-black">IT</option>
+              <option value="nl" className="text-black">NL</option>
+              <option value="tr" className="text-black">TR</option>
+            </select>
+
+            <Button onClick={() => onSearch()} disabled={!query.trim() || loading}>
+              {loading ? "Buscando..." : "Buscar"}
+            </Button>
+          </div>
+        </>
+      )}
+
+      {error && (
+        <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>
+      )}
+
+      {/* ── Seleção de resultado ── */}
+      {hasResults && (
+        <div className="mb-3">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-[11px] font-bold text-[#fff2c1]">
+              {searchResults.length} mobis encontrados — clique para adicionar
+            </span>
+            <button
+              type="button"
+              onClick={onCancelSearch}
+              className="text-[10px] text-[#888] hover:text-[#ff8a8a] cursor-pointer transition-colors"
+            >
+              cancelar
+            </button>
+          </div>
+          <div className="space-y-[6px] max-h-[260px] overflow-y-auto pr-1">
+            {searchResults.map((item) => (
+              <SearchResultOption
+                key={item.ClassName}
+                item={item}
+                onSelect={onAddItem}
+              />
+            ))}
+          </div>
+          <div className="border-t border-dashed border-[#d7d7d7] opacity-40 mt-3" />
+        </div>
+      )}
+
+      {/* ── Lista do inventário ── */}
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
+        {items.length === 0 ? (
+          !loading && !hasResults && (
+            <div className="text-[#e0e0e0] text-[12px]">
+              Nenhum mobi no inventário. Adicione acima.
+            </div>
+          )
+        ) : (
+          items.map((item) => (
+            <InventoryItemCard
+              key={item.ClassName}
+              item={item}
+              onUpdateQty={onUpdateQty}
+              onSetQty={onSetQty}
+              onRemove={onRemove}
+            />
+          ))
+        )}
+      </div>
+
+      {/* ── Rodapé com totais ── */}
+      {items.length > 0 && (
+        <>
+          <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
+          <div className="shrink-0 space-y-2">
+            <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
+              <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
+              <button
+                type="button"
+                onClick={onClear}
+                className="text-[10px] text-[#666] hover:text-[#ff8a8a] cursor-pointer transition-colors"
+              >
+                limpar tudo
+              </button>
+            </div>
+            <div className="border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-2 flex items-center justify-between">
+              <span className="text-[12px] text-[#d2d2d2] font-bold">Total do inventário</span>
+              <div className="flex items-center gap-[5px]">
+                <img src={coinIcon} alt="coin" className="w-4 h-4" />
+                <span className="text-[16px] font-bold text-[#ffd64d]">
+                  {totalValue.toLocaleString("pt-BR")}
+                </span>
+              </div>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+}
