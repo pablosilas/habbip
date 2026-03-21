@@ -79,7 +79,7 @@ export default function InventoryTab({
   loggedUserName,
 }) {
   const [expanded, setExpanded] = React.useState(true)
-  const [footerExpanded, setFooterExpanded] = React.useState(true)
+  const [footerExpanded, setFooterExpanded] = React.useState(false)
   const [inventoryFilter, setInventoryFilter] = React.useState("")
   const [showDropdown, setShowDropdown] = React.useState(false)
 

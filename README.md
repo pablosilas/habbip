@@ -1,18 +1,58 @@
-# React + Vite
+# Habbip
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> Ferramenta feita para jogadores do Habbo Hotel — consulte preços da Feira Livre, pesquise perfis de usuários e gerencie seu inventário de mobis.
 
-Currently, two official plugins are available:
+---
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+## Screenshots
 
-## React Compiler
+<!-- Substitua os caminhos abaixo pelas imagens reais do projeto -->
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+![Feira Livre](./screenshots/feira.png)
+![Buscar Usuário](./screenshots/usuario.png)
+![Inventário](./screenshots/inventario.png)
 
-Note: This will impact Vite dev & build performances.
+---
 
-## Expanding the ESLint configuration
+## Funcionalidades
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+### 🛒 Feira Livre
+- Pesquise mobis por nome ou classname
+- Veja preço atual, média e quantidade de ofertas
+- Acompanhe a tendência de preço (subindo, caindo ou estável)
+- Histórico de vendas por dia com gráfico de linha interativo
+- Conversor de créditos para reais com taxa personalizável
+- Ordenação por preço, tendência, ofertas ou atualização
+- Histórico de buscas recentes com favoritos
+
+### 👤 Buscar Usuário
+- Pesquise qualquer usuário do Habbo Hotel BR
+- Veja perfil completo: emblemas, amigos, grupos e quartos
+- Salve usuários como favoritos
+- Histórico de buscas recentes
+
+### 📦 Somar Inventário
+- Monte seu inventário adicionando mobis pelo nome ou classname
+- Controle a quantidade de cada item
+- Cálculo automático do valor total baseado nos preços da Feira Livre
+- Conversor de créditos para reais
+- Filtro de busca dentro do inventário
+- Inventário salvo por usuário logado
+- Histórico de buscas com favoritos
+
+### 👤 Login
+- Entre com seu nick do Habbo para salvar seus dados
+- Inventário, histórico e favoritos separados por usuário
+- Opção de continuar como anônimo
+
+---
+
+## Aviso Legal
+
+Este projeto não é afiliado, patrocinado, apoiado ou aprovado pela Sulake Oy ou suas afiliadas. Habbo é uma marca registrada da Sulake Oy.
+
+---
+
+## Autor
+
+Desenvolvido por **[Groovin](https://www.habbo.com.br/profile/Groovin)** 🎮
