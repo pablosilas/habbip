@@ -4,7 +4,9 @@ import Button from "../../ui/Button"
 import coinIcon from "../../../assets/coin.png"
 import boxIcon from "../../../assets/box.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
+import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { getFurnitureImageUrl } from "../../../services/habboApi"
+import { useInventoryHistory } from "../../../hooks/useSearchHistory"
 
 function SearchResultOption({ item, onSelect }) {
   const [imgStatus, setImgStatus] = React.useState("loading")
@@ -61,6 +63,7 @@ export default function InventoryTab({
   loading,
   error,
   searchResults,
+  searchKey,
   onSearch,
   onAddItem,
   onCancelSearch,
@@ -73,23 +76,62 @@ export default function InventoryTab({
   totalValue,
   creditRate,
   onSetCreditRate,
+  loggedUserName,
 }) {
   const [expanded, setExpanded] = React.useState(true)
-  const [footerExpanded, setFooterExpanded] = React.useState(false)
+  const [footerExpanded, setFooterExpanded] = React.useState(true)
   const [inventoryFilter, setInventoryFilter] = React.useState("")
+  const [showDropdown, setShowDropdown] = React.useState(false)
+
+  const {
+    history,
+    favorites,
+    addToHistory,
+    removeFromHistory,
+    clearHistory,
+    toggleFavorite,
+    isFavorite,
+  } = useInventoryHistory(loggedUserName)
+
+  const lastSearchedTermRef = React.useRef(null)
+
+  // Quando searchResults chega, registra no histórico com classname do primeiro resultado
+  React.useEffect(() => {
+    if (searchResults.length > 0 && lastSearchedTermRef.current) {
+      const firstClassname = searchResults[0]?.ClassName || null
+      addToHistory({ term: lastSearchedTermRef.current, classname: firstClassname })
+      lastSearchedTermRef.current = null
+    }
+  }, [addToHistory, searchResults, searchKey])
 
   const hasResults = searchResults.length > 0
+  const hasDropdownItems = history.length > 0 || favorites.length > 0
+
+  function handleSearch() {
+    if (query.trim()) lastSearchedTermRef.current = query.trim()
+    onSearch()
+    setShowDropdown(false)
+  }
+
+  function handleSelectFromDropdown(term) {
+    setQuery(term)
+    setShowDropdown(false)
+    lastSearchedTermRef.current = term
+    onSearch(term)
+  }
 
   function handleKeyDown(e) {
-    if (e.key === "Enter" && query.trim() && !loading) onSearch()
-    if (e.key === "Escape" && hasResults) onCancelSearch()
+    if (e.key === "Enter" && query.trim() && !loading) handleSearch()
+    if (e.key === "Escape") {
+      if (hasResults) onCancelSearch()
+      setShowDropdown(false)
+    }
   }
 
   React.useEffect(() => {
     if (items.length > 0) setExpanded(false)
   }, [items.length])
 
-  // Filtra os itens do inventário pelo termo digitado
   const filteredItems = inventoryFilter.trim()
     ? items.filter((item) =>
       item.FurniName?.toLowerCase().includes(inventoryFilter.toLowerCase()) ||
@@ -121,13 +163,28 @@ export default function InventoryTab({
 
       {expanded && (
         <>
+          {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={handleKeyDown}
+              onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
+              onBlur={() => setShowDropdown(false)}
               placeholder="Nome ou classname do mobi"
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+            />
+
+            <SearchHistoryDropdown
+              show={showDropdown}
+              history={history}
+              favorites={favorites}
+              onSelect={handleSelectFromDropdown}
+              onRemove={removeFromHistory}
+              onToggleFav={toggleFavorite}
+              isFavorite={isFavorite}
+              onClear={clearHistory}
+              showFurniImage
             />
           </div>
 
@@ -148,7 +205,7 @@ export default function InventoryTab({
               <option value="tr" className="text-black">TR</option>
             </select>
 
-            <Button onClick={() => onSearch()} disabled={!query.trim() || loading}>
+            <Button onClick={handleSearch} disabled={!query.trim() || loading}>
               {loading ? "Buscando..." : "Buscar"}
             </Button>
           </div>
@@ -178,10 +235,10 @@ export default function InventoryTab({
             {[...searchResults]
               .sort((a, b) => {
                 const getPrice = (item) => {
-                  const history = item?.marketData?.history || []
+                  const h = item?.marketData?.history || []
                   return (
                     item?.marketData?.currentPrice ??
-                    (history.length > 0 ? history[history.length - 1]?.[0] : null) ??
+                    (h.length > 0 ? h[h.length - 1]?.[0] : null) ??
                     item?.marketData?.averagePrice ??
                     0
                   )
@@ -243,7 +300,6 @@ export default function InventoryTab({
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
           <div className="shrink-0 space-y-2">
 
-            {/* Linha de controle: tipos/unidades + toggle + limpar */}
             <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
               <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
               <div className="flex items-center gap-3">
@@ -265,7 +321,6 @@ export default function InventoryTab({
             </div>
 
             {footerExpanded ? (
-              /* Versão expandida */
               <>
                 <div className="border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-2 flex items-center justify-between">
                   <span className="text-[12px] text-[#d2d2d2] font-bold">Total do inventário</span>
@@ -284,7 +339,6 @@ export default function InventoryTab({
                 />
               </>
             ) : (
-              /* Versão minimizada */
               <div className="flex items-center justify-between border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-[6px]">
                 <div className="flex items-center gap-[5px]">
                   <img src={coinIcon} alt="coin" className="w-3 h-3" />

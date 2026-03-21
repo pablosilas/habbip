@@ -34,7 +34,7 @@ export function useInventory(loggedUserName) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [searchResults, setSearchResults] = useState([])
-  const [searchKey, setSearchKey] = React.useState(0)
+  const [searchKey, setSearchKey] = useState(0)
 
   // Recarrega inventário quando o usuário logado mudar
   useEffect(() => {

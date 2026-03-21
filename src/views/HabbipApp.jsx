@@ -381,6 +381,8 @@ export default function HabboDeskApp() {
                   totalValue={inventory.totalValue}
                   creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
                   onSetCreditRate={converter.setRate}
+                  searchKey={inventory.searchKey}
+                  loggedUserName={auth.loggedUser?.name}
                 />
               )}
             </div>
