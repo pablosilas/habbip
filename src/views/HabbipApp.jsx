@@ -25,6 +25,7 @@ import { useUserSearch } from "../hooks/useUserSearch"
 import { useAuth } from "../hooks/useAuth"
 import { useCloseJoke } from "../hooks/useCloseJoke"
 import { useInventory } from "../hooks/useInventory"
+import { useCreditConverter } from "../hooks/useCreditConverter"
 
 const BG_OPTIONS = [bgPattern, bg2, bg3]
 
@@ -164,6 +165,7 @@ export default function HabboDeskApp() {
   const closeJoke = useCloseJoke()
   const auth = useAuth(user.buildFullUserProfile)
   const inventory = useInventory(auth.loggedUser?.name)
+  const converter = useCreditConverter(auth.loggedUser?.name)
 
   // Quando o usuário logado mudar (login/logout), carrega a preferência de bg dele
   React.useEffect(() => {
@@ -342,6 +344,8 @@ export default function HabboDeskApp() {
                   results={fair.results}
                   expanded={fairExpanded}
                   setExpanded={setFairExpanded}
+                  creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
+                  onSetCreditRate={converter.setRate}
                 />
               ) : activeTab === "usuario" ? (
                 <UserTab
@@ -375,6 +379,8 @@ export default function HabboDeskApp() {
                   totalItems={inventory.totalItems}
                   totalUnits={inventory.totalUnits}
                   totalValue={inventory.totalValue}
+                  creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
+                  onSetCreditRate={converter.setRate}
                 />
               )}
             </div>

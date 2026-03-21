@@ -109,3 +109,9 @@ export function useUserHistory(loggedUserName) {
   const { historyKey, favoritesKey } = buildKeys("user", userKey)
   return useStoredList(historyKey, favoritesKey)
 }
+
+export function useInventoryHistory(loggedUserName) {
+  const userKey = resolveUserKey(loggedUserName)
+  const { historyKey, favoritesKey } = buildKeys("inventory", userKey)
+  return useStoredList(historyKey, favoritesKey)
+}

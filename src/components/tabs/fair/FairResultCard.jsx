@@ -13,6 +13,7 @@ import flagNl from "../../../assets/flagnl.png"
 import flagTr from "../../../assets/flagtr.png"
 import starOn from "../../../assets/star_on.png"
 import starOff from "../../../assets/star_off.png"
+import CreditConverterBlock from "../../ui/CreditConverterBlock"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
@@ -252,30 +253,46 @@ function HistoryTimeline({ history = [] }) {
 }
 
 function FurnitureImage({ classname, furniName, size = "small" }) {
-  const [status, setStatus] = React.useState("loading") // "loading" | "ok" | "error"
-  const imageUrl = getFurnitureImageUrl(classname)
+  const [status, setStatus] = React.useState("loading")
+  const imageUrl = React.useMemo(() => getFurnitureImageUrl(classname), [classname])
   const sizeClass = size === "large" ? "w-[88px] h-[88px]" : "w-[44px] h-[44px]"
 
-  // Reseta o status quando o classname muda
-  React.useEffect(() => { setStatus("loading") }, [classname])
+  React.useEffect(() => {
+    if (!imageUrl) {
+      setStatus("error")
+      return
+    }
+
+    setStatus("loading")
+
+    const img = new Image()
+
+    img.onload = () => setStatus("ok")
+    img.onerror = () => setStatus("error")
+    img.src = imageUrl
+
+    // Se já estiver em cache e completa
+    if (img.complete) {
+      setStatus("ok")
+    }
+  }, [imageUrl])
 
   return (
     <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden`}>
-      {/* box.png aparece enquanto carrega e também como fallback de erro */}
-      {(status === "loading" || status === "error" || !imageUrl) && (
+      {status !== "ok" && (
         <img
           src={boxIcon}
           alt="carregando"
-          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
+          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"
+            }`}
         />
       )}
-      {imageUrl && (
+
+      {status === "ok" && (
         <img
           src={imageUrl}
           alt={furniName || "Mobi"}
-          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
-          onLoad={() => setStatus("ok")}
-          onError={() => setStatus("error")}
+          className="max-w-full max-h-full object-contain image-rendering-pixel"
         />
       )}
     </div>
@@ -460,7 +477,7 @@ function PriceSparkline({ history = [] }) {
  *   isFavorite        {boolean}    Se o mobi está nos favoritos
  *   onToggleFavorite  {function}   Callback para adicionar/remover dos favoritos
  */
-export default function FairResultCard({ item, isFavorite = false, onToggleFavorite }) {
+export default function FairResultCard({ item, isFavorite = false, onToggleFavorite, creditRate, onSetCreditRate }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
@@ -510,7 +527,7 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
       </div>
 
       {/* ── Métricas ── */}
-      <div className="grid grid-cols-2 xs:grid-cols-3 gap-3 mb-3">
+      <div className="grid grid-cols-3 gap-3 mb-2">
         <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
           <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
             {trendInfo.icon} {trendInfo.label}
@@ -519,6 +536,19 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
         <MetricBlock label="Média" value={averagePrice} showCoin coinIcon={coinIcon} />
         <MetricBlock label="Ofertas" value={openOffers} />
       </div>
+
+      {/* ── Conversor de créditos ── */}
+      {creditRate != null && onSetCreditRate && (
+        <div className="mb-3">
+          <CreditConverterBlock
+            rateCredits={creditRate.credits}
+            rateReais={creditRate.reais}
+            onSetRate={onSetCreditRate}
+            credits={typeof priceNow === "number" ? priceNow : null}
+            compact
+          />
+        </div>
+      )}
 
       {/* ── Linha do tempo de vendas ── */}
       <HistoryTimeline history={history} />

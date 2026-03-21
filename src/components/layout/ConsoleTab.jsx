@@ -36,9 +36,9 @@ export default function ConsoleTab({ label, icon, active, onClick }) {
       </span>
 
       <div className="flex flex-col gap-[2px] mt-auto">
-        <div className={`w-55 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
-        <div className={`w-55 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
-        <div className={`w-55 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
+        <div className={`w-35 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
+        <div className={`w-35 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
+        <div className={`w-35 h-[3px] ${active ? "bg-[#C9981D]" : "bg-[#F1BF26]"} ${active ? "border-b-[2px] border-[#AB7A02]" : "border-b-[2px] border-[#C49104]"} `} />
       </div>
 
       {active ? (

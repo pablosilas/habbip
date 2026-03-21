@@ -17,7 +17,9 @@ export default function FairTab({
   results,
   loggedUserName,
   expanded,
-  setExpanded
+  setExpanded,
+  creditRate,
+  onSetCreditRate,
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
@@ -66,7 +68,7 @@ export default function FairTab({
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div>
+        <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">
             Buscar mobi
           </div>
@@ -199,7 +201,7 @@ export default function FairTab({
               const bDiff = (bLast?.[0] ?? 0) - (bPrev?.[0] ?? bLast?.[0] ?? 0)
               return bDiff - aDiff
             }
-            if (sortBy === "offers") return (bLast?.[3] ?? 0) - (aLast?.[3] ?? 0)
+            if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bLast?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aLast?.[3] ?? 0)
             if (sortBy === "updated") return (bLast?.[4] ?? 0) - (aLast?.[4] ?? 0)
             return 0
           })
@@ -211,6 +213,8 @@ export default function FairTab({
                 item={item}
                 isFavorite={isFavorite(favKey)}
                 onToggleFavorite={() => toggleFavorite(favKey)}
+                creditRate={creditRate}
+                onSetCreditRate={onSetCreditRate}
               />
             )
           })}

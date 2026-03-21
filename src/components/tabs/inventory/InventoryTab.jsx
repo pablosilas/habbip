@@ -3,9 +3,9 @@ import InventoryItemCard from "../inventory/InventoryItemCard"
 import Button from "../../ui/Button"
 import coinIcon from "../../../assets/coin.png"
 import boxIcon from "../../../assets/box.png"
+import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import { getFurnitureImageUrl } from "../../../services/habboApi"
 
-// Mini card de resultado para seleção
 function SearchResultOption({ item, onSelect }) {
   const [imgStatus, setImgStatus] = React.useState("loading")
   const imageUrl = getFurnitureImageUrl(item.ClassName)
@@ -22,7 +22,6 @@ function SearchResultOption({ item, onSelect }) {
       onClick={() => onSelect(item)}
       className="w-full flex items-center gap-3 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md px-3 py-2 text-left transition-colors cursor-pointer"
     >
-      {/* Imagem */}
       <div className="w-9 h-9 shrink-0 flex items-center justify-center overflow-hidden">
         {(imgStatus === "loading" || imgStatus === "error" || !imageUrl) && (
           <img
@@ -41,14 +40,10 @@ function SearchResultOption({ item, onSelect }) {
           />
         )}
       </div>
-
-      {/* Info */}
       <div className="flex-1 min-w-0">
         <div className="text-white text-[12px] font-bold truncate">{item.FurniName || "-"}</div>
         <div className="text-[#888] text-[10px] truncate">{item.ClassName || "-"}</div>
       </div>
-
-      {/* Preço */}
       <div className="flex items-center gap-1 shrink-0">
         <img src={coinIcon} alt="coin" className="w-3 h-3" />
         <span className="text-[12px] text-[#ffd64d] font-bold">{price}</span>
@@ -76,8 +71,13 @@ export default function InventoryTab({
   totalItems,
   totalUnits,
   totalValue,
+  creditRate,
+  onSetCreditRate,
 }) {
   const [expanded, setExpanded] = React.useState(true)
+  const [footerExpanded, setFooterExpanded] = React.useState(false)
+  const [inventoryFilter, setInventoryFilter] = React.useState("")
+
   const hasResults = searchResults.length > 0
 
   function handleKeyDown(e) {
@@ -89,6 +89,14 @@ export default function InventoryTab({
     if (items.length > 0) setExpanded(false)
   }, [items.length])
 
+  // Filtra os itens do inventário pelo termo digitado
+  const filteredItems = inventoryFilter.trim()
+    ? items.filter((item) =>
+      item.FurniName?.toLowerCase().includes(inventoryFilter.toLowerCase()) ||
+      item.ClassName?.toLowerCase().includes(inventoryFilter.toLowerCase())
+    )
+    : items
+
   return (
     <div className="h-full flex flex-col">
 
@@ -97,14 +105,16 @@ export default function InventoryTab({
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div>
-
+        <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">Somar Inventário</div>
-          <div className="text-[#d2d2d2] text-[11px]">
+          <div
+            className="text-[#d2d2d2] text-[11px] truncate"
+            title="Monte seu inventário e calcule o valor total baseado na feira livre."
+          >
             Monte seu inventário e calcule o valor total baseado na feira livre.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
+        <span className="text-[#d2d2d2] text-[11px] shrink-0">
           {expanded ? "▲ recolher" : "▼ expandir"}
         </span>
       </div>
@@ -164,16 +174,41 @@ export default function InventoryTab({
               cancelar
             </button>
           </div>
-          <div className="space-y-[6px] max-h-[260px] overflow-y-auto pr-1">
-            {searchResults.map((item) => (
-              <SearchResultOption
-                key={item.ClassName}
-                item={item}
-                onSelect={onAddItem}
-              />
-            ))}
+          <div className="space-y-[6px] max-h-[200px] overflow-y-auto pr-1">
+            {[...searchResults]
+              .sort((a, b) => {
+                const getPrice = (item) => {
+                  const history = item?.marketData?.history || []
+                  return (
+                    item?.marketData?.currentPrice ??
+                    (history.length > 0 ? history[history.length - 1]?.[0] : null) ??
+                    item?.marketData?.averagePrice ??
+                    0
+                  )
+                }
+                return getPrice(b) - getPrice(a)
+              })
+              .map((item) => (
+                <SearchResultOption
+                  key={item.ClassName}
+                  item={item}
+                  onSelect={onAddItem}
+                />
+              ))}
           </div>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 mt-3" />
+        </div>
+      )}
+
+      {/* ── Filtro do inventário ── */}
+      {items.length > 2 && (
+        <div className="mb-2">
+          <input
+            value={inventoryFilter}
+            onChange={(e) => setInventoryFilter(e.target.value)}
+            placeholder="Filtrar no inventário..."
+            className="w-full h-8 border border-[#555] bg-[rgba(255,255,255,0.06)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] rounded-sm"
+          />
         </div>
       )}
 
@@ -185,8 +220,12 @@ export default function InventoryTab({
               Nenhum mobi no inventário. Adicione acima.
             </div>
           )
+        ) : filteredItems.length === 0 ? (
+          <div className="text-[#888] text-[12px]">
+            Nenhum mobi encontrado para "{inventoryFilter}".
+          </div>
         ) : (
-          items.map((item) => (
+          filteredItems.map((item) => (
             <InventoryItemCard
               key={item.ClassName}
               item={item}
@@ -203,25 +242,65 @@ export default function InventoryTab({
         <>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
           <div className="shrink-0 space-y-2">
+
+            {/* Linha de controle: tipos/unidades + toggle + limpar */}
             <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
               <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
-              <button
-                type="button"
-                onClick={onClear}
-                className="text-[10px] text-[#666] hover:text-[#ff8a8a] cursor-pointer transition-colors"
-              >
-                limpar tudo
-              </button>
-            </div>
-            <div className="border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-2 flex items-center justify-between">
-              <span className="text-[12px] text-[#d2d2d2] font-bold">Total do inventário</span>
-              <div className="flex items-center gap-[5px]">
-                <img src={coinIcon} alt="coin" className="w-4 h-4" />
-                <span className="text-[16px] font-bold text-[#ffd64d]">
-                  {totalValue.toLocaleString("pt-BR")}
-                </span>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setFooterExpanded((v) => !v)}
+                  className="text-[10px] text-[#888] hover:text-[#ffd64d] cursor-pointer transition-colors"
+                >
+                  {footerExpanded ? "▲ minimizar" : "▼ expandir"}
+                </button>
+                <button
+                  type="button"
+                  onClick={onClear}
+                  className="text-[10px] text-[#666] hover:text-[#ff8a8a] cursor-pointer transition-colors"
+                >
+                  limpar tudo
+                </button>
               </div>
             </div>
+
+            {footerExpanded ? (
+              /* Versão expandida */
+              <>
+                <div className="border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-2 flex items-center justify-between">
+                  <span className="text-[12px] text-[#d2d2d2] font-bold">Total do inventário</span>
+                  <div className="flex items-center gap-[5px]">
+                    <img src={coinIcon} alt="coin" className="w-4 h-4" />
+                    <span className="text-[16px] font-bold text-[#ffd64d]">
+                      {totalValue.toLocaleString("pt-BR")}
+                    </span>
+                  </div>
+                </div>
+                <CreditConverterBlock
+                  rateCredits={creditRate?.credits}
+                  rateReais={creditRate?.reais}
+                  onSetRate={onSetCreditRate}
+                  credits={totalValue}
+                />
+              </>
+            ) : (
+              /* Versão minimizada */
+              <div className="flex items-center justify-between border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-[6px]">
+                <div className="flex items-center gap-[5px]">
+                  <img src={coinIcon} alt="coin" className="w-3 h-3" />
+                  <span className="text-[13px] font-bold text-[#ffd64d]">
+                    {totalValue.toLocaleString("pt-BR")}
+                  </span>
+                </div>
+                <CreditConverterBlock
+                  rateCredits={creditRate?.credits}
+                  rateReais={creditRate?.reais}
+                  onSetRate={onSetCreditRate}
+                  credits={totalValue}
+                  minimal
+                />
+              </div>
+            )}
           </div>
         </>
       )}

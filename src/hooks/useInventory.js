@@ -34,6 +34,7 @@ export function useInventory(loggedUserName) {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const [searchResults, setSearchResults] = useState([])
+  const [searchKey, setSearchKey] = React.useState(0)
 
   // Recarrega inventário quando o usuário logado mudar
   useEffect(() => {
@@ -61,6 +62,7 @@ export function useInventory(loggedUserName) {
     setLoading(true)
     setError("")
     setSearchResults([])
+    setSearchKey((v) => v + 1)
 
     try {
       const searchParam = isClassname(q)
@@ -197,5 +199,6 @@ export function useInventory(loggedUserName) {
     totalItems,
     totalUnits,
     totalValue,
+    searchKey
   }
 }

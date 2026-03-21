@@ -49,7 +49,7 @@ export default function UserTab({
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
-        <div>
+        <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">
             Buscar usuário
           </div>
