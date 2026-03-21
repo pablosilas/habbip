@@ -26,11 +26,21 @@ export default function InfoModal({ open, onClose }) {
             <div className="text-[#fff2c1] font-bold text-[12px] mb-1">Versão</div>
             <div className="text-[#ededed] text-[12px]">1.0.0</div>
           </div>
-          <Button onClick={onClose} >
+
+          {/* Direitos */}
+          <div className="border-t border-[#ffffff22] pt-2 mt-2">
+            <div className="text-[#bfbfbf] text-[10px] leading-4 text-center">
+              © 2026 Habbo Desk<br />
+              Todos os direitos reservados.<br />
+              Este site não é afiliado, patrocinado, apoiado ou aprovado pela Sulake Oy ou suas afiliadas.
+            </div>
+          </div>
+
+          <Button onClick={onClose}>
             Fechar
           </Button>
         </>
-      </ConsoleCard >
-    </div >
+      </ConsoleCard>
+    </div>
   )
 }

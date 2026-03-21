@@ -69,7 +69,7 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
           {isLogged
             ? userData.motto || "Sem motto."
             : activeTab === "feira"
-              ? "Pesquise mobis e veja os dados da feira."
+              ? "Pesquise mobis e veja os dados da feira livre."
               : "Pesquise um usuário do Habbo."}
         </div>
       </div>
