@@ -2,7 +2,7 @@ import React from "react"
 import roomPlaceholder from "../../assets/room.png"
 import onlineIcon from "../../assets/online.png"
 import offlineIcon from "../../assets/offline.png"
-import starOn from "../../assets/star_on.png"
+import starOn from "../../assets/star.png"
 import starOff from "../../assets/star_off.png"
 import boxIcon from "../../assets/box.png"
 
