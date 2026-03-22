@@ -1,7 +1,7 @@
 import React from "react"
 import { getHabboAvatarHeadUrl, getFurnitureImageUrl } from "../../services/habboApi"
 import { getEntryTerm } from "../../hooks/useSearchHistory"
-import starOn from "../../assets/star_on.png"
+import starOn from "../../assets/star.png"
 import starOff from "../../assets/star_off.png"
 
 /**

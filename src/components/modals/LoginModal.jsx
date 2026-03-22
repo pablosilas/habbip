@@ -1,6 +1,7 @@
 import React from "react"
 import ConsoleCard from "../ui/ConsoleCard"
 import Button from "../ui/Button"
+import PasswordInput from "../ui/PasswordInput"
 import { fetchUserByName, getHabboAvatarHeadUrl } from "../../services/habboApi"
 import messageSound from "../../assets/message.mp3"
 
@@ -8,38 +9,23 @@ function playSound() {
   try { new Audio(messageSound).play() } catch { }
 }
 
-// ── Validação do nick no Habbo ───────────────────────────────────────────────
 function useHabboNickValidation(habboNick) {
-  const [status, setStatus] = React.useState("idle") // idle | checking | found | not_found
+  const [status, setStatus] = React.useState("idle")
   const [habboUser, setHabboUser] = React.useState(null)
   const timerRef = React.useRef(null)
 
   React.useEffect(() => {
     const nick = habboNick.trim()
+    if (!nick) { setStatus("idle"); setHabboUser(null); return }
 
-    // Reseta se campo vazio
-    if (!nick) {
-      setStatus("idle")
-      setHabboUser(null)
-      return
-    }
-
-    // Debounce de 600ms após parar de digitar
     clearTimeout(timerRef.current)
     timerRef.current = setTimeout(async () => {
-      setStatus("checking")
-      setHabboUser(null)
+      setStatus("checking"); setHabboUser(null)
       try {
         const user = await fetchUserByName(nick)
-        if (user?.uniqueId) {
-          setHabboUser(user)
-          setStatus("found")
-        } else {
-          setStatus("not_found")
-        }
-      } catch {
-        setStatus("not_found")
-      }
+        if (user?.uniqueId) { setHabboUser(user); setStatus("found") }
+        else setStatus("not_found")
+      } catch { setStatus("not_found") }
     }, 600)
 
     return () => clearTimeout(timerRef.current)
@@ -48,22 +34,17 @@ function useHabboNickValidation(habboNick) {
   return { status, habboUser }
 }
 
-// ── Preview do avatar ────────────────────────────────────────────────────────
 function AvatarPreview({ nick, status, habboUser }) {
   const [imgError, setImgError] = React.useState(false)
-
   React.useEffect(() => setImgError(false), [nick])
 
   if (status === "idle") return null
 
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border text-[12px] transition-all ${status === "found"
-      ? "border-[#7CFC8A] bg-[rgba(124,252,138,0.08)]"
-      : status === "not_found"
-        ? "border-[#FF8A8A] bg-[rgba(255,138,138,0.08)]"
-        : "border-[#555] bg-[rgba(255,255,255,0.04)]"
+    <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border text-[12px] transition-all ${status === "found" ? "border-[#7CFC8A] bg-[rgba(124,252,138,0.08)]"
+        : status === "not_found" ? "border-[#FF8A8A] bg-[rgba(255,138,138,0.08)]"
+          : "border-[#555] bg-[rgba(255,255,255,0.04)]"
       }`}>
-      {/* Avatar */}
       {status === "found" && nick && !imgError ? (
         <img
           src={getHabboAvatarHeadUrl({ name: nick, hotel: "br", size: "s" })}
@@ -76,30 +57,21 @@ function AvatarPreview({ nick, status, habboUser }) {
           {status === "checking" ? "⏳" : status === "found" ? "👤" : "❌"}
         </div>
       )}
-
-      {/* Texto */}
       <div className="flex-1 min-w-0">
-        {status === "checking" && (
-          <span className="text-[#aaa]">Verificando nick no Habbo...</span>
-        )}
+        {status === "checking" && <span className="text-[#aaa]">Verificando nick no Habbo...</span>}
         {status === "found" && (
           <div>
             <span className="text-[#7CFC8A] font-bold">{habboUser?.name || nick}</span>
             <span className="text-[#7CFC8A]"> encontrado ✓</span>
-            {habboUser?.motto && (
-              <div className="text-[#aaa] text-[10px] truncate">{habboUser.motto}</div>
-            )}
+            {habboUser?.motto && <div className="text-[#aaa] text-[10px] truncate">{habboUser.motto}</div>}
           </div>
         )}
-        {status === "not_found" && (
-          <span className="text-[#FF8A8A]">Nick não encontrado no Habbo Hotel</span>
-        )}
+        {status === "not_found" && <span className="text-[#FF8A8A]">Nick não encontrado no Habbo Hotel</span>}
       </div>
     </div>
   )
 }
 
-// ── Formulário de Login ──────────────────────────────────────────────────────
 function LoginForm({ onLogin, onSwitch, loading, error }) {
   const [habboNick, setHabboNick] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -125,13 +97,11 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
       </div>
       <div>
         <div className="text-white text-[13px] font-bold mb-1">Senha</div>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Sua senha"
           autoComplete="current-password"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
         />
       </div>
 
@@ -151,7 +121,6 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
   )
 }
 
-// ── Formulário de Cadastro ───────────────────────────────────────────────────
 function RegisterForm({ onRegister, onSwitch, loading, error }) {
   const [habboNick, setHabboNick] = React.useState("")
   const [password, setPassword] = React.useState("")
@@ -177,7 +146,6 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      {/* Nick */}
       <div>
         <div className="text-white text-[13px] font-bold mb-1">Nick do Habbo</div>
         <input
@@ -187,20 +155,16 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
           autoComplete="username"
           className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0] mb-2"
         />
-        {/* Preview de validação */}
         <AvatarPreview nick={habboNick.trim()} status={status} habboUser={habboUser} />
       </div>
 
-      {/* Senha */}
       <div>
         <div className="text-white text-[13px] font-bold mb-1">Senha</div>
-        <input
-          type="password"
+        <PasswordInput
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Mínimo 6 caracteres"
           autoComplete="new-password"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
         />
         <div className="flex items-start gap-1 mt-1">
           <span className="text-[10px] text-[#aaa] leading-4">
@@ -209,16 +173,13 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
         </div>
       </div>
 
-      {/* Confirmar senha */}
       <div>
         <div className="text-white text-[13px] font-bold mb-1">Confirmar senha</div>
-        <input
-          type="password"
+        <PasswordInput
           value={confirmPassword}
           onChange={(e) => setConfirmPassword(e.target.value)}
           placeholder="Repita a senha"
           autoComplete="new-password"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
         />
       </div>
 
@@ -238,17 +199,9 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
   )
 }
 
-// ── Modal principal ──────────────────────────────────────────────────────────
 export default function LoginModal({
-  open,
-  mode = "login",
-  onSetMode,
-  loading,
-  error,
-  onLogin,
-  onRegister,
-  onContinueAnonymous,
-  onClose,
+  open, mode = "login", onSetMode, loading, error,
+  onLogin, onRegister, onContinueAnonymous, onClose,
 }) {
   if (!open) return null
 
@@ -260,19 +213,9 @@ export default function LoginModal({
         className="w-full max-w-[420px]"
       >
         {mode === "login" ? (
-          <LoginForm
-            onLogin={onLogin}
-            onSwitch={() => onSetMode("register")}
-            loading={loading}
-            error={error}
-          />
+          <LoginForm onLogin={onLogin} onSwitch={() => onSetMode("register")} loading={loading} error={error} />
         ) : (
-          <RegisterForm
-            onRegister={onRegister}
-            onSwitch={() => onSetMode("login")}
-            loading={loading}
-            error={error}
-          />
+          <RegisterForm onRegister={onRegister} onSwitch={() => onSetMode("login")} loading={loading} error={error} />
         )}
 
         <div className="flex items-center gap-2 my-3">
@@ -281,11 +224,7 @@ export default function LoginModal({
           <div className="flex-1 border-t border-[#ffffff22]" />
         </div>
 
-        <Button
-          variant="secondary"
-          onClick={() => { playSound(); onContinueAnonymous({}) }}
-          disabled={loading}
-        >
+        <Button variant="secondary" onClick={() => { playSound(); onContinueAnonymous({}) }} disabled={loading}>
           Continuar sem conta
         </Button>
 

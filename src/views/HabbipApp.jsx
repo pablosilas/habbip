@@ -76,16 +76,69 @@ function BgSelector({ bgIndex, onBgChange, bgs }) {
     <div
       ref={dropdownRef}
       style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, zIndex: 99999 }}
-      className="bg-[#2a2306] border border-[#7B4001] rounded-[6px] shadow-[0_6px_20px_rgba(0,0,0,0.6)] p-2 flex flex-col gap-[6px]"
+      className={[
+        "relative overflow-hidden rounded-[14px]",
+        "border-[2px] border-[#7A7A7A]",
+        "outline outline-[1px] outline-[#000000]",
+        "bg-[#4D4D4D]",
+        "shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]",
+      ].join(" ")}
     >
-      <div className="text-[9px] font-bold text-[#c9982a] uppercase tracking-wider text-center whitespace-nowrap">Fundo</div>
-      <div className="flex gap-[6px] justify-center">
-        {bgs.map((bg, i) => (
-          <button key={i} type="button" onClick={() => { onBgChange(i); setOpen(false) }}
-            className="w-6 h-6 rounded-sm border-2 overflow-hidden cursor-pointer transition-transform hover:scale-110 shrink-0"
-            style={{ backgroundImage: `url(${bg})`, backgroundSize: "cover", backgroundPosition: "center", borderColor: bgIndex === i ? "#ffca00" : "#555" }}
-          />
-        ))}
+      {/* Header */}
+      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
+        <span className="text-[10px] font-bold text-white">Fundo</span>
+        <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
+          <button
+            type="button"
+            onClick={() => setOpen(false)}
+            title="Fechar"
+            className="flex items-center justify-center cursor-pointer hover:brightness-110 active:translate-y-[1px]"
+            style={{
+              width: 18, height: 18, borderRadius: 4,
+              background: "#7A7A7A",
+              borderTop: "1.5px solid #000",
+              borderLeft: "1.5px solid #000",
+              borderRight: "1.5px solid #000",
+              borderBottom: "2.5px solid #000",
+              boxShadow: "inset 0 0 0 1px #8c8c8c",
+            }}
+          >
+            <span
+              className="block w-0 h-0 translate-y-[1px]"
+              style={{
+                borderLeft: "4px solid transparent",
+                borderRight: "4px solid transparent",
+                borderTop: "6px solid #ffffff",
+              }}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="px-3 py-3 bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+        <div className="flex gap-[6px] justify-center">
+          {bgs.map((bg, i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => { onBgChange(i); setOpen(false) }}
+              className="w-6 h-6 rounded-sm overflow-hidden cursor-pointer transition-transform hover:scale-110 shrink-0"
+              style={{
+                backgroundImage: `url(${bg})`,
+                backgroundSize: "cover",
+                backgroundPosition: "center",
+                borderTop: "1.5px solid #000",
+                borderLeft: "1.5px solid #000",
+                borderRight: "1.5px solid #000",
+                borderBottom: "2.5px solid #000",
+                boxShadow: bgIndex === i
+                  ? "inset 0 0 0 2px #ffca00"
+                  : "inset 0 0 0 1px #8c8c8c",
+              }}
+            />
+          ))}
+        </div>
       </div>
     </div>
   ) : null
@@ -111,27 +164,23 @@ export default function HabboDeskApp() {
   const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
 
-  // ── Logout compartilhado (usado pelo X e pelo ProfileModal) ─────────────────
-  function doLogout() {
-    auth.handleLogout(() => {
-      setProfileModalOpen(false)
-      setConfirmingLogout(false)
-      fair.setMobiQuery(""); fair.setResults([]); fair.setError(null)
-      user.setNickQuery(""); user.setSearchedUser(null); user.setError(null)
-      setFairExpanded(true); setUserExpanded(true)
-      setActiveTab("feira")
-    })
-  }
+  // ── Hooks declarados antes de qualquer função que os use ──────────────────
+  //
+  // Problema original: doLogout era declarado antes dos hooks auth/fair/user,
+  // referenciando fair.setMobiQuery, user.setNickQuery etc. antes de existirem.
+  // Funcionava em runtime porque doLogout só era *chamado* depois da montagem,
+  // mas era uma armadilha de leitura — mover para depois dos hooks elimina
+  // a dependência implícita na ordem de declaração.
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const auth = useAuth()
   const isLoggedIn = auth.isLoggedIn
 
-  // ── Sincronização com servidor ─────────────────────────────────────────────
+  // ── Sincronização com servidor ────────────────────────────────────────────
   const { serverData, loadingData, syncError, markDirty } =
     useServerSync(isLoggedIn)
 
-  // ── Hooks de dados (recebem serverData + markDirty) ────────────────────────
+  // ── Hooks de dados ────────────────────────────────────────────────────────
   const inventory = useInventory(serverData, markDirty, isLoggedIn)
   const watchlist = useWatchlist(serverData, markDirty, isLoggedIn)
   const converter = useCreditConverter(serverData, markDirty, isLoggedIn)
@@ -144,11 +193,25 @@ export default function HabboDeskApp() {
     isLoggedIn,
   })
 
-  // ── Busca (sem servidor) ───────────────────────────────────────────────────
+  // ── Busca (sem servidor) ──────────────────────────────────────────────────
   const fair = useFairSearch()
   const user = useUserSearch()
 
-  // ── Background ─────────────────────────────────────────────────────────────
+  // ── Logout ────────────────────────────────────────────────────────────────
+  // Declarado após todos os hooks que usa, eliminando a dependência implícita
+  // na ordem de declaração que existia na versão original.
+  function doLogout() {
+    auth.handleLogout(() => {
+      setProfileModalOpen(false)
+      setConfirmingLogout(false)
+      fair.setMobiQuery(""); fair.setResults([]); fair.setError(null)
+      user.setNickQuery(""); user.setSearchedUser(null); user.setError(null)
+      setFairExpanded(true); setUserExpanded(true)
+      setActiveTab("feira")
+    })
+  }
+
+  // ── Background ────────────────────────────────────────────────────────────
   function handleBgChange(index) {
     setBgIndex(index)
     try { localStorage.setItem("habbip:bg", String(index)) } catch { }
@@ -175,7 +238,6 @@ export default function HabboDeskApp() {
     return () => window.removeEventListener("resize", setVh)
   }, [])
 
-  // ── Bloqueio de features para anônimos ────────────────────────────────────
   function handleLockedAction() {
     auth.setLoginModalOpen(true)
     auth.setAuthMode("login")
@@ -193,7 +255,7 @@ export default function HabboDeskApp() {
 
   return (
     <>
-      {/* ── Modais ────────────────────────────────────────────────────────── */}
+      {/* ── Modais ─────────────────────────────────────────────────────────── */}
       <LoginModal
         open={auth.loginModalOpen}
         mode={auth.authMode}
@@ -220,7 +282,7 @@ export default function HabboDeskApp() {
         onCancel={() => setConfirmingLogout(false)}
       />
 
-      {/* ── App ───────────────────────────────────────────────────────────── */}
+      {/* ── App ────────────────────────────────────────────────────────────── */}
       <div
         className="h-screen overflow-hidden flex items-center justify-center py-0 px-2 sm:p-2"
         style={{
@@ -241,32 +303,35 @@ export default function HabboDeskApp() {
             innerClassName="flex flex-col overflow-hidden"
             headerRight={
               <div className="flex items-center gap-[6px]">
-                {/* Indicador de sync error */}
                 {syncError && (
                   <span title={syncError} className="text-[9px] text-[#FF8A8A] cursor-help">⚠ sync</span>
                 )}
-                {/* Indicador de loading dados */}
                 {loadingData && (
                   <span className="text-[9px] text-[#ffd64d] animate-pulse">carregando...</span>
                 )}
-                <NotificationBell
-                  notifications={monitor.notifications}
-                  unreadCount={monitor.unreadCount}
-                  watchlist={watchlist.watchlist}
-                  isPolling={monitor.isPolling}
-                  onMarkAllRead={monitor.markAllRead}
-                  onClearNotifications={monitor.clearNotifications}
-                  onRemoveNotification={monitor.removeNotification}
-                  onRemoveFromWatchlist={watchlist.removeFromWatchlist}
-                  onPollNow={monitor.pollNow}
-                />
+                {isLoggedIn && (
+                  <NotificationBell
+                    notifications={monitor.notifications}
+                    unreadCount={monitor.unreadCount}
+                    watchlist={watchlist.watchlist}
+                    isPolling={monitor.isPolling}
+                    onMarkAllRead={monitor.markAllRead}
+                    onClearNotifications={monitor.clearNotifications}
+                    onRemoveNotification={monitor.removeNotification}
+                    onRemoveFromWatchlist={watchlist.removeFromWatchlist}
+                    onPollNow={monitor.pollNow}
+                  />
+                )}
                 <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />
-                <span
-                  onClick={() => isLoggedIn ? setConfirmingLogout(true) : null}
-                  className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
-                >
-                  X
-                </span>
+                {/* Botão X: confirma logout se logado, não faz nada se anônimo */}
+                {isLoggedIn && (
+                  <span
+                    onClick={() => setConfirmingLogout(true)}
+                    className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
+                  >
+                    X
+                  </span>
+                )}
               </div>
             }
             footer={
@@ -348,7 +413,6 @@ export default function HabboDeskApp() {
                     ? watchlist.toggleWatchlist
                     : () => handleLockedAction("watchlist")
                   }
-                  // Passa o histórico do servidor para o FairTab
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}

@@ -1,11 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react"
-import {
-  fetchMarketHistory,
-  fetchOfficialMarketBatch,
-  mergeOfficialMarketData,
-} from "../services/habboApi"
-
-const isClassname = (query) => query.trim().includes("_")
+import { searchMarketItems } from "../services/marketSearch"
 
 export function useInventory(serverData, markDirty, isLoggedIn) {
   const [items, setItems] = useState([])
@@ -47,40 +41,16 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
     setSearchKey((v) => v + 1)
 
     try {
-      const searchParam = isClassname(q)
-        ? { classname: q, hotel, days: "all" }
-        : { name: q, hotel, days: "all" }
+      const filtered = await searchMarketItems({ query: q, hotel, days: "all" })
 
-      const legacyData = await fetchMarketHistory(searchParam)
-      const legacyItems = (Array.isArray(legacyData) ? legacyData : []).filter(
-        (item) => !!item?.ClassName?.trim()
-      )
+      if (filtered.length === 0) { setError("Nenhum mobi encontrado."); return }
 
-      if (legacyItems.length === 0) { setError("Nenhum mobi encontrado."); return }
-
-      const batchItems = legacyItems.map((item) => ({
-        classname: item.ClassName,
-        furniType: item.FurniType === "wallItem" ? "wallItem" : "roomItem",
-      }))
-
-      let officialBatch = null
-      try { officialBatch = await fetchOfficialMarketBatch(batchItems, hotel) } catch { }
-
-      const merged = officialBatch ? mergeOfficialMarketData(legacyItems, officialBatch) : legacyItems
-
-      const filtered = merged.filter((item) => {
-        const history = item?.marketData?.history
-        const averagePrice = item?.marketData?.averagePrice
-        if (Array.isArray(history) && history.length > 0) {
-          if (history.some((entry) => (entry?.[0] ?? 0) > 0)) return true
-        }
-        return averagePrice && averagePrice > 0
-      })
-
-      if (filtered.length === 0) { setError("Nenhum mobi com dados de preço encontrado."); return }
-
-      if (filtered.length === 1) { addToInventory(filtered[0]); setQuery("") }
-      else setSearchResults(filtered)
+      if (filtered.length === 1) {
+        addToInventory(filtered[0])
+        setQuery("")
+      } else {
+        setSearchResults(filtered)
+      }
     } catch (err) {
       setError(err.message || "Erro ao buscar mobi.")
     } finally {
@@ -103,11 +73,13 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
   }, [])
 
   const cancelSearch = useCallback(() => { setSearchResults([]); setError("") }, [])
+
   const updateQty = useCallback((className, delta) => {
     setItems((prev) => prev.map((item) =>
       item.ClassName === className ? { ...item, qty: Math.max(1, item.qty + delta) } : item
     ))
   }, [])
+
   const setQty = useCallback((className, value) => {
     const n = parseInt(value, 10)
     if (isNaN(n) || n < 1) return
@@ -115,9 +87,11 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
       item.ClassName === className ? { ...item, qty: n } : item
     ))
   }, [])
+
   const removeItem = useCallback((className) => {
     setItems((prev) => prev.filter((item) => item.ClassName !== className))
   }, [])
+
   const clearInventory = useCallback(() => setItems([]), [])
 
   const totalItems = items.length

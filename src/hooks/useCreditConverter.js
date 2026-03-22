@@ -22,16 +22,32 @@ export function useCreditConverter(serverData, markDirty, isLoggedIn) {
   const [config, setConfig] = useState(loadAnonConfig)
   const hydrated = useRef(false)
 
-  // Hidrata do servidor
+  // Guarda os settings completos do servidor para poder fazer merge ao salvar.
+  //
+  // Problema original: ao chamar markDirty("settings", { creditRate: {...} }),
+  // o objeto enviado continha apenas creditRate — se serverData.settings tivesse
+  // outras chaves (ex: theme, notifications), elas seriam silenciosamente
+  // descartadas dependendo de como o backend trata o PUT /user/data.
+  //
+  // Solução: manter uma ref com os settings completos do servidor e sempre
+  // fazer spread deles antes de incluir o creditRate atualizado.
+  const serverSettingsRef = useRef({})
+
+  // Hidrata do servidor e armazena os settings completos na ref
   useEffect(() => {
     if (!serverData || !isLoggedIn) return
     const s = serverData.settings
+
+    // Salva os settings completos para uso no merge ao salvar
+    if (s && typeof s === "object") {
+      serverSettingsRef.current = s
+    }
+
     if (s?.creditRate?.credits > 0 && s?.creditRate?.reais > 0) {
       setConfig({ credits: s.creditRate.credits, reais: s.creditRate.reais })
-      hydrated.current = true
-    } else {
-      hydrated.current = true // mesmo sem creditRate salvo, marque como hidratado
     }
+
+    hydrated.current = true
   }, [serverData, isLoggedIn])
 
   const setRate = useCallback(({ credits, reais }) => {
@@ -42,10 +58,18 @@ export function useCreditConverter(serverData, markDirty, isLoggedIn) {
     setConfig({ credits: c, reais: r })
 
     if (isLoggedIn) {
-      // Merge na chave settings.creditRate
-      markDirty?.("settings", { creditRate: { credits: c, reais: r } })
+      // Merge com os settings existentes do servidor para não perder outras chaves
+      const mergedSettings = {
+        ...serverSettingsRef.current,
+        creditRate: { credits: c, reais: r },
+      }
+      markDirty?.("settings", mergedSettings)
+      // Mantém a ref atualizada para o próximo save
+      serverSettingsRef.current = mergedSettings
     } else {
-      try { localStorage.setItem("habbip:anon:creditrate", JSON.stringify({ credits: c, reais: r })) } catch { }
+      try {
+        localStorage.setItem("habbip:anon:creditrate", JSON.stringify({ credits: c, reais: r }))
+      } catch { }
     }
   }, [isLoggedIn, markDirty])
 

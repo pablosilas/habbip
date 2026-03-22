@@ -11,8 +11,12 @@ import flagFr from "../../../assets/flagfr.png"
 import flagIt from "../../../assets/flagit.png"
 import flagNl from "../../../assets/flagnl.png"
 import flagTr from "../../../assets/flagtr.png"
+import watchIcon from "../../../assets/watch.png"
+import plusIcon from "../../../assets/plus.png"
+import starIcon from "../../../assets/star.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import { createPortal } from "react-dom"
+import toolIcon from "../../../assets/tool.png"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
@@ -318,44 +322,6 @@ function PriceSparkline({ history = [] }) {
   )
 }
 
-// ─── Ícones ───────────────────────────────────────────────────────────────────
-
-function DotsIcon() {
-  return (
-    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
-      <circle cx="8" cy="2.5" r="1.5" />
-      <circle cx="8" cy="8" r="1.5" />
-      <circle cx="8" cy="13.5" r="1.5" />
-    </svg>
-  )
-}
-
-function EyeIcon({ active }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill={active ? "#ffd64d" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3">
-      <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" />
-      <circle cx="8" cy="8" r="2.5" fill={active ? "#7c4e00" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" />
-    </svg>
-  )
-}
-
-function StarIcon({ active }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill={active ? "#ffd64d" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" strokeLinejoin="round">
-      <path d="M8 1.5l1.84 3.73 4.11.6-2.98 2.9.7 4.1L8 10.77l-3.67 1.93.7-4.1L2.05 5.83l4.11-.6z" />
-    </svg>
-  )
-}
-
-function PlusIcon({ active }) {
-  return (
-    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke={active ? "#7CFC8A" : "rgba(255,255,255,0.5)"} strokeWidth="1.5" strokeLinecap="round">
-      <rect x="2" y="2" width="12" height="12" rx="2" stroke={active ? "#7CFC8A" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" />
-      <path d="M8 5v6M5 8h6" />
-    </svg>
-  )
-}
-
 // ─── ActionsMenu ──────────────────────────────────────────────────────────────
 
 function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn }) {
@@ -402,80 +368,132 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     <div
       ref={menuRef}
       style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 250 }}
-      className="rounded-[8px] border border-[#3a3a3a] bg-[#1e1e1e] shadow-[0_8px_30px_rgba(0,0,0,0.6)] overflow-hidden"
+      className={[
+        "relative overflow-hidden rounded-[14px]",
+        "border-[2px] border-[#7A7A7A]",
+        "outline outline-[1px] outline-[#000000]",
+        "bg-[#4D4D4D]",
+        "shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]",
+      ].join(" ")}
     >
-      {/* Monitorar */}
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation()
-          if (!isLoggedIn) return
-          if (!isWatching) {
-            const imgUrl = getFurnitureImageUrl(item.ClassName)
-            if (onTriggerFly && btnRef.current && imgUrl) {
-              const rect = btnRef.current.getBoundingClientRect()
-              onTriggerFly(rect, imgUrl)
+      {/* Header */}
+      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
+        <span className="text-[10px] font-bold text-white">Ações</span>
+        <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setOpen(false) }}
+            title="Fechar"
+            className="flex items-center justify-center cursor-pointer hover:brightness-110 active:translate-y-[1px]"
+            style={{
+              width: 18, height: 18, borderRadius: 4,
+              background: "#7A7A7A",
+              borderTop: "1.5px solid #000",
+              borderLeft: "1.5px solid #000",
+              borderRight: "1.5px solid #000",
+              borderBottom: "2.5px solid #000",
+              boxShadow: "inset 0 0 0 1px #8c8c8c",
+            }}
+          >
+            <span
+              className="block w-0 h-0 translate-y-[1px]"
+              style={{
+                borderLeft: "4px solid transparent",
+                borderRight: "4px solid transparent",
+                borderTop: "6px solid #ffffff",
+              }}
+            />
+          </button>
+        </div>
+      </div>
+
+      {/* Body */}
+      <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+        {/* Monitorar */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation()
+            if (!isLoggedIn) return
+            if (!isWatching) {
+              const imgUrl = getFurnitureImageUrl(item.ClassName)
+              if (onTriggerFly && btnRef.current && imgUrl) {
+                const rect = btnRef.current.getBoundingClientRect()
+                onTriggerFly(rect, imgUrl)
+              }
             }
-          }
-          onToggleWatchlist?.(item)
-          setOpen(false)
-        }}
-        disabled={!isLoggedIn}
-        className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#2a2a2a] ${isLoggedIn
-          ? "hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
-          : "opacity-40 cursor-not-allowed"
-          }`}
-      >
-        <EyeIcon active={isWatching} />
-        <span className="flex-1 text-[11px] text-[#d0d0d0]">
-          {isWatching ? "Parar de monitorar" : "Monitorar preço"}
-        </span>
-        {!isLoggedIn && (
-          <span className="text-[9px] text-[#666]">Login necessário</span>
-        )}
-        {isLoggedIn && isWatching && (
-          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
-            ativo
+            onToggleWatchlist?.(item)
+            setOpen(false)
+          }}
+          disabled={!isLoggedIn}
+          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn
+            ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
+            : "opacity-40 cursor-not-allowed"
+            }`}
+        >
+          <img
+            src={watchIcon}
+            alt="Monitorar"
+            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`}
+          />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">
+            {isWatching ? "Parar de monitorar" : "Monitorar preço"}
           </span>
-        )}
-      </button>
+          {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
+          {isLoggedIn && isWatching && (
+            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
+              ativo
+            </span>
+          )}
+        </button>
 
-      {/* Favoritar */}
-      <button
-        type="button"
-        onClick={action(onToggleFavorite)}
-        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors border-b border-[#2a2a2a] cursor-pointer"
-      >
-        <StarIcon active={isFavorite} />
-        <span className="flex-1 text-[11px] text-[#d0d0d0]">
-          {isFavorite ? "Remover dos favoritos" : "Favoritar"}
-        </span>
-        {isFavorite && (
-          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
-            favoritado
+        {/* Favoritar */}
+        <button
+          type="button"
+          onClick={action(onToggleFavorite)}
+          className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
+        >
+          <img
+            src={starIcon}
+            alt="Monitorar"
+            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`}
+          />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">
+            {isFavorite ? "Remover dos favoritos" : "Favoritar"}
           </span>
-        )}
-      </button>
+          {isFavorite && (
+            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
+              favoritado
+            </span>
+          )}
+        </button>
 
-      {/* Inventário */}
-      <button
-        type="button"
-        onClick={isLoggedIn ? action(() => onAddToInventory?.(item)) : undefined}
-        disabled={!isLoggedIn}
-        className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left ${isLoggedIn
-          ? "hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
-          : "opacity-40 cursor-not-allowed"
-          }`}
-      >
-        <PlusIcon active={isInInventory} />
-        <span className="flex-1 text-[11px] text-[#d0d0d0]">
-          {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
-        </span>
-        {!isLoggedIn && <span className="text-[9px] text-[#666]">Login necessário</span>}
-        {isLoggedIn && isInInventory && (
-          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">no inv.</span>
-        )}
-      </button>
+        {/* Inventário */}
+        <button
+          type="button"
+          onClick={isLoggedIn ? action(() => onAddToInventory?.(item)) : undefined}
+          disabled={!isLoggedIn}
+          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn
+            ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
+            : "opacity-40 cursor-not-allowed"
+            }`}
+        >
+          <img
+            src={plusIcon}
+            alt="Monitorar"
+            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`}
+          />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">
+            {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
+          </span>
+          {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
+          {isLoggedIn && isInInventory && (
+            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">
+              no inv.
+            </span>
+          )}
+        </button>
+      </div>
     </div>
   ) : null
 
@@ -487,11 +505,15 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         title="Ações"
         onClick={handleToggle}
         className={`w-[22px] h-[22px] shrink-0 flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${open
-          ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
-          : "border-[#555] bg-[rgba(255,255,255,0.05)] text-[#888] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
+          ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
+          : "border-[#555] bg-[rgba(255,255,255,0.05)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
           }`}
       >
-        <DotsIcon />
+        <img
+          src={toolIcon}
+          alt="Ações"
+          className="w-[14px] h-[14px] object-contain image-rendering-pixel"
+        />
       </button>
       {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </>

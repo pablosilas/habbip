@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react"
+import { useState, useReducer, useEffect, useCallback, useRef } from "react"
 import {
   fetchMarketHistory,
   fetchOfficialMarketBatch,
@@ -8,26 +8,92 @@ import {
 const POLL_INTERVAL_MS = 5 * 60 * 1000
 const MAX_NOTIFICATIONS = 50
 
+// ─── Reducer para notifications + unreadCount ─────────────────────────────────
+//
+// notifications e unreadCount sempre mudam juntos — toda operação (hydrate, add,
+// markAllRead, clear, remove) precisava atualizar os dois estados separadamente,
+// gerando dois renders por ação e causando o warning de setState em cascata.
+//
+// useReducer resolve isso: cada dispatch é uma única atualização atômica que
+// produz um único render, independente de quantos campos do estado mudam.
+
+const initialNotifState = { notifications: [], unreadCount: 0 }
+
+function notifReducer(state, action) {
+  switch (action.type) {
+    case "HYDRATE": {
+      const notifications = action.payload
+      return {
+        notifications,
+        unreadCount: notifications.filter((n) => !n.read).length,
+      }
+    }
+    case "ADD": {
+      const notif = action.payload
+      const duplicate = state.notifications.some(
+        (n) => n.id === notif.id || (
+          n.className === notif.className &&
+          n.oldPrice === notif.oldPrice &&
+          n.newPrice === notif.newPrice
+        )
+      )
+      if (duplicate) return state
+      const notifications = [notif, ...state.notifications].slice(0, MAX_NOTIFICATIONS)
+      return { notifications, unreadCount: state.unreadCount + 1 }
+    }
+    case "MARK_ALL_READ": {
+      return {
+        notifications: state.notifications.map((n) => ({ ...n, read: true })),
+        unreadCount: 0,
+      }
+    }
+    case "CLEAR":
+      return initialNotifState
+    case "REMOVE": {
+      const notifications = state.notifications.filter((n) => n.id !== action.payload)
+      return {
+        notifications,
+        unreadCount: notifications.filter((n) => !n.read).length,
+      }
+    }
+    default:
+      return state
+  }
+}
+
 export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDirty, isLoggedIn }) {
-  const [notifications, setNotifications] = useState([])
-  const [unreadCount, setUnreadCount] = useState(0)
+  const [{ notifications, unreadCount }, dispatch] = useReducer(notifReducer, initialNotifState)
   const [isPolling, setIsPolling] = useState(false)
   const timerRef = useRef(null)
+  const initialPollRef = useRef(null)
   const pollingRef = useRef(false)
   const hydrated = useRef(false)
   const skipNextSync = useRef(false)
   const isLoggedInRef = useRef(isLoggedIn)
 
-  useEffect(() => { isLoggedInRef.current = isLoggedIn }, [isLoggedIn])
+  // ─── Refs para evitar dependências instáveis que mudam a cada render ──────
+  //
+  // Problema original: watchlist era dependência direta de pollAll/checkItem.
+  // Cada chamada a updateWatchlistItem recriava o array watchlist, o que
+  // recriava checkItem e pollAll, e por sua vez re-disparava o useEffect de
+  // agendamento — reiniciando o setInterval a cada item verificado.
+  //
+  // Solução: acessar watchlist e updateWatchlistItem sempre pela ref, mantendo
+  // pollAll e checkItem com identidade estável durante toda a vida do componente.
+  const watchlistRef = useRef(watchlist)
+  const updateWatchlistItemRef = useRef(updateWatchlistItem)
 
-  // Hidrata notificações do servidor
+  useEffect(() => { isLoggedInRef.current = isLoggedIn }, [isLoggedIn])
+  useEffect(() => { watchlistRef.current = watchlist }, [watchlist])
+  useEffect(() => { updateWatchlistItemRef.current = updateWatchlistItem }, [updateWatchlistItem])
+
+  // Hidrata notificações do servidor — dispatch é atômico, render único
   useEffect(() => {
     if (!serverData || !isLoggedIn) return
     if (Array.isArray(serverData.notifications)) {
       skipNextSync.current = true
       hydrated.current = true
-      setNotifications(serverData.notifications)
-      setUnreadCount(serverData.notifications.filter((n) => !n.read).length)
+      dispatch({ type: "HYDRATE", payload: serverData.notifications })
     }
   }, [serverData, isLoggedIn])
 
@@ -42,36 +108,22 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
   }, [notifications, isLoggedIn, markDirty])
 
   const addNotification = useCallback((notif) => {
-    setNotifications((prev) => {
-      // Evita duplicata com notificação já gerada pelo job do backend
-      if (prev.some((n) => n.id === notif.id || (
-        n.className === notif.className &&
-        n.oldPrice === notif.oldPrice &&
-        n.newPrice === notif.newPrice
-      ))) return prev
-      return [notif, ...prev].slice(0, MAX_NOTIFICATIONS)
-    })
-    setUnreadCount((v) => v + 1)
+    dispatch({ type: "ADD", payload: notif })
   }, [])
 
   const markAllRead = useCallback(() => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })))
-    setUnreadCount(0)
+    dispatch({ type: "MARK_ALL_READ" })
   }, [])
 
   const clearNotifications = useCallback(() => {
-    setNotifications([])
-    setUnreadCount(0)
+    dispatch({ type: "CLEAR" })
   }, [])
 
   const removeNotification = useCallback((id) => {
-    setNotifications((prev) => {
-      const updated = prev.filter((n) => n.id !== id)
-      setUnreadCount(updated.filter((n) => !n.read).length)
-      return updated
-    })
+    dispatch({ type: "REMOVE", payload: id })
   }, [])
 
+  // checkItem lê watchlist e updateWatchlistItem pelas refs — identidade estável
   const checkItem = useCallback(async (watchedItem) => {
     try {
       const legacyData = await fetchMarketHistory({
@@ -93,7 +145,7 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
       let officialBatch = null
       try {
         officialBatch = await fetchOfficialMarketBatch(batchItems, watchedItem.hotel ?? "br")
-      } catch { }
+      } catch { /* empty */ }
 
       const merged = officialBatch
         ? mergeOfficialMarketData(legacyItems, officialBatch)
@@ -115,7 +167,8 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
 
       const oldPrice = watchedItem.basePrice
       if (!oldPrice || oldPrice === newPrice) {
-        updateWatchlistItem(watchedItem.ClassName, found.marketData)
+        // Atualiza via ref — não recria checkItem nem pollAll
+        updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
         return
       }
 
@@ -136,32 +189,53 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
         createdAt: Date.now(),
       })
 
-      updateWatchlistItem(watchedItem.ClassName, found.marketData)
-    } catch { }
-  }, [addNotification, updateWatchlistItem])
+      // Atualiza via ref — não recria checkItem nem pollAll
+      updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
+    } catch { /* empty */ }
+  }, [addNotification]) // removido updateWatchlistItem das deps — acessa pela ref
 
+  // pollAll lê a watchlist pela ref — identidade estável, não recria ao mudar itens
   const pollAll = useCallback(async () => {
-    if (pollingRef.current || watchlist.length === 0) return
+    if (pollingRef.current || watchlistRef.current.length === 0) return
     pollingRef.current = true
     setIsPolling(true)
 
-    for (const item of watchlist) {
+    for (const item of watchlistRef.current) {
       await checkItem(item)
       await new Promise((r) => setTimeout(r, 500))
     }
 
     pollingRef.current = false
     setIsPolling(false)
-  }, [watchlist, checkItem])
+  }, [checkItem]) // checkItem é estável, então pollAll também é estável
 
+  // Agendamento do polling
+  //
+  // Antes: dependia de [watchlist.length, pollAll]. Como pollAll era recriado
+  // a cada mudança de watchlist (inclusive por updateWatchlistItem), o intervalo
+  // era cancelado e reiniciado constantemente durante uma varredura ativa.
+  //
+  // Agora: depende apenas de [watchlist.length, pollAll]. pollAll é estável,
+  // então o efeito só re-executa quando itens são adicionados ou removidos da
+  // watchlist — que é o único momento em que faz sentido reconfigurar o intervalo.
+  //
+  // pollAll() não é chamado diretamente no corpo do efeito porque internamente
+  // ele chama setIsPolling(true), o que causaria um setState síncrono dentro
+  // de um efeito — gerando renders em cascata. O setTimeout(..., 0) adia a
+  // chamada para fora do ciclo síncrono de commit do React.
   useEffect(() => {
-    if (watchlist.length === 0) {
-      clearInterval(timerRef.current)
-      return
-    }
-    pollAll()
+    clearInterval(timerRef.current)
+    clearTimeout(initialPollRef.current)
+
+    if (watchlist.length === 0) return
+
+    initialPollRef.current = setTimeout(pollAll, 0)
     timerRef.current = setInterval(pollAll, POLL_INTERVAL_MS)
-    return () => clearInterval(timerRef.current)
+
+    return () => {
+      clearInterval(timerRef.current)
+      clearTimeout(initialPollRef.current)
+    }
   }, [watchlist.length, pollAll])
 
   return {
