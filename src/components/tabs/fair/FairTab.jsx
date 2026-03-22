@@ -20,6 +20,8 @@ export default function FairTab({
   setExpanded,
   creditRate,
   onSetCreditRate,
+  onAddToInventory,
+  isInInventory
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
@@ -211,6 +213,8 @@ export default function FairTab({
                 onToggleFavorite={() => toggleFavorite(favKey)}
                 creditRate={creditRate}
                 onSetCreditRate={onSetCreditRate}
+                onAddToInventory={onAddToInventory}
+                isInInventory={isInInventory(item.ClassName)}
               />
             )
           })}

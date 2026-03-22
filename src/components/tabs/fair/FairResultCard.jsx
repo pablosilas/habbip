@@ -13,6 +13,8 @@ import flagNl from "../../../assets/flagnl.png"
 import flagTr from "../../../assets/flagtr.png"
 import starOn from "../../../assets/star_on.png"
 import starOff from "../../../assets/star_off.png"
+import plusOff from "../../../assets/plus_off.png"
+import plusOn from "../../../assets/plus_on.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 
 function formatDateLabel(timestampInSeconds) {
@@ -476,8 +478,9 @@ function PriceSparkline({ history = [] }) {
  * Props:
  *   isFavorite        {boolean}    Se o mobi está nos favoritos
  *   onToggleFavorite  {function}   Callback para adicionar/remover dos favoritos
+ *   isInInventory     {boolean}    Se o mobi está no inventário
  */
-export default function FairResultCard({ item, isFavorite = false, onToggleFavorite, creditRate, onSetCreditRate }) {
+export default function FairResultCard({ item, isFavorite = false, onToggleFavorite, creditRate, onSetCreditRate, onAddToInventory, isInInventory = false }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
@@ -506,20 +509,36 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
               </div>
             </div>
 
-            {onToggleFavorite && (
-              <button
-                type="button"
-                title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                onClick={onToggleFavorite}
-                className="shrink-0 cursor-pointer transition-transform hover:scale-125"
-              >
-                <img
-                  src={isFavorite ? starOn : starOff}
-                  alt={isFavorite ? "remover favorito" : "adicionar favorito"}
-                  className={isFavorite ? "w-5 h-5 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
-                />
-              </button>
-            )}
+            <div className="flex items-center gap-2">
+              {onAddToInventory && (
+                <button
+                  type="button"
+                  title="Adicionar ao inventário"
+                  onClick={() => onAddToInventory(item)}
+                  className="shrink-0 cursor-pointer transition-transform hover:scale-125"
+                >
+                  <img
+                    src={isInInventory ? plusOn : plusOff}
+                    alt="Adicionar ao inventário"
+                    className={isInInventory ? "w-4 h-4 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
+                  />
+                </button>
+              )}
+              {onToggleFavorite && (
+                <button
+                  type="button"
+                  title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
+                  onClick={onToggleFavorite}
+                  className="shrink-0 cursor-pointer transition-transform hover:scale-125"
+                >
+                  <img
+                    src={isFavorite ? starOn : starOff}
+                    alt={isFavorite ? "remover favorito" : "adicionar favorito"}
+                    className={isFavorite ? "w-4 h-4 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
+                  />
+                </button>
+              )}
+            </div>
           </div>
         </div>
 

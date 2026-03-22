@@ -365,6 +365,14 @@ export default function HabboDeskApp() {
                   setExpanded={setFairExpanded}
                   creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
                   onSetCreditRate={converter.setRate}
+                  onAddToInventory={(item) => {
+                    if (inventory.items.some(i => i.ClassName === item.ClassName)) {
+                      inventory.removeItem(item.ClassName)
+                    } else {
+                      inventory.addToInventory(item)
+                    }
+                  }}
+                  isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
                 />
               ) : activeTab === "usuario" ? (
                 <UserTab
