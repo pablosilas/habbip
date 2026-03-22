@@ -1,6 +1,7 @@
 import React from "react"
 import FairResultCard from "../fair/FairResultCard"
 import Button from "../../ui/Button"
+import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useMobiHistory } from "../../../hooks/useSearchHistory"
 
@@ -23,7 +24,6 @@ export default function FairTab({
   isInInventory,
   isWatching = false,
   onToggleWatchlist,
-  // Novos props para sincronização
   serverData,
   markDirty,
   isLoggedIn,
@@ -86,30 +86,30 @@ export default function FairTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="relative mb-2">
-            <input
-              ref={inputRef}
+          <div className="mb-2">
+            <SearchInput
+              inputRef={inputRef}
               value={mobiQuery}
               onChange={(e) => setMobiQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nome do mobi"
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
               inputMode="search"
               enterKeyHint="search"
-            />
-            <SearchHistoryDropdown
-              show={showDropdown}
-              history={history}
-              favorites={favorites}
-              onSelect={handleSelectFromDropdown}
-              onRemove={removeFromHistory}
-              onToggleFav={toggleFavorite}
-              isFavorite={isFavorite}
-              onClear={clearHistory}
-              showFurniImage
-            />
+            >
+              <SearchHistoryDropdown
+                show={showDropdown}
+                history={history}
+                favorites={favorites}
+                onSelect={handleSelectFromDropdown}
+                onRemove={removeFromHistory}
+                onToggleFav={toggleFavorite}
+                isFavorite={isFavorite}
+                onClear={clearHistory}
+                showFurniImage
+              />
+            </SearchInput>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">

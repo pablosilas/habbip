@@ -1,6 +1,7 @@
 import React from "react"
 import InventoryItemCard from "../inventory/InventoryItemCard"
 import Button from "../../ui/Button"
+import SearchInput from "../../ui/SearchInput"
 import coinIcon from "../../../assets/coin.png"
 import boxIcon from "../../../assets/box.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
@@ -71,7 +72,6 @@ export default function InventoryTab({
   totalValue,
   creditRate,
   onSetCreditRate,
-  // Novos props para sincronização
   serverData,
   markDirty,
   isLoggedIn,
@@ -151,9 +151,9 @@ export default function InventoryTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="relative mb-2">
-            <input
-              ref={inputRef}
+          <div className="mb-2">
+            <SearchInput
+              inputRef={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -165,21 +165,21 @@ export default function InventoryTab({
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Nome ou classname do mobi"
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
               inputMode="search"
               enterKeyHint="search"
-            />
-            <SearchHistoryDropdown
-              show={showDropdown}
-              history={history}
-              favorites={favorites}
-              onSelect={handleSelectFromDropdown}
-              onRemove={removeFromHistory}
-              onToggleFav={toggleFavorite}
-              isFavorite={isFavorite}
-              onClear={clearHistory}
-              showFurniImage
-            />
+            >
+              <SearchHistoryDropdown
+                show={showDropdown}
+                history={history}
+                favorites={favorites}
+                onSelect={handleSelectFromDropdown}
+                onRemove={removeFromHistory}
+                onToggleFav={toggleFavorite}
+                isFavorite={isFavorite}
+                onClear={clearHistory}
+                showFurniImage
+              />
+            </SearchInput>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
@@ -236,11 +236,11 @@ export default function InventoryTab({
       {/* Filtro do inventário */}
       {items.length > 2 && (
         <div className="mb-2">
-          <input
+          <SearchInput
             value={inventoryFilter}
             onChange={(e) => setInventoryFilter(e.target.value)}
             placeholder="Filtrar no inventário..."
-            className="w-full h-8 border border-[#555] bg-[rgba(255,255,255,0.06)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] rounded-sm"
+            className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)] [&_input]:rounded-sm"
           />
         </div>
       )}

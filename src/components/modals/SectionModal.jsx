@@ -1,5 +1,6 @@
 import React from "react"
 import ConsoleCard from "../ui/ConsoleCard"
+import SearchInput from "../ui/SearchInput"
 
 /**
  * SectionModal
@@ -48,12 +49,11 @@ export default function SectionModal({ open, onClose, title, items = [], renderI
       >
         {/* Input de busca */}
         <div className="mb-3 shrink-0">
-          <input
-            ref={inputRef}
+          <SearchInput
+            inputRef={inputRef}
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             placeholder={`Buscar em ${title.toLowerCase()}...`}
-            className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#888]"
           />
         </div>
 

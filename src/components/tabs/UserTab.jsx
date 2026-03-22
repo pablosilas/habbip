@@ -1,6 +1,7 @@
 import React from "react"
 import ProfileContent from "../profile/ProfileContent"
 import Button from "../ui/Button"
+import SearchInput from "../ui/SearchInput"
 import SearchHistoryDropdown from "../ui/SearchHistoryDropdown"
 import { useUserHistory } from "../../hooks/useSearchHistory"
 
@@ -13,7 +14,6 @@ export default function UserTab({
   userData,
   expanded,
   setExpanded,
-  // Novos props para sincronização
   serverData,
   markDirty,
   isLoggedIn,
@@ -66,31 +66,31 @@ export default function UserTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="relative mb-2">
-            <input
-              ref={inputRef}
+          <div className="mb-2">
+            <SearchInput
+              inputRef={inputRef}
               value={nickQuery}
               onChange={(e) => setNickQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nick do usuário"
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
               inputMode="search"
               enterKeyHint="search"
-            />
-            <SearchHistoryDropdown
-              show={showDropdown}
-              history={history}
-              favorites={favorites}
-              onSelect={handleSelectFromDropdown}
-              onRemove={removeFromHistory}
-              onToggleFav={toggleFavorite}
-              isFavorite={isFavorite}
-              onClear={clearHistory}
-              showAvatar
-              hotel="br"
-            />
+            >
+              <SearchHistoryDropdown
+                show={showDropdown}
+                history={history}
+                favorites={favorites}
+                onSelect={handleSelectFromDropdown}
+                onRemove={removeFromHistory}
+                onToggleFav={toggleFavorite}
+                isFavorite={isFavorite}
+                onClear={clearHistory}
+                showAvatar
+                hotel="br"
+              />
+            </SearchInput>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
