@@ -358,7 +358,7 @@ function PlusIcon({ active }) {
 
 // ─── ActionsMenu ──────────────────────────────────────────────────────────────
 
-function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory }) {
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly }) {
   const [open, setOpen] = React.useState(false)
   const [pos, setPos] = React.useState({ top: 0, left: 0 })
   const btnRef = React.useRef(null)
@@ -407,7 +407,18 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       {/* Monitorar */}
       <button
         type="button"
-        onClick={action(() => onToggleWatchlist?.(item))}
+        onClick={(e) => {
+          e.stopPropagation()
+          if (!isWatching) {
+            const imgUrl = getFurnitureImageUrl(item.ClassName)
+            if (onTriggerFly && btnRef.current && imgUrl) {
+              const rect = btnRef.current.getBoundingClientRect()
+              onTriggerFly(rect, imgUrl)
+            }
+          }
+          onToggleWatchlist?.(item)
+          setOpen(false)
+        }}
         className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors border-b border-[#2a2a2a] cursor-pointer"
       >
         <EyeIcon active={isWatching} />
@@ -465,8 +476,8 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         title="Ações"
         onClick={handleToggle}
         className={`w-[22px] h-[22px] shrink-0 flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${open
-            ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
-            : "border-[#555] bg-[rgba(255,255,255,0.05)] text-[#888] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
+          ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
+          : "border-[#555] bg-[rgba(255,255,255,0.05)] text-[#888] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
           }`}
       >
         <DotsIcon />
@@ -488,6 +499,7 @@ export default function FairResultCard({
   isInInventory = false,
   isWatching = false,
   onToggleWatchlist,
+  onTriggerFly
 }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
@@ -517,8 +529,10 @@ export default function FairResultCard({
               </div>
             </div>
 
+            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="small" />
             {/* Menu de ações — substitui os 3 botões anteriores */}
             <ActionsMenu
+              onTriggerFly={onTriggerFly}
               item={item}
               isFavorite={isFavorite}
               isWatching={isWatching}
@@ -530,7 +544,6 @@ export default function FairResultCard({
           </div>
         </div>
 
-        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="small" />
       </div>
 
       {/* ── Métricas ── */}

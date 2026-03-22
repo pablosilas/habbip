@@ -15,8 +15,7 @@ function SearchResultOption({ item, onSelect }) {
   const price =
     item?.marketData?.currentPrice ??
     (history.length > 0 ? history[history.length - 1]?.[0] : null) ??
-    item?.marketData?.averagePrice ??
-    "-"
+    item?.marketData?.averagePrice ?? "-"
 
   return (
     <button
@@ -26,11 +25,7 @@ function SearchResultOption({ item, onSelect }) {
     >
       <div className="w-9 h-9 shrink-0 flex items-center justify-center overflow-hidden">
         {(imgStatus === "loading" || imgStatus === "error" || !imageUrl) && (
-          <img
-            src={boxIcon}
-            alt=""
-            className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
-          />
+          <img src={boxIcon} alt="" className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`} />
         )}
         {imageUrl && (
           <img
@@ -76,7 +71,10 @@ export default function InventoryTab({
   totalValue,
   creditRate,
   onSetCreditRate,
-  loggedUserName,
+  // Novos props para sincronização
+  serverData,
+  markDirty,
+  isLoggedIn,
 }) {
   const inputRef = React.useRef(null)
   const [expanded, setExpanded] = React.useState(true)
@@ -92,7 +90,7 @@ export default function InventoryTab({
     clearHistory,
     toggleFavorite,
     isFavorite,
-  } = useInventoryHistory(loggedUserName)
+  } = useInventoryHistory(serverData, markDirty, isLoggedIn)
 
   const lastSearchedTermRef = React.useRef(null)
 
@@ -135,17 +133,14 @@ export default function InventoryTab({
   return (
     <div className="h-full flex flex-col">
 
-      {/* ── Cabeçalho expansível ── */}
+      {/* Cabeçalho expansível */}
       <div
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">Meu Inventário</div>
-          <div
-            className="text-[#d2d2d2] text-[11px]"
-            title="Monte seu inventário e calcule o valor total baseado na feira livre."
-          >
+          <div className="text-[#d2d2d2] text-[11px]">
             Monte seu inventário e calcule o valor total baseado na feira livre.
           </div>
         </div>
@@ -156,7 +151,6 @@ export default function InventoryTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
               ref={inputRef}
@@ -175,7 +169,6 @@ export default function InventoryTab({
               inputMode="search"
               enterKeyHint="search"
             />
-
             <SearchHistoryDropdown
               show={showDropdown}
               history={history}
@@ -195,17 +188,10 @@ export default function InventoryTab({
               onChange={(e) => setHotel(e.target.value)}
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
             >
-              <option value="br" className="text-black">BR</option>
-              <option value="com" className="text-black">COM</option>
-              <option value="de" className="text-black">DE</option>
-              <option value="es" className="text-black">ES</option>
-              <option value="fi" className="text-black">FI</option>
-              <option value="fr" className="text-black">FR</option>
-              <option value="it" className="text-black">IT</option>
-              <option value="nl" className="text-black">NL</option>
-              <option value="tr" className="text-black">TR</option>
+              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
+                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
+              ))}
             </select>
-
             <Button type="submit" disabled={!query.trim() || loading}>
               {loading ? "Buscando..." : "Buscar"}
             </Button>
@@ -213,11 +199,9 @@ export default function InventoryTab({
         </form>
       )}
 
-      {error && (
-        <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>
-      )}
+      {error && <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>}
 
-      {/* ── Seleção de resultado ── */}
+      {/* Seleção de resultado */}
       {hasResults && (
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
@@ -237,28 +221,19 @@ export default function InventoryTab({
               .sort((a, b) => {
                 const getPrice = (item) => {
                   const h = item?.marketData?.history || []
-                  return (
-                    item?.marketData?.currentPrice ??
-                    (h.length > 0 ? h[h.length - 1]?.[0] : null) ??
-                    item?.marketData?.averagePrice ??
-                    0
-                  )
+                  return item?.marketData?.currentPrice ?? (h.length > 0 ? h[h.length - 1]?.[0] : null) ?? item?.marketData?.averagePrice ?? 0
                 }
                 return getPrice(b) - getPrice(a)
               })
               .map((item) => (
-                <SearchResultOption
-                  key={item.ClassName}
-                  item={item}
-                  onSelect={onAddItem}
-                />
+                <SearchResultOption key={item.ClassName} item={item} onSelect={onAddItem} />
               ))}
           </div>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 mt-3" />
         </div>
       )}
 
-      {/* ── Filtro do inventário ── */}
+      {/* Filtro do inventário */}
       {items.length > 2 && (
         <div className="mb-2">
           <input
@@ -270,7 +245,7 @@ export default function InventoryTab({
         </div>
       )}
 
-      {/* ── Lista do inventário ── */}
+      {/* Lista do inventário */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
         {items.length === 0 ? (
           !loading && !hasResults && (
@@ -295,7 +270,7 @@ export default function InventoryTab({
         )}
       </div>
 
-      {/* ── Rodapé com totais ── */}
+      {/* Rodapé com totais */}
       {items.length > 0 && (
         <>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />

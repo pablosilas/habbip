@@ -24,6 +24,11 @@ export default function FairTab({
   isInInventory,
   isWatching = false,
   onToggleWatchlist,
+  // Novos props para sincronização
+  serverData,
+  markDirty,
+  isLoggedIn,
+  onTriggerFly
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
@@ -37,7 +42,7 @@ export default function FairTab({
     clearHistory,
     toggleFavorite,
     isFavorite,
-  } = useMobiHistory(loggedUserName)
+  } = useMobiHistory(serverData, markDirty, isLoggedIn)
 
   const lastSearchedTermRef = React.useRef(null)
 
@@ -72,23 +77,16 @@ export default function FairTab({
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">
-            Feira Livre
-          </div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4"
-            title="Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas."
-          >
+          <div className="text-[#f4f4f4] font-bold text-[13px]">Feira Livre</div>
+          <div className="text-[#d2d2d2] text-[11px] leading-4">
             Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
-          {expanded ? "▲ recolher" : "▼ expandir"}
-        </span>
+        <span className="text-[#d2d2d2] text-[11px]">{expanded ? "▲ recolher" : "▼ expandir"}</span>
       </div>
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
               ref={inputRef}
@@ -102,7 +100,6 @@ export default function FairTab({
               inputMode="search"
               enterKeyHint="search"
             />
-
             <SearchHistoryDropdown
               show={showDropdown}
               history={history}
@@ -122,17 +119,10 @@ export default function FairTab({
               onChange={(e) => setFairHotel(e.target.value)}
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
             >
-              <option value="br" className="text-black">BR</option>
-              <option value="com" className="text-black">COM</option>
-              <option value="de" className="text-black">DE</option>
-              <option value="es" className="text-black">ES</option>
-              <option value="fi" className="text-black">FI</option>
-              <option value="fr" className="text-black">FR</option>
-              <option value="it" className="text-black">IT</option>
-              <option value="nl" className="text-black">NL</option>
-              <option value="tr" className="text-black">TR</option>
+              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
+                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
+              ))}
             </select>
-
             <select
               value={fairDays}
               onChange={(e) => setFairDays(e.target.value)}
@@ -146,38 +136,21 @@ export default function FairTab({
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button type="submit" disabled={loading}>
-              {loading ? "Consultando..." : "Consultar feira"}
-            </Button>
-
-            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>
-              Limpar
-            </Button>
+            <Button type="submit" disabled={loading}>{loading ? "Consultando..." : "Consultar feira"}</Button>
+            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>Limpar</Button>
           </div>
         </form>
       )}
 
-      {error ? (
-        <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>
-      ) : null}
+      {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
 
       {results.length > 1 && (
         <div className="flex items-center gap-2 mb-2">
           <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
           <div className="flex gap-1 flex-wrap">
-            {[
-              { value: "price", label: "Preço" },
-              { value: "trend", label: "Tendência" },
-              { value: "offers", label: "Ofertas" }
-            ].map(({ value, label }) => (
-              <button
-                key={value}
-                type="button"
-                onClick={() => setSortBy(value)}
-                className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value
-                  ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                  : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
-                  }`}
+            {[{ value: "price", label: "Preço" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
+              <button key={value} type="button" onClick={() => setSortBy(value)}
+                className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
               >
                 {label}
               </button>
@@ -189,20 +162,14 @@ export default function FairTab({
       <div className="space-y-2 pr-1">
         {[...results]
           .sort((a, b) => {
-            const aHist = a.marketData?.history
-            const bHist = b.marketData?.history
-            const aLast = Array.isArray(aHist) && aHist.length ? aHist[aHist.length - 1] : null
-            const bLast = Array.isArray(bHist) && bHist.length ? bHist[bHist.length - 1] : null
-            const aPrev = Array.isArray(aHist) && aHist.length > 1 ? aHist[aHist.length - 2] : null
-            const bPrev = Array.isArray(bHist) && bHist.length > 1 ? bHist[bHist.length - 2] : null
-
-            if (sortBy === "price") return (bLast?.[0] ?? 0) - (aLast?.[0] ?? 0)
-            if (sortBy === "trend") {
-              const aDiff = (aLast?.[0] ?? 0) - (aPrev?.[0] ?? aLast?.[0] ?? 0)
-              const bDiff = (bLast?.[0] ?? 0) - (bPrev?.[0] ?? bLast?.[0] ?? 0)
-              return bDiff - aDiff
-            }
-            if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bLast?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aLast?.[3] ?? 0)
+            const aH = a.marketData?.history; const bH = b.marketData?.history
+            const aL = Array.isArray(aH) && aH.length ? aH[aH.length - 1] : null
+            const bL = Array.isArray(bH) && bH.length ? bH[bH.length - 1] : null
+            const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
+            const bP = Array.isArray(bH) && bH.length > 1 ? bH[bH.length - 2] : null
+            if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
+            if (sortBy === "trend") return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
+            if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
             return 0
           })
           .map((item, index) => {
@@ -211,6 +178,7 @@ export default function FairTab({
               <FairResultCard
                 key={`${favKey}-${index}`}
                 item={item}
+                onTriggerFly={onTriggerFly}
                 isFavorite={isFavorite(favKey)}
                 onToggleFavorite={() => toggleFavorite(favKey)}
                 creditRate={creditRate}
@@ -222,11 +190,8 @@ export default function FairTab({
               />
             )
           })}
-
         {!loading && !results.length && !error && (
-          <div className="text-[#e0e0e0] text-[12px]">
-            Nenhum mobi encontrado.
-          </div>
+          <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
         )}
       </div>
     </div>

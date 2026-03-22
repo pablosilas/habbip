@@ -1,63 +1,56 @@
-import { useState, useEffect, useCallback } from "react"
+import { useState, useEffect, useCallback, useRef } from "react"
 
 const MAX_HISTORY = 10
 
-function resolveUserKey(loggedUserName) {
-  if (!loggedUserName?.trim()) return "anonymous"
-  return loggedUserName.trim().toLowerCase().replace(/\s+/g, "_")
-}
-
-function buildKeys(type, userKey) {
-  return {
-    historyKey: `habbodesk:${userKey}:history:${type}`,
-    favoritesKey: `habbodesk:${userKey}:favorites:${type}`,
-  }
-}
-
-function loadJSON(key, fallback) {
-  try {
-    const raw = localStorage.getItem(key)
-    return raw ? JSON.parse(raw) : fallback
-  } catch {
-    return fallback
-  }
-}
-
-function saveJSON(key, value) {
-  try {
-    localStorage.setItem(key, JSON.stringify(value))
-  } catch { /* empty */ }
-}
-
-// Extrai o termo de busca de uma entrada (string simples ou objeto { term, ... })
 export function getEntryTerm(entry) {
   if (!entry) return ""
   return typeof entry === "string" ? entry : entry.term ?? ""
 }
 
-// ─── Hook genérico interno ────────────────────────────────────────────────────
+// ── Hook interno com suporte a servidor ─────────────────────────────────────
 
-function useStoredList(historyKey, favoritesKey) {
-  const [activeKeys, setActiveKeys] = useState({ historyKey, favoritesKey })
-  const [history, setHistory] = useState(() => loadJSON(historyKey, []))
-  const [favorites, setFavorites] = useState(() => loadJSON(favoritesKey, []))
+function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
+  const [history, setHistory] = useState(() => {
+    if (!isLoggedIn) return []
+    try {
+      const raw = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const [favorites, setFavorites] = useState(() => {
+    if (!isLoggedIn) return []
+    try {
+      const raw = localStorage.getItem(`habbip:anon:favorites:${fieldKey}`)
+      return raw ? JSON.parse(raw) : []
+    } catch { return [] }
+  })
+  const hydrated = useRef(false)
 
-  if (
-    activeKeys.historyKey !== historyKey ||
-    activeKeys.favoritesKey !== favoritesKey
-  ) {
-    setActiveKeys({ historyKey, favoritesKey })
-    setHistory(loadJSON(historyKey, []))
-    setFavorites(loadJSON(favoritesKey, []))
-  }
+  // Quando os dados do servidor chegarem, substitui o estado local
+  useEffect(() => {
+    if (!serverData || !isLoggedIn) return
+    const d = serverData[fieldKey]
+    if (!d) return
+    setHistory(Array.isArray(d.history) ? d.history : [])
+    setFavorites(Array.isArray(d.favorites) ? d.favorites : [])
+    hydrated.current = true
+  }, [serverData, fieldKey, isLoggedIn])
 
-  useEffect(() => { saveJSON(historyKey, history) }, [history, historyKey])
-  useEffect(() => { saveJSON(favoritesKey, favorites) }, [favorites, favoritesKey])
+  // Persiste no localStorage para anônimos
+  useEffect(() => {
+    if (isLoggedIn) return
+    try {
+      localStorage.setItem(`habbip:anon:history:${fieldKey}`, JSON.stringify(history))
+      localStorage.setItem(`habbip:anon:favorites:${fieldKey}`, JSON.stringify(favorites))
+    } catch { }
+  }, [history, favorites, fieldKey, isLoggedIn])
 
-  /**
-   * Adiciona ao histórico.
-   * entry pode ser string simples ou objeto { term, classname, ... }
-   */
+  // Sincroniza com servidor quando logado
+  useEffect(() => {
+    if (!isLoggedIn || !hydrated.current) return
+    markDirty?.(fieldKey, { history, favorites })
+  }, [history, favorites, isLoggedIn, fieldKey, markDirty])
+
   const addToHistory = useCallback((entry) => {
     const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
     if (!term?.trim()) return
@@ -80,38 +73,21 @@ function useStoredList(historyKey, favoritesKey) {
     )
   }, [])
 
-  const isFavorite = useCallback(
-    (term) => favorites.includes(term),
-    [favorites]
-  )
+  const isFavorite = useCallback((term) => favorites.includes(term), [favorites])
 
-  return {
-    history,
-    favorites,
-    addToHistory,
-    removeFromHistory,
-    clearHistory,
-    toggleFavorite,
-    isFavorite,
-  }
+  return { history, favorites, addToHistory, removeFromHistory, clearHistory, toggleFavorite, isFavorite }
 }
 
-// ─── Hooks públicos ───────────────────────────────────────────────────────────
+// ── Hooks públicos ────────────────────────────────────────────────────────────
 
-export function useMobiHistory(loggedUserName) {
-  const userKey = resolveUserKey(loggedUserName)
-  const { historyKey, favoritesKey } = buildKeys("mobi", userKey)
-  return useStoredList(historyKey, favoritesKey)
+export function useMobiHistory(serverData, markDirty, isLoggedIn) {
+  return useHistoryStore(serverData, "mobi_history", markDirty, isLoggedIn)
 }
 
-export function useUserHistory(loggedUserName) {
-  const userKey = resolveUserKey(loggedUserName)
-  const { historyKey, favoritesKey } = buildKeys("user", userKey)
-  return useStoredList(historyKey, favoritesKey)
+export function useUserHistory(serverData, markDirty, isLoggedIn) {
+  return useHistoryStore(serverData, "user_history", markDirty, isLoggedIn)
 }
 
-export function useInventoryHistory(loggedUserName) {
-  const userKey = resolveUserKey(loggedUserName)
-  const { historyKey, favoritesKey } = buildKeys("inventory", userKey)
-  return useStoredList(historyKey, favoritesKey)
+export function useInventoryHistory(serverData, markDirty, isLoggedIn) {
+  return useHistoryStore(serverData, "inv_history", markDirty, isLoggedIn)
 }

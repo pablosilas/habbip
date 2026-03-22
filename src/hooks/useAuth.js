@@ -1,85 +1,164 @@
 import React from "react"
+import {
+  register,
+  login,
+  logout,
+  getStoredUser,
+  clearSession,
+} from "../services/authService"
+import {
+  fetchUserByName,
+  fetchUserProfileById,
+  fetchUserBadgesById,
+  fetchUserGroupsById,
+  fetchUserRoomsById,
+} from "../services/habboApi"
 
-const STORAGE_KEYS = {
-  loggedUser: "habbodesk_logged_user",
-  anonymousSkipLogin: "habbodesk_anonymous_skip_login",
+// Busca tudo: dados básicos + profile + badges + groups + rooms
+// Igual ao que o UserTab faz ao buscar um usuário
+async function enrichWithHabboProfile(user) {
+  if (!user?.habboNick) return user
+  try {
+    const basicUser = await fetchUserByName(user.habboNick)
+    if (!basicUser?.uniqueId) return user
+
+    const id = basicUser.uniqueId
+
+    // Busca tudo em paralelo
+    const [profileData, badges, groups, rooms] = await Promise.allSettled([
+      fetchUserProfileById(id),
+      fetchUserBadgesById(id),
+      fetchUserGroupsById(id),
+      fetchUserRoomsById(id),
+    ])
+
+    const habboProfile = {
+      ...basicUser,
+      ...(profileData.status === "fulfilled" ? profileData.value : {}),
+      badges: badges.status === "fulfilled" ? (badges.value ?? []) : [],
+      groups: groups.status === "fulfilled" ? (groups.value ?? []) : [],
+      rooms: rooms.status === "fulfilled" ? (rooms.value ?? []) : [],
+    }
+
+    return { ...user, habboProfile }
+  } catch {
+    return user
+  }
 }
 
-export function useAuth(buildFullUserProfile) {
-  const [loggedUser, setLoggedUser] = React.useState(null)
+function storeEnrichedUser(user) {
+  try {
+    localStorage.setItem("habbip:user", JSON.stringify(user))
+  } catch { }
+}
+
+export function useAuth() {
+  const [loggedUser, setLoggedUser] = React.useState(() => getStoredUser())
   const [loginModalOpen, setLoginModalOpen] = React.useState(false)
+  const [authMode, setAuthMode] = React.useState("login")
   const [loginLoading, setLoginLoading] = React.useState(false)
   const [loginError, setLoginError] = React.useState("")
 
   React.useEffect(() => {
-    const savedUser = localStorage.getItem(STORAGE_KEYS.loggedUser)
-    const anonymousSkipLogin = localStorage.getItem(STORAGE_KEYS.anonymousSkipLogin)
-
-    if (savedUser) {
-      try {
-        setLoggedUser(JSON.parse(savedUser))
-      } catch {
-        localStorage.removeItem(STORAGE_KEYS.loggedUser)
-        setLoginModalOpen(true)
-      }
-      return
+    const skip = localStorage.getItem("habbip:skip_login")
+    if (!getStoredUser() && skip !== "true") {
+      setLoginModalOpen(true)
     }
-
-    if (anonymousSkipLogin === "true") {
-      setLoginModalOpen(false)
-      return
-    }
-
-    setLoginModalOpen(true)
   }, [])
 
-  const handleLoginWithNick = async (nick) => {
+  React.useEffect(() => {
+    function handleExpired() {
+      setLoggedUser(null)
+      setLoginError("Sua sessão expirou. Faça login novamente.")
+      setLoginModalOpen(true)
+    }
+    window.addEventListener("habbip:session-expired", handleExpired)
+    return () => window.removeEventListener("habbip:session-expired", handleExpired)
+  }, [])
+
+  // Se já tem sessão salva mas sem perfil completo, busca em background
+  React.useEffect(() => {
+    const stored = getStoredUser()
+    if (stored?.habboNick && !stored?.habboProfile) {
+      enrichWithHabboProfile(stored).then((enriched) => {
+        setLoggedUser(enriched)
+        storeEnrichedUser(enriched)
+      })
+    }
+  }, [])
+
+  const handleLogin = async ({ habboNick, password }) => {
     setLoginLoading(true)
     setLoginError("")
-
     try {
-      const fullUser = await buildFullUserProfile(nick)
-      setLoggedUser(fullUser)
-      localStorage.setItem(STORAGE_KEYS.loggedUser, JSON.stringify(fullUser))
-      localStorage.removeItem(STORAGE_KEYS.anonymousSkipLogin)
+      const user = await login({ habboNick, password })
+      const enriched = await enrichWithHabboProfile(user)
+      storeEnrichedUser(enriched)
+      setLoggedUser(enriched)
       setLoginModalOpen(false)
+      localStorage.removeItem("habbip:skip_login")
+      return enriched
     } catch (err) {
-      setLoginError(err.message || "Não foi possível entrar com esse nick.")
+      setLoginError(err.message || "Erro ao fazer login.")
+      return null
     } finally {
       setLoginLoading(false)
     }
   }
 
-  const handleContinueAnonymous = ({ doNotAskAgain }) => {
-    setLoggedUser(null)
-    localStorage.removeItem(STORAGE_KEYS.loggedUser)
-
-    if (doNotAskAgain) {
-      localStorage.setItem(STORAGE_KEYS.anonymousSkipLogin, "true")
-    } else {
-      localStorage.removeItem(STORAGE_KEYS.anonymousSkipLogin)
+  const handleRegister = async ({ habboNick, password }) => {
+    setLoginLoading(true)
+    setLoginError("")
+    try {
+      const user = await register({ habboNick, password })
+      const enriched = await enrichWithHabboProfile(user)
+      storeEnrichedUser(enriched)
+      setLoggedUser(enriched)
+      setLoginModalOpen(false)
+      localStorage.removeItem("habbip:skip_login")
+      return enriched
+    } catch (err) {
+      setLoginError(err.message || "Erro ao criar conta.")
+      return null
+    } finally {
+      setLoginLoading(false)
     }
+  }
 
+  const handleContinueAnonymous = ({ doNotAskAgain } = {}) => {
+    setLoggedUser(null)
+    clearSession()
+    if (doNotAskAgain) {
+      localStorage.setItem("habbip:skip_login", "true")
+    } else {
+      localStorage.removeItem("habbip:skip_login")
+    }
     setLoginError("")
     setLoginModalOpen(false)
   }
 
-  const handleLogout = (onAfterLogout) => {
+  const handleLogout = async (onAfterLogout) => {
+    await logout()
     setLoggedUser(null)
-    localStorage.removeItem(STORAGE_KEYS.loggedUser)
-    localStorage.removeItem(STORAGE_KEYS.anonymousSkipLogin)
+    localStorage.removeItem("habbip:skip_login")
     onAfterLogout?.()
     setLoginModalOpen(true)
   }
 
   return {
     loggedUser,
+    setLoggedUser,
     loginModalOpen,
     setLoginModalOpen,
+    authMode,
+    setAuthMode,
     loginLoading,
     loginError,
-    handleLoginWithNick,
+    setLoginError,
+    handleLogin,
+    handleRegister,
     handleContinueAnonymous,
     handleLogout,
+    isLoggedIn: !!loggedUser,
   }
 }

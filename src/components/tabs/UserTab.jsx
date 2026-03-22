@@ -11,9 +11,12 @@ export default function UserTab({
   loading,
   error,
   userData,
-  loggedUserName,
   expanded,
-  setExpanded
+  setExpanded,
+  // Novos props para sincronização
+  serverData,
+  markDirty,
+  isLoggedIn,
 }) {
   const inputRef = React.useRef(null)
   const [showDropdown, setShowDropdown] = React.useState(false)
@@ -26,7 +29,7 @@ export default function UserTab({
     clearHistory,
     toggleFavorite,
     isFavorite,
-  } = useUserHistory(loggedUserName)
+  } = useUserHistory(serverData, markDirty, isLoggedIn)
 
   function handleSearch() {
     inputRef.current?.blur()
@@ -51,13 +54,8 @@ export default function UserTab({
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">
-            Buscar Usuário
-          </div>
-          <div
-            className="text-[#d2d2d2] text-[11px] leading-4"
-            title="Encontre usuários, veja perfis e salve seus favoritos."
-          >
+          <div className="text-[#f4f4f4] font-bold text-[13px]">Buscar Usuário</div>
+          <div className="text-[#d2d2d2] text-[11px] leading-4">
             Encontre usuários, veja perfis e salve seus favoritos.
           </div>
         </div>
@@ -81,7 +79,6 @@ export default function UserTab({
               inputMode="search"
               enterKeyHint="search"
             />
-
             <SearchHistoryDropdown
               show={showDropdown}
               history={history}
@@ -100,7 +97,6 @@ export default function UserTab({
             <Button type="submit" disabled={loading}>
               {loading ? "Buscando..." : "Buscar usuário"}
             </Button>
-
             <Button variant="secondary" type="button" onClick={() => setNickQuery("")}>
               Limpar
             </Button>
@@ -108,9 +104,7 @@ export default function UserTab({
         </form>
       )}
 
-      {error ? (
-        <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>
-      ) : null}
+      {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
 
       <div className="flex-1 min-h-0">
         {userData ? (
@@ -122,9 +116,7 @@ export default function UserTab({
           />
         ) : (
           !loading && !error && (
-            <div className="text-[#e0e0e0] text-[12px]">
-              Nenhum usuário carregado.
-            </div>
+            <div className="text-[#e0e0e0] text-[12px]">Nenhum usuário carregado.</div>
           )
         )}
       </div>
