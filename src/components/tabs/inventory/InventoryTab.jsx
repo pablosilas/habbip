@@ -78,6 +78,7 @@ export default function InventoryTab({
   onSetCreditRate,
   loggedUserName,
 }) {
+  const inputRef = React.useRef(null)
   const [expanded, setExpanded] = React.useState(true)
   const [footerExpanded, setFooterExpanded] = React.useState(false)
   const [inventoryFilter, setInventoryFilter] = React.useState("")
@@ -107,6 +108,7 @@ export default function InventoryTab({
   const hasDropdownItems = history.length > 0 || favorites.length > 0
 
   function handleSearch() {
+    inputRef.current?.blur()
     if (query.trim()) lastSearchedTermRef.current = query.trim()
     onSearch()
     setShowDropdown(false)
@@ -141,13 +143,13 @@ export default function InventoryTab({
         <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">Somar Inventário</div>
           <div
-            className="text-[#d2d2d2] text-[11px] truncate"
+            className="text-[#d2d2d2] text-[11px]"
             title="Monte seu inventário e calcule o valor total baseado na feira livre."
           >
             Monte seu inventário e calcule o valor total baseado na feira livre.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px] shrink-0">
+        <span className="text-[#d2d2d2] text-[11px]">
           {expanded ? "▲ recolher" : "▼ expandir"}
         </span>
       </div>
@@ -157,6 +159,7 @@ export default function InventoryTab({
           {/* Input com dropdown de histórico */}
           <div className="relative mb-2">
             <input
+              ref={inputRef}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               onKeyDown={(e) => {
@@ -169,6 +172,8 @@ export default function InventoryTab({
               onBlur={() => setShowDropdown(false)}
               placeholder="Nome ou classname do mobi"
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+              inputMode="search"
+              enterKeyHint="search"
             />
 
             <SearchHistoryDropdown

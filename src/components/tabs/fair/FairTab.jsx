@@ -46,6 +46,7 @@ export default function FairTab({
   }, [addToHistory, results])
 
   function handleSearch() {
+    inputRef.current?.blur()
     if (mobiQuery.trim()) lastSearchedTermRef.current = mobiQuery.trim()
     onSearch()
     setShowDropdown(false)
@@ -94,6 +95,8 @@ export default function FairTab({
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nome do mobi"
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+              inputMode="search"
+              enterKeyHint="search"
             />
 
             <SearchHistoryDropdown
@@ -161,8 +164,7 @@ export default function FairTab({
             {[
               { value: "price", label: "Preço" },
               { value: "trend", label: "Tendência" },
-              { value: "offers", label: "Ofertas" },
-              { value: "updated", label: "Atualização" },
+              { value: "offers", label: "Ofertas" }
             ].map(({ value, label }) => (
               <button
                 key={value}
@@ -197,7 +199,6 @@ export default function FairTab({
               return bDiff - aDiff
             }
             if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bLast?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aLast?.[3] ?? 0)
-            if (sortBy === "updated") return (bLast?.[4] ?? 0) - (aLast?.[4] ?? 0)
             return 0
           })
           .map((item, index) => {

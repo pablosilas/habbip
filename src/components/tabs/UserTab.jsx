@@ -15,7 +15,7 @@ export default function UserTab({
   expanded,
   setExpanded
 }) {
-  const hasResult = !!userData
+  const inputRef = React.useRef(null)
   const [showDropdown, setShowDropdown] = React.useState(false)
 
   const {
@@ -29,6 +29,7 @@ export default function UserTab({
   } = useUserHistory(loggedUserName)
 
   function handleSearch() {
+    inputRef.current?.blur()
     if (nickQuery.trim()) addToHistory(nickQuery.trim())
     onSearch()
     setShowDropdown(false)
@@ -54,13 +55,13 @@ export default function UserTab({
             Buscar Usuário
           </div>
           <div
-            className="text-[#d2d2d2] text-[11px] leading-4 truncate"
+            className="text-[#d2d2d2] text-[11px] leading-4"
             title="Encontre usuários, veja perfis e salve seus favoritos."
           >
             Encontre usuários, veja perfis e salve seus favoritos.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px] shrink-0">
+        <span className="text-[#d2d2d2] text-[11px]">
           {expanded ? "▲ recolher" : "▼ expandir"}
         </span>
       </div>
@@ -69,6 +70,7 @@ export default function UserTab({
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
           <div className="relative mb-2">
             <input
+              ref={inputRef}
               value={nickQuery}
               onChange={(e) => setNickQuery(e.target.value)}
               onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
@@ -76,6 +78,8 @@ export default function UserTab({
               onBlur={() => setShowDropdown(false)}
               placeholder="Digite o nick do usuário"
               className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none placeholder:text-[#d2d2d2]"
+              inputMode="search"
+              enterKeyHint="search"
             />
 
             <SearchHistoryDropdown
