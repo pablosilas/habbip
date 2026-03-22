@@ -15,6 +15,7 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
   const timerRef = useRef(null)
   const pollingRef = useRef(false)
   const hydrated = useRef(false)
+  const skipNextSync = useRef(false)
   const isLoggedInRef = useRef(isLoggedIn)
 
   useEffect(() => { isLoggedInRef.current = isLoggedIn }, [isLoggedIn])
@@ -23,22 +24,32 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
   useEffect(() => {
     if (!serverData || !isLoggedIn) return
     if (Array.isArray(serverData.notifications)) {
+      skipNextSync.current = true
+      hydrated.current = true
       setNotifications(serverData.notifications)
       setUnreadCount(serverData.notifications.filter((n) => !n.read).length)
-      hydrated.current = true
     }
   }, [serverData, isLoggedIn])
 
   // Sincroniza notificações com servidor
   useEffect(() => {
     if (!isLoggedIn || !hydrated.current) return
+    if (skipNextSync.current) {
+      skipNextSync.current = false
+      return
+    }
     markDirty?.("notifications", notifications)
   }, [notifications, isLoggedIn, markDirty])
 
   const addNotification = useCallback((notif) => {
     setNotifications((prev) => {
-      const updated = [notif, ...prev].slice(0, MAX_NOTIFICATIONS)
-      return updated
+      // Evita duplicata com notificação já gerada pelo job do backend
+      if (prev.some((n) => n.id === notif.id || (
+        n.className === notif.className &&
+        n.oldPrice === notif.oldPrice &&
+        n.newPrice === notif.newPrice
+      ))) return prev
+      return [notif, ...prev].slice(0, MAX_NOTIFICATIONS)
     })
     setUnreadCount((v) => v + 1)
   }, [])
