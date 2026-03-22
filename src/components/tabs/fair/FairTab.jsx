@@ -21,7 +21,9 @@ export default function FairTab({
   creditRate,
   onSetCreditRate,
   onAddToInventory,
-  isInInventory
+  isInInventory,
+  isWatching = false,
+  onToggleWatchlist,
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
@@ -215,6 +217,8 @@ export default function FairTab({
                 onSetCreditRate={onSetCreditRate}
                 onAddToInventory={onAddToInventory}
                 isInInventory={isInInventory(item.ClassName)}
+                isWatching={isWatching ? isWatching(item.ClassName) : false}
+                onToggleWatchlist={onToggleWatchlist}
               />
             )
           })}

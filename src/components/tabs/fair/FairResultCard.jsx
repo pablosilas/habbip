@@ -11,11 +11,8 @@ import flagFr from "../../../assets/flagfr.png"
 import flagIt from "../../../assets/flagit.png"
 import flagNl from "../../../assets/flagnl.png"
 import flagTr from "../../../assets/flagtr.png"
-import starOn from "../../../assets/star_on.png"
-import starOff from "../../../assets/star_off.png"
-import plusOff from "../../../assets/plus_off.png"
-import plusOn from "../../../assets/plus_on.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
+import { createPortal } from "react-dom"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
@@ -44,19 +41,15 @@ function timeAgo(lastUpdated) {
   if (!datePart) return null
   const [year, month, day] = datePart.split("-")
   if (!year || !month || !day) return null
-
   const dateStr = timePart
     ? `${year}-${month}-${day}T${timePart}`
     : `${year}-${month}-${day}T00:00:00`
-
   const date = new Date(dateStr)
   if (isNaN(date.getTime())) return null
-
   const diffMs = Date.now() - date.getTime()
   const diffMin = Math.floor(diffMs / 60000)
   const diffH = Math.floor(diffMin / 60)
   const diffD = Math.floor(diffH / 24)
-
   if (diffMin < 60) return "agora pouco"
   if (diffH < 24) return `há ${diffH}h`
   if (diffD === 1) return "há 1 dia"
@@ -94,30 +87,17 @@ function getTrendInfo(history = []) {
   const previous = getPreviousHistoryEntry(history)
   const latestPrice = latest?.[0]
   const previousPrice = previous?.[0]
-
   if (latestPrice == null || previousPrice == null) {
     return { label: "Sem tendência", icon: "•", colorClass: "text-[#cfcfcf]" }
   }
-  if (latestPrice > previousPrice) {
-    return { label: "Subindo", icon: "▲", colorClass: "text-[#7CFC8A]" }
-  }
-  if (latestPrice < previousPrice) {
-    return { label: "Caindo", icon: "▼", colorClass: "text-[#FF8A8A]" }
-  }
+  if (latestPrice > previousPrice) return { label: "Subindo", icon: "▲", colorClass: "text-[#7CFC8A]" }
+  if (latestPrice < previousPrice) return { label: "Caindo", icon: "▼", colorClass: "text-[#FF8A8A]" }
   return { label: "Estável", icon: "•", colorClass: "text-[#f1d97a]" }
 }
 
 function getHotelFlag(hotel) {
-  if (hotel === "br") return flagBr
-  if (hotel === "com") return flagCom
-  if (hotel === "de") return flagDe
-  if (hotel === "es") return flagEs
-  if (hotel === "fi") return flagFi
-  if (hotel === "fr") return flagFr
-  if (hotel === "it") return flagIt
-  if (hotel === "nl") return flagNl
-  if (hotel === "tr") return flagTr
-  return null
+  const map = { br: flagBr, com: flagCom, de: flagDe, es: flagEs, fi: flagFi, fr: flagFr, it: flagIt, nl: flagNl, tr: flagTr }
+  return map[hotel] ?? null
 }
 
 function MetricBlock({ label, value, showCoin = false, coinIcon, children }) {
@@ -133,41 +113,20 @@ function MetricBlock({ label, value, showCoin = false, coinIcon, children }) {
   )
 }
 
-/**
- * HistoryTimeline
- *
- * Exibe todos os registros do histórico em uma linha do tempo compacta,
- * do mais antigo ao mais recente. Cada linha mostra:
- *   • data (dd/mm)
- *   • barra proporcional à quantidade vendida
- *   • quantidade vendida (un.)
- *   • preço médio com ícone de moeda
- *   • ofertas abertas (se disponível)
- */
 function HistoryTimeline({ history = [] }) {
   const [expanded, setExpanded] = React.useState(false)
-
-  // Filtra entradas com pelo menos 1 item vendido e com timestamp válido,
-  // ordena do mais recente ao mais antigo
   const entries = history
     .filter((e) => (e?.[1] ?? 0) > 0 && e?.[4])
     .sort((a, b) => b[4] - a[4])
-
   if (entries.length === 0) return null
-
   const maxSold = Math.max(...entries.map((e) => e[1] ?? 0))
-
-  // Mostra apenas os 4 mais recentes quando recolhido (já estão no início do array)
   const COLLAPSED_LIMIT = 4
   const visible = expanded ? entries : entries.slice(0, COLLAPSED_LIMIT)
   const hasMore = entries.length > COLLAPSED_LIMIT
-
-  // O mais recente é sempre o primeiro do array completo
   const latestTimestamp = entries[0]?.[4]
 
   return (
     <div className="mb-3">
-      {/* Cabeçalho */}
       <div
         className={`flex items-center justify-between mb-[6px] ${hasMore ? "cursor-pointer group" : ""}`}
         onClick={hasMore ? () => setExpanded((v) => !v) : undefined}
@@ -177,12 +136,10 @@ function HistoryTimeline({ history = [] }) {
         </span>
         {hasMore && (
           <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
-            {expanded ? `▲ recolher` : `▼ ver todos (${entries.length})`}
+            {expanded ? "▲ recolher" : `▼ ver todos (${entries.length})`}
           </span>
         )}
       </div>
-
-      {/* Linhas */}
       <div className="space-y-[3px]">
         {visible.map((entry, i) => {
           const price = entry[0] ?? 0
@@ -190,61 +147,32 @@ function HistoryTimeline({ history = [] }) {
           const openOffers = entry[3]
           const timestamp = entry[4]
           const barPct = maxSold > 0 ? (sold / maxSold) * 100 : 0
-
-          // Destaca a entrada mais recente — sempre o maior timestamp, independente de expandido
           const isLatest = timestamp === latestTimestamp
-
           return (
             <div
               key={timestamp ?? i}
-              className={`flex items-center gap-2 px-2 py-[3px] rounded transition-colors ${isLatest
-                ? "bg-[rgba(255,255,255,0.08)]"
-                : "bg-[rgba(255,255,255,0.03)]"
-                }`}
+              className={`flex items-center gap-2 px-2 py-[3px] rounded transition-colors ${isLatest ? "bg-[rgba(255,255,255,0.08)]" : "bg-[rgba(255,255,255,0.03)]"}`}
             >
-              {/* Data */}
-              <span
-                className={`text-[10px] shrink-0 w-[30px] text-right tabular-nums ${isLatest ? "text-[#e0e0e0] font-bold" : "text-[#888]"
-                  }`}
-              >
+              <span className={`text-[10px] shrink-0 w-[30px] text-right tabular-nums ${isLatest ? "text-[#e0e0e0] font-bold" : "text-[#888]"}`}>
                 {formatDateShort(timestamp)}
               </span>
-
-              {/* Barra de quantidade */}
               <div className="flex-1 h-[6px] rounded-full bg-[rgba(255,255,255,0.06)] overflow-hidden min-w-0">
                 <div
                   className="h-full rounded-full transition-all"
-                  style={{
-                    width: `${barPct}%`,
-                    backgroundColor: isLatest ? "#ffd64d" : "rgba(255,214,77,0.45)",
-                  }}
+                  style={{ width: `${barPct}%`, backgroundColor: isLatest ? "#ffd64d" : "rgba(255,214,77,0.45)" }}
                 />
               </div>
-
-              {/* Vendas */}
-              <span
-                className={`text-[10px] shrink-0 w-[32px] tabular-nums ${isLatest ? "text-[#ffd64d] font-bold" : "text-[#b0b0b0]"
-                  }`}
-              >
+              <span className={`text-[10px] shrink-0 w-[32px] tabular-nums ${isLatest ? "text-[#ffd64d] font-bold" : "text-[#b0b0b0]"}`}>
                 {sold} un.
               </span>
-
-              {/* Preço médio */}
               <div className="flex items-center gap-[3px] shrink-0">
                 <img src={coinIcon} alt="coin" className="w-3 h-3" />
-                <span
-                  className={`text-[10px] tabular-nums ${isLatest ? "text-[#f1f1f1] font-bold" : "text-[#c0c0c0]"
-                    }`}
-                >
+                <span className={`text-[10px] tabular-nums ${isLatest ? "text-[#f1f1f1] font-bold" : "text-[#c0c0c0]"}`}>
                   {price}
                 </span>
               </div>
-
-              {/* Ofertas abertas (opcional) */}
               {openOffers != null && openOffers > 0 && (
-                <span className="text-[9px] text-[#666] shrink-0">
-                  {openOffers} of.
-                </span>
+                <span className="text-[9px] text-[#666] shrink-0">{openOffers} of.</span>
               )}
             </div>
           )
@@ -260,23 +188,13 @@ function FurnitureImage({ classname, furniName, size = "small" }) {
   const sizeClass = size === "large" ? "w-[88px] h-[88px]" : "w-[44px] h-[44px]"
 
   React.useEffect(() => {
-    if (!imageUrl) {
-      setStatus("error")
-      return
-    }
-
+    if (!imageUrl) { setStatus("error"); return }
     setStatus("loading")
-
     const img = new Image()
-
     img.onload = () => setStatus("ok")
     img.onerror = () => setStatus("error")
     img.src = imageUrl
-
-    // Se já estiver em cache e completa
-    if (img.complete) {
-      setStatus("ok")
-    }
+    if (img.complete) setStatus("ok")
   }, [imageUrl])
 
   return (
@@ -285,28 +203,16 @@ function FurnitureImage({ classname, furniName, size = "small" }) {
         <img
           src={boxIcon}
           alt="carregando"
-          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"
-            }`}
+          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
         />
       )}
-
       {status === "ok" && (
-        <img
-          src={imageUrl}
-          alt={furniName || "Mobi"}
-          className="max-w-full max-h-full object-contain image-rendering-pixel"
-        />
+        <img src={imageUrl} alt={furniName || "Mobi"} className="max-w-full max-h-full object-contain image-rendering-pixel" />
       )}
     </div>
   )
 }
 
-/**
- * PriceSparkline
- *
- * Gráfico SVG de linha mostrando evolução do preço ao longo do histórico.
- * Tooltip aparece ao passar o mouse sobre cada ponto com preço + data.
- */
 function PriceSparkline({ history = [] }) {
   const [tooltip, setTooltip] = React.useState(null)
   const [expanded, setExpanded] = React.useState(true)
@@ -321,11 +227,7 @@ function PriceSparkline({ history = [] }) {
 
   if (points.length < 2) return null
 
-  const W = 260
-  const H = 90
-  const PAD_X = 4
-  const PAD_Y = 8
-
+  const W = 260, H = 90, PAD_X = 4, PAD_Y = 8
   const prices = points.map((e) => e[0])
   const minPrice = Math.min(...prices)
   const maxPrice = Math.max(...prices)
@@ -338,26 +240,13 @@ function PriceSparkline({ history = [] }) {
     date: formatDateLabel(entry[4]),
   }))
 
-  const linePath = coords
-    .map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`)
-    .join(" ")
-
-  const areaPath =
-    linePath +
-    ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`
+  const linePath = coords.map((c, i) => `${i === 0 ? "M" : "L"} ${c.x.toFixed(1)} ${c.y.toFixed(1)}`).join(" ")
+  const areaPath = linePath + ` L ${coords[coords.length - 1].x.toFixed(1)} ${H} L ${coords[0].x.toFixed(1)} ${H} Z`
 
   const firstPrice = prices[0]
   const lastPrice = prices[prices.length - 1]
-
-  const lineColor =
-    lastPrice > firstPrice ? "#7CFC8A" :
-      lastPrice < firstPrice ? "#FF8A8A" :
-        "#f1d97a"
-
-  const areaColor =
-    lastPrice > firstPrice ? "rgba(124,252,138,0.08)" :
-      lastPrice < firstPrice ? "rgba(255,138,138,0.08)" :
-        "rgba(241,217,122,0.08)"
+  const lineColor = lastPrice > firstPrice ? "#7CFC8A" : lastPrice < firstPrice ? "#FF8A8A" : "#f1d97a"
+  const areaColor = lastPrice > firstPrice ? "rgba(124,252,138,0.08)" : lastPrice < firstPrice ? "rgba(255,138,138,0.08)" : "rgba(241,217,122,0.08)"
 
   return (
     <div className="mt-2 mb-3">
@@ -377,7 +266,6 @@ function PriceSparkline({ history = [] }) {
           </span>
         </div>
       </div>
-
       {expanded && (
         <>
           <div className="relative w-full">
@@ -388,69 +276,28 @@ function PriceSparkline({ history = [] }) {
               onMouseLeave={() => setTooltip(null)}
             >
               {[0.25, 0.5, 0.75].map((t) => (
-                <line
-                  key={t}
-                  x1={PAD_X}
-                  y1={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)}
-                  x2={W - PAD_X}
-                  y2={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)}
-                  stroke="rgba(255,255,255,0.05)"
-                  strokeWidth="1"
-                />
+                <line key={t} x1={PAD_X} y1={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)} x2={W - PAD_X} y2={(PAD_Y + t * (H - PAD_Y * 2)).toFixed(1)} stroke="rgba(255,255,255,0.05)" strokeWidth="1" />
               ))}
-
               <path d={areaPath} fill={areaColor} />
-
-              <path
-                d={linePath}
-                fill="none"
-                stroke={lineColor}
-                strokeWidth="2"
-                strokeLinejoin="round"
-                strokeLinecap="round"
-              />
-
+              <path d={linePath} fill="none" stroke={lineColor} strokeWidth="2" strokeLinejoin="round" strokeLinecap="round" />
               {coords.map((c, i) => (
                 <g key={i}>
-                  <circle
-                    cx={c.x}
-                    cy={c.y}
-                    r={tooltip?.price === c.price && tooltip?.date === c.date ? 5 : 3.5}
-                    fill={lineColor}
-                    stroke="#1a1a1a"
-                    strokeWidth="1"
-                  />
-                  <circle
-                    cx={c.x}
-                    cy={c.y}
-                    r="8"
-                    fill="transparent"
-                    className="cursor-crosshair"
-                    onMouseEnter={() => setTooltip({ x: c.x, y: c.y, price: c.price, date: c.date })}
-                  />
+                  <circle cx={c.x} cy={c.y} r={tooltip?.price === c.price && tooltip?.date === c.date ? 5 : 3.5} fill={lineColor} stroke="#1a1a1a" strokeWidth="1" />
+                  <circle cx={c.x} cy={c.y} r="8" fill="transparent" className="cursor-crosshair" onMouseEnter={() => setTooltip({ x: c.x, y: c.y, price: c.price, date: c.date })} />
                 </g>
               ))}
             </svg>
-
             {tooltip && (() => {
               const pct = tooltip.x / W
-              const anchor =
-                pct < 0.2 ? "left" :
-                  pct > 0.8 ? "right" :
-                    "center"
-
+              const anchor = pct < 0.2 ? "left" : pct > 0.8 ? "right" : "center"
               const style = {
                 bottom: `${((H - tooltip.y) / H) * 100 + 14}%`,
                 ...(anchor === "left" && { left: `${pct * 100}%`, transform: "translateX(0)" }),
                 ...(anchor === "right" && { left: `${pct * 100}%`, transform: "translateX(-100%)" }),
                 ...(anchor === "center" && { left: `${pct * 100}%`, transform: "translateX(-50%)" }),
               }
-
               return (
-                <div
-                  className="absolute z-20 pointer-events-none px-2 py-[3px] rounded border border-[#555] bg-[#1e1e1e] text-[10px] text-white whitespace-nowrap shadow-lg"
-                  style={style}
-                >
+                <div className="absolute z-20 pointer-events-none px-2 py-[3px] rounded border border-[#555] bg-[#1e1e1e] text-[10px] text-white whitespace-nowrap shadow-lg" style={style}>
                   <div className="flex items-center gap-1">
                     <img src={coinIcon} alt="coin" className="w-3 h-3" />
                     <span className="font-bold">{tooltip.price}</span>
@@ -461,7 +308,6 @@ function PriceSparkline({ history = [] }) {
               )
             })()}
           </div>
-
           <div className="flex justify-between mt-[2px]">
             <span className="text-[9px] text-[#aaa]">mín {minPrice}</span>
             <span className="text-[9px] text-[#aaa]">máx {maxPrice}</span>
@@ -472,15 +318,177 @@ function PriceSparkline({ history = [] }) {
   )
 }
 
-/**
- * FairResultCard
- *
- * Props:
- *   isFavorite        {boolean}    Se o mobi está nos favoritos
- *   onToggleFavorite  {function}   Callback para adicionar/remover dos favoritos
- *   isInInventory     {boolean}    Se o mobi está no inventário
- */
-export default function FairResultCard({ item, isFavorite = false, onToggleFavorite, creditRate, onSetCreditRate, onAddToInventory, isInInventory = false }) {
+// ─── Ícones ───────────────────────────────────────────────────────────────────
+
+function DotsIcon() {
+  return (
+    <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor">
+      <circle cx="8" cy="2.5" r="1.5" />
+      <circle cx="8" cy="8" r="1.5" />
+      <circle cx="8" cy="13.5" r="1.5" />
+    </svg>
+  )
+}
+
+function EyeIcon({ active }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill={active ? "#ffd64d" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3">
+      <path d="M1 8s2.5-5 7-5 7 5 7 5-2.5 5-7 5-7-5-7-5z" />
+      <circle cx="8" cy="8" r="2.5" fill={active ? "#7c4e00" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" />
+    </svg>
+  )
+}
+
+function StarIcon({ active }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill={active ? "#ffd64d" : "none"} stroke={active ? "#ffd64d" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" strokeLinejoin="round">
+      <path d="M8 1.5l1.84 3.73 4.11.6-2.98 2.9.7 4.1L8 10.77l-3.67 1.93.7-4.1L2.05 5.83l4.11-.6z" />
+    </svg>
+  )
+}
+
+function PlusIcon({ active }) {
+  return (
+    <svg width="13" height="13" viewBox="0 0 16 16" fill="none" stroke={active ? "#7CFC8A" : "rgba(255,255,255,0.5)"} strokeWidth="1.5" strokeLinecap="round">
+      <rect x="2" y="2" width="12" height="12" rx="2" stroke={active ? "#7CFC8A" : "rgba(255,255,255,0.5)"} strokeWidth="1.3" />
+      <path d="M8 5v6M5 8h6" />
+    </svg>
+  )
+}
+
+// ─── ActionsMenu ──────────────────────────────────────────────────────────────
+
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory }) {
+  const [open, setOpen] = React.useState(false)
+  const [pos, setPos] = React.useState({ top: 0, left: 0 })
+  const btnRef = React.useRef(null)
+  const menuRef = React.useRef(null)
+
+  function handleToggle(e) {
+    e.stopPropagation()
+    if (!open && btnRef.current) {
+      const rect = btnRef.current.getBoundingClientRect()
+      // Tenta abrir à direita; se ultrapassar a tela, abre à esquerda
+      const menuWidth = 210
+      const spaceRight = window.innerWidth - rect.right
+      const left = spaceRight >= menuWidth
+        ? rect.right - menuWidth
+        : rect.left - menuWidth + rect.width
+      setPos({ top: rect.bottom + 4, left: Math.max(8, left) })
+    }
+    setOpen((v) => !v)
+  }
+
+  React.useEffect(() => {
+    if (!open) return
+    function handleOutside(e) {
+      if (!btnRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) {
+        setOpen(false)
+      }
+    }
+    document.addEventListener("mousedown", handleOutside)
+    return () => document.removeEventListener("mousedown", handleOutside)
+  }, [open])
+
+  function action(fn) {
+    return (e) => {
+      e.stopPropagation()
+      fn?.()
+      setOpen(false)
+    }
+  }
+
+  const menu = open ? (
+    <div
+      ref={menuRef}
+      style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 210 }}
+      className="rounded-[8px] border border-[#3a3a3a] bg-[#1e1e1e] shadow-[0_8px_30px_rgba(0,0,0,0.6)] overflow-hidden"
+    >
+      {/* Monitorar */}
+      <button
+        type="button"
+        onClick={action(() => onToggleWatchlist?.(item))}
+        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors border-b border-[#2a2a2a] cursor-pointer"
+      >
+        <EyeIcon active={isWatching} />
+        <span className="flex-1 text-[11px] text-[#d0d0d0]">
+          {isWatching ? "Parar de monitorar" : "Monitorar preço"}
+        </span>
+        {isWatching && (
+          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
+            ativo
+          </span>
+        )}
+      </button>
+
+      {/* Favoritar */}
+      <button
+        type="button"
+        onClick={action(onToggleFavorite)}
+        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors border-b border-[#2a2a2a] cursor-pointer"
+      >
+        <StarIcon active={isFavorite} />
+        <span className="flex-1 text-[11px] text-[#d0d0d0]">
+          {isFavorite ? "Remover dos favoritos" : "Favoritar"}
+        </span>
+        {isFavorite && (
+          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
+            favoritado
+          </span>
+        )}
+      </button>
+
+      {/* Inventário */}
+      <button
+        type="button"
+        onClick={action(() => onAddToInventory?.(item))}
+        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
+      >
+        <PlusIcon active={isInInventory} />
+        <span className="flex-1 text-[11px] text-[#d0d0d0]">
+          {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
+        </span>
+        {isInInventory && (
+          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">
+            no inv.
+          </span>
+        )}
+      </button>
+    </div>
+  ) : null
+
+  return (
+    <>
+      <button
+        ref={btnRef}
+        type="button"
+        title="Ações"
+        onClick={handleToggle}
+        className={`w-[22px] h-[22px] shrink-0 flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${open
+            ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
+            : "border-[#555] bg-[rgba(255,255,255,0.05)] text-[#888] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
+          }`}
+      >
+        <DotsIcon />
+      </button>
+      {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
+    </>
+  )
+}
+
+// ─── FairResultCard ───────────────────────────────────────────────────────────
+
+export default function FairResultCard({
+  item,
+  isFavorite = false,
+  onToggleFavorite,
+  creditRate,
+  onSetCreditRate,
+  onAddToInventory,
+  isInInventory = false,
+  isWatching = false,
+  onToggleWatchlist,
+}) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
@@ -509,36 +517,16 @@ export default function FairResultCard({ item, isFavorite = false, onToggleFavor
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              {onAddToInventory && (
-                <button
-                  type="button"
-                  title="Adicionar ao inventário"
-                  onClick={() => onAddToInventory(item)}
-                  className="shrink-0 cursor-pointer transition-transform hover:scale-125"
-                >
-                  <img
-                    src={isInInventory ? plusOn : plusOff}
-                    alt="Adicionar ao inventário"
-                    className={isInInventory ? "w-4 h-4 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
-                  />
-                </button>
-              )}
-              {onToggleFavorite && (
-                <button
-                  type="button"
-                  title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-                  onClick={onToggleFavorite}
-                  className="shrink-0 cursor-pointer transition-transform hover:scale-125"
-                >
-                  <img
-                    src={isFavorite ? starOn : starOff}
-                    alt={isFavorite ? "remover favorito" : "adicionar favorito"}
-                    className={isFavorite ? "w-4 h-4 image-rendering-pixel" : "w-4 h-4 image-rendering-pixel opacity-50"}
-                  />
-                </button>
-              )}
-            </div>
+            {/* Menu de ações — substitui os 3 botões anteriores */}
+            <ActionsMenu
+              item={item}
+              isFavorite={isFavorite}
+              isWatching={isWatching}
+              isInInventory={isInInventory}
+              onToggleFavorite={onToggleFavorite}
+              onToggleWatchlist={onToggleWatchlist}
+              onAddToInventory={onAddToInventory}
+            />
           </div>
         </div>
 

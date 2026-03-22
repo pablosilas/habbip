@@ -14,6 +14,7 @@ import InventoryTab from "../components/tabs/inventory/InventoryTab"
 import ConsoleTab from "../components/layout/ConsoleTab"
 import ConsoleCard from "../components/ui/ConsoleCard"
 import ToastMessage from "../components/layout/ToastMessage"
+import NotificationBell from "../components/ui/NotificationBell"
 
 import LoginModal from "../components/modals/LoginModal"
 import ProfileModal from "../components/modals/ProfileModal"
@@ -26,6 +27,9 @@ import { useAuth } from "../hooks/useAuth"
 import { useCloseJoke } from "../hooks/useCloseJoke"
 import { useInventory } from "../hooks/useInventory"
 import { useCreditConverter } from "../hooks/useCreditConverter"
+
+import { useWatchlist } from "../hooks/useWatchlist"
+import { useMonitor } from "../hooks/useMonitor"
 
 const BG_OPTIONS = [bg3, bg2, bgPattern]
 
@@ -166,6 +170,12 @@ export default function HabboDeskApp() {
   const auth = useAuth(user.buildFullUserProfile)
   const inventory = useInventory(auth.loggedUser?.name)
   const converter = useCreditConverter(auth.loggedUser?.name)
+  const watchlist = useWatchlist(auth.loggedUser?.name)
+  const monitor = useMonitor({
+    watchlist: watchlist.watchlist,
+    updateWatchlistItem: watchlist.updateWatchlistItem,
+    loggedUserName: auth.loggedUser?.name,
+  })
 
   // Quando o usuário logado mudar (login/logout), carrega a preferência de bg dele
   React.useEffect(() => {
@@ -273,6 +283,17 @@ export default function HabboDeskApp() {
             innerClassName="flex flex-col overflow-hidden"
             headerRight={
               <div className="flex items-center gap-[6px]">
+                <NotificationBell
+                  notifications={monitor.notifications}
+                  unreadCount={monitor.unreadCount}
+                  watchlist={watchlist.watchlist}
+                  isPolling={monitor.isPolling}
+                  onMarkAllRead={monitor.markAllRead}
+                  onClearNotifications={monitor.clearNotifications}
+                  onRemoveNotification={monitor.removeNotification}
+                  onRemoveFromWatchlist={watchlist.removeFromWatchlist}
+                  onPollNow={monitor.pollNow}
+                />
                 <BgSelector
                   bgIndex={bgIndex}
                   onBgChange={handleBgChange}
@@ -373,6 +394,8 @@ export default function HabboDeskApp() {
                     }
                   }}
                   isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
+                  isWatching={watchlist.isWatching}
+                  onToggleWatchlist={watchlist.toggleWatchlist}
                 />
               ) : activeTab === "usuario" ? (
                 <UserTab
