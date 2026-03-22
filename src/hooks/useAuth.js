@@ -99,7 +99,11 @@ export function useAuth() {
       localStorage.removeItem("habbip:skip_login")
       return enriched
     } catch (err) {
-      setLoginError(err.message || "Erro ao fazer login.")
+      if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setLoginError("Não foi possível conectar ao servidor. Verifique sua conexão.")
+      } else {
+        setLoginError(err.message || "Erro ao fazer login.")
+      }
       return null
     } finally {
       setLoginLoading(false)
@@ -118,7 +122,11 @@ export function useAuth() {
       localStorage.removeItem("habbip:skip_login")
       return enriched
     } catch (err) {
-      setLoginError(err.message || "Erro ao criar conta.")
+      if (err instanceof TypeError && err.message === "Failed to fetch") {
+        setLoginError("Não foi possível conectar ao servidor. Verifique sua conexão.")
+      } else {
+        setLoginError(err.message || "Erro ao criar conta.")
+      }
       return null
     } finally {
       setLoginLoading(false)

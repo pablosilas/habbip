@@ -87,8 +87,24 @@ export async function apiFetch(path, options = {}) {
   }
 
   if (!res.ok) {
-    const err = await res.json().catch(() => ({ error: "Erro desconhecido." }))
-    throw new Error(err.error || "Erro na requisição.")
+    const err = await res.json().catch(() => null)
+
+    // Mensagem vinda do backend (ex: "Nick ou senha incorretos.")
+    if (err?.error) throw new Error(err.error)
+
+    // Fallbacks por status HTTP
+    const httpMessages = {
+      400: "Dados inválidos. Verifique as informações e tente novamente.",
+      401: "Nick ou senha incorretos.",
+      403: "Acesso não autorizado.",
+      404: "Recurso não encontrado.",
+      409: "Esse nick já tem uma conta cadastrada.",
+      429: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
+      500: "Erro no servidor. Tente novamente em instantes.",
+      502: "Servidor indisponível. Tente novamente em instantes.",
+      503: "Serviço temporariamente indisponível.",
+    }
+    throw new Error(httpMessages[res.status] || `Erro inesperado (${res.status}).`)
   }
 
   return res.json()
