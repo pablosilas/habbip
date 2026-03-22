@@ -15,7 +15,6 @@ export default function FairTab({
   loading,
   error,
   results,
-  loggedUserName,
   expanded,
   setExpanded,
   creditRate,
@@ -187,6 +186,7 @@ export default function FairTab({
                 isInInventory={isInInventory(item.ClassName)}
                 isWatching={isWatching ? isWatching(item.ClassName) : false}
                 onToggleWatchlist={onToggleWatchlist}
+                isLoggedIn={isLoggedIn}
               />
             )
           })}

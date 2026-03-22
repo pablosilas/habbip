@@ -58,10 +58,10 @@ function AvatarPreview({ nick, status, habboUser }) {
 
   return (
     <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border text-[12px] transition-all ${status === "found"
-        ? "border-[#7CFC8A] bg-[rgba(124,252,138,0.08)]"
-        : status === "not_found"
-          ? "border-[#FF8A8A] bg-[rgba(255,138,138,0.08)]"
-          : "border-[#555] bg-[rgba(255,255,255,0.04)]"
+      ? "border-[#7CFC8A] bg-[rgba(124,252,138,0.08)]"
+      : status === "not_found"
+        ? "border-[#FF8A8A] bg-[rgba(255,138,138,0.08)]"
+        : "border-[#555] bg-[rgba(255,255,255,0.04)]"
       }`}>
       {/* Avatar */}
       {status === "found" && nick && !imgError ? (
@@ -202,6 +202,11 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
           autoComplete="new-password"
           className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
         />
+        <div className="flex items-start gap-1 mt-1">
+          <span className="text-[10px] text-[#aaa] leading-4">
+            Use uma senha diferente do Habbo Hotel.
+          </span>
+        </div>
       </div>
 
       {/* Confirmar senha */}
@@ -245,8 +250,6 @@ export default function LoginModal({
   onContinueAnonymous,
   onClose,
 }) {
-  const [doNotAskAgain, setDoNotAskAgain] = React.useState(false)
-
   if (!open) return null
 
   return (
@@ -278,28 +281,17 @@ export default function LoginModal({
           <div className="flex-1 border-t border-[#ffffff22]" />
         </div>
 
-        <div className="flex flex-col gap-2">
-          <Button
-            variant="secondary"
-            onClick={() => { playSound(); onContinueAnonymous({ doNotAskAgain }) }}
-            disabled={loading}
-          >
-            Continuar sem conta
-          </Button>
-          <label className="flex items-center gap-2 text-[12px] text-[#ededed] cursor-pointer">
-            <input
-              type="checkbox"
-              checked={doNotAskAgain}
-              onChange={(e) => setDoNotAskAgain(e.target.checked)}
-            />
-            Não perguntar novamente
-          </label>
-        </div>
+        <Button
+          variant="secondary"
+          onClick={() => { playSound(); onContinueAnonymous({}) }}
+          disabled={loading}
+        >
+          Continuar sem conta
+        </Button>
 
         <div className="mt-3 border border-[#ffffff22] rounded-[6px] p-2 bg-[rgba(255,255,255,0.03)]">
           <div className="text-[10px] text-[#aaa] leading-4">
-            <span className="text-[#ffd64d] font-bold">Sem conta:</span> Feira livre e busca de usuários disponíveis.
-            Inventário, watchlist e histórico exigem login.
+            <span className="text-[#ffd64d] font-bold">Crie sua conta:</span> Controle seus mobis, acompanhe preços em tempo real e organize tudo no seu inventário.
           </div>
         </div>
       </ConsoleCard>

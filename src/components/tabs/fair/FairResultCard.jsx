@@ -358,7 +358,7 @@ function PlusIcon({ active }) {
 
 // ─── ActionsMenu ──────────────────────────────────────────────────────────────
 
-function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly }) {
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn }) {
   const [open, setOpen] = React.useState(false)
   const [pos, setPos] = React.useState({ top: 0, left: 0 })
   const btnRef = React.useRef(null)
@@ -369,7 +369,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
       // Tenta abrir à direita; se ultrapassar a tela, abre à esquerda
-      const menuWidth = 210
+      const menuWidth = 250
       const spaceRight = window.innerWidth - rect.right
       const left = spaceRight >= menuWidth
         ? rect.right - menuWidth
@@ -401,7 +401,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   const menu = open ? (
     <div
       ref={menuRef}
-      style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 210 }}
+      style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 250 }}
       className="rounded-[8px] border border-[#3a3a3a] bg-[#1e1e1e] shadow-[0_8px_30px_rgba(0,0,0,0.6)] overflow-hidden"
     >
       {/* Monitorar */}
@@ -409,6 +409,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         type="button"
         onClick={(e) => {
           e.stopPropagation()
+          if (!isLoggedIn) return
           if (!isWatching) {
             const imgUrl = getFurnitureImageUrl(item.ClassName)
             if (onTriggerFly && btnRef.current && imgUrl) {
@@ -419,13 +420,20 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           onToggleWatchlist?.(item)
           setOpen(false)
         }}
-        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors border-b border-[#2a2a2a] cursor-pointer"
+        disabled={!isLoggedIn}
+        className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#2a2a2a] ${isLoggedIn
+          ? "hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
+          : "opacity-40 cursor-not-allowed"
+          }`}
       >
         <EyeIcon active={isWatching} />
         <span className="flex-1 text-[11px] text-[#d0d0d0]">
           {isWatching ? "Parar de monitorar" : "Monitorar preço"}
         </span>
-        {isWatching && (
+        {!isLoggedIn && (
+          <span className="text-[9px] text-[#666]">Login necessário</span>
+        )}
+        {isLoggedIn && isWatching && (
           <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
             ativo
           </span>
@@ -452,17 +460,20 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       {/* Inventário */}
       <button
         type="button"
-        onClick={action(() => onAddToInventory?.(item))}
-        className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
+        onClick={isLoggedIn ? action(() => onAddToInventory?.(item)) : undefined}
+        disabled={!isLoggedIn}
+        className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left ${isLoggedIn
+          ? "hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer"
+          : "opacity-40 cursor-not-allowed"
+          }`}
       >
         <PlusIcon active={isInInventory} />
         <span className="flex-1 text-[11px] text-[#d0d0d0]">
           {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
         </span>
-        {isInInventory && (
-          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">
-            no inv.
-          </span>
+        {!isLoggedIn && <span className="text-[9px] text-[#666]">Login necessário</span>}
+        {isLoggedIn && isInInventory && (
+          <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">no inv.</span>
         )}
       </button>
     </div>
@@ -499,7 +510,8 @@ export default function FairResultCard({
   isInInventory = false,
   isWatching = false,
   onToggleWatchlist,
-  onTriggerFly
+  onTriggerFly,
+  isLoggedIn = false
 }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
@@ -540,6 +552,7 @@ export default function FairResultCard({
               onToggleFavorite={onToggleFavorite}
               onToggleWatchlist={onToggleWatchlist}
               onAddToInventory={onAddToInventory}
+              isLoggedIn={isLoggedIn}
             />
           </div>
         </div>

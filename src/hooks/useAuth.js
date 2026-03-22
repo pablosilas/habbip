@@ -49,7 +49,7 @@ async function enrichWithHabboProfile(user) {
 function storeEnrichedUser(user) {
   try {
     localStorage.setItem("habbip:user", JSON.stringify(user))
-  } catch { }
+  } catch { /* empty */ }
 }
 
 export function useAuth() {
@@ -60,8 +60,7 @@ export function useAuth() {
   const [loginError, setLoginError] = React.useState("")
 
   React.useEffect(() => {
-    const skip = localStorage.getItem("habbip:skip_login")
-    if (!getStoredUser() && skip !== "true") {
+    if (!getStoredUser()) {
       setLoginModalOpen(true)
     }
   }, [])
@@ -133,14 +132,10 @@ export function useAuth() {
     }
   }
 
-  const handleContinueAnonymous = ({ doNotAskAgain } = {}) => {
+  const handleContinueAnonymous = () => {
     setLoggedUser(null)
     clearSession()
-    if (doNotAskAgain) {
-      localStorage.setItem("habbip:skip_login", "true")
-    } else {
-      localStorage.removeItem("habbip:skip_login")
-    }
+    localStorage.removeItem("habbip:skip_login")
     setLoginError("")
     setLoginModalOpen(false)
   }
