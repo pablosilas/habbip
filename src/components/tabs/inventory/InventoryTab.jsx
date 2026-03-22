@@ -141,7 +141,7 @@ export default function InventoryTab({
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">Somar Inventário</div>
+          <div className="text-[#f4f4f4] font-bold text-[13px]">Meu Inventário</div>
           <div
             className="text-[#d2d2d2] text-[11px]"
             title="Monte seu inventário e calcule o valor total baseado na feira livre."

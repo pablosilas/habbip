@@ -314,12 +314,12 @@ export default function HabboDeskApp() {
                     onClick={() => setActiveTab("usuario")}
                   />
                   <ConsoleTab
-                    label="Somar Inventário"
+                    label="Meu Inventário"
                     icon={
                       <img
                         src={inventarioIcon}
                         className="w-7 h-6 image-rendering-pixel icon-dark"
-                        alt="Somar Inventário"
+                        alt="Meu Inventário"
                       />
                     }
                     active={activeTab === "inventario"}

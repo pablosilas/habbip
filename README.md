@@ -31,7 +31,7 @@
 - Salve usuários como favoritos
 - Histórico de buscas recentes
 
-### 📦 Somar Inventário
+### 📦 Meu Inventário
 - Monte seu inventário adicionando mobis pelo nome ou classname
 - Controle a quantidade de cada item
 - Cálculo automático do valor total baseado nos preços da Feira Livre
