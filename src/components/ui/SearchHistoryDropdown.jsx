@@ -1,8 +1,9 @@
 import React from "react"
-import { getHabboAvatarHeadUrl, getFurnitureImageUrl } from "../../services/habboApi"
+import { getHabboAvatarHeadUrl } from "../../services/habboApi"
 import { getEntryTerm } from "../../hooks/useSearchHistory"
 import starOn from "../../assets/star.png"
 import starOff from "../../assets/star_off.png"
+import FurniThumb from "./FurniThumb"
 
 /**
  * SearchHistoryDropdown
@@ -118,33 +119,6 @@ export default function SearchHistoryDropdown({
   )
 }
 
-function FurniThumb({ classname, isFav }) {
-  const [hasError, setHasError] = React.useState(false)
-  const url = getFurnitureImageUrl(classname)
-
-  return (
-    <div className="shrink-0 w-7 h-7 flex items-center justify-center overflow-hidden relative">
-      {!hasError && url ? (
-        <img
-          src={url}
-          alt={classname}
-          className="w-full h-full object-contain image-rendering-pixel"
-          onError={() => setHasError(true)}
-        />
-      ) : (
-        <span className="text-[10px] text-[#666]">📦</span>
-      )}
-      {isFav && (
-        <img
-          src={starOn}
-          alt="favorito"
-          className="absolute bottom-0 right-0 w-[8px] h-[8px] image-rendering-pixel"
-        />
-      )}
-    </div>
-  )
-}
-
 function AvatarThumb({ nick, hotel, isFav }) {
   const [hasError, setHasError] = React.useState(false)
   const url = getHabboAvatarHeadUrl({ name: nick, hotel, size: "s" })
@@ -185,7 +159,7 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
       {showAvatar ? (
         <AvatarThumb nick={term} hotel={hotel} isFav={isFav} />
       ) : showFurniImage && classname ? (
-        <FurniThumb classname={classname} isFav={isFav} />
+        <FurniThumb classname={classname} isFav={isFav} showStar />
       ) : (
         <div className="shrink-0 w-[14px] h-[14px] flex items-center justify-center">
           {isFav

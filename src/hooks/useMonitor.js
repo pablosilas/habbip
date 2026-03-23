@@ -1,6 +1,5 @@
 import { useState, useReducer, useEffect, useCallback, useRef } from "react"
 import {
-  fetchMarketHistory,
   fetchOfficialMarketBatchSafe,
   mergeOfficialMarketData,
 } from "../services/habboApi"
@@ -126,34 +125,18 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
   // checkItem lê watchlist e updateWatchlistItem pelas refs — identidade estável
   const checkItem = useCallback(async (watchedItem) => {
     try {
-      const legacyData = await fetchMarketHistory({
-        classname: watchedItem.ClassName,
-        hotel: watchedItem.hotel ?? "br",
-        days: "7",
-      })
-
-      const legacyItems = (Array.isArray(legacyData) ? legacyData : []).filter(
-        (item) => !!item?.ClassName?.trim()
-      )
-      if (legacyItems.length === 0) return
-
-      const batchItems = legacyItems.map((item) => ({
-        classname: item.ClassName,
-        furniType: item.FurniType === "wallItem" ? "wallItem" : "roomItem",
-      }))
+      const batchItems = [{ classname: watchedItem.ClassName, furniType: watchedItem.FurniType === "wallItem" ? "wallItem" : "roomItem" }]
 
       let officialBatch = null
       try {
         officialBatch = await fetchOfficialMarketBatchSafe(batchItems, watchedItem.hotel ?? "br")
-      } catch { /* empty */ }
+      } catch { return }
 
-      const merged = officialBatch
-        ? mergeOfficialMarketData(legacyItems, officialBatch)
-        : legacyItems
+      if (!officialBatch) return
 
-      const found = merged.find(
-        (i) => i.ClassName?.toLowerCase() === watchedItem.ClassName?.toLowerCase()
-      )
+      const legacyItems = [{ ClassName: watchedItem.ClassName, FurniName: watchedItem.FurniName, FurniType: watchedItem.FurniType }]
+      const merged = mergeOfficialMarketData(legacyItems, officialBatch)
+      const found = merged[0]
       if (!found) return
 
       const newPrice =
@@ -167,7 +150,6 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
 
       const oldPrice = watchedItem.basePrice
       if (!oldPrice || oldPrice === newPrice) {
-        // Atualiza via ref — não recria checkItem nem pollAll
         updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
         return
       }
@@ -179,9 +161,7 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
         id: `${watchedItem.ClassName}-${Date.now()}`,
         className: watchedItem.ClassName,
         furniName: watchedItem.FurniName,
-        oldPrice,
-        newPrice,
-        diff,
+        oldPrice, newPrice, diff,
         pct: parseFloat(pct),
         direction: diff > 0 ? "up" : "down",
         hotel: watchedItem.hotel ?? "br",
@@ -189,9 +169,8 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
         createdAt: Date.now(),
       })
 
-      // Atualiza via ref — não recria checkItem nem pollAll
       updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
-    } catch { /* empty */ }
+    } catch { }
   }, [addNotification]) // removido updateWatchlistItem das deps — acessa pela ref
 
   // pollAll lê a watchlist pela ref — identidade estável, não recria ao mudar itens

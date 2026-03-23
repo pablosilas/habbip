@@ -1,11 +1,10 @@
 import React from "react"
 import { createPortal } from "react-dom"
-import { getFurnitureImageUrl } from "../../services/habboApi"
 import coinIcon from "../../assets/coin.png"
-import boxIcon from "../../assets/box.png"
 import closeIcon from "../../assets/close.png"
 import alertIcon from "../../assets/alert.png"
 import watchIcon from "../../assets/watch.png"
+import FurniThumb from "./FurniThumb"
 
 function timeAgo(ms) {
   const diff = Date.now() - ms
@@ -17,30 +16,6 @@ function timeAgo(ms) {
   if (min < 60) return `${min}min`
   if (h < 24) return `${h}h`
   return `${d}d`
-}
-
-function FurniThumb({ classname }) {
-  const [err, setErr] = React.useState(false)
-  const url = getFurnitureImageUrl(classname)
-
-  if (err || !url) {
-    return (
-      <img
-        src={boxIcon}
-        alt=""
-        className="w-6 h-6 object-contain opacity-50 image-rendering-pixel"
-      />
-    )
-  }
-
-  return (
-    <img
-      src={url}
-      alt={classname}
-      className="w-6 h-6 object-contain image-rendering-pixel"
-      onError={() => setErr(true)}
-    />
-  )
 }
 
 function TabBtn({ active, onClick, children }) {
@@ -115,7 +90,7 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
       ].join(" ")}
     >
       <div className="shrink-0 mt-[2px]">
-        <FurniThumb classname={notif.className} />
+        <FurniThumb classname={notif.className} size="md" />
       </div>
 
       <div
@@ -206,7 +181,7 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen }) {
   return (
     <div className="flex items-center gap-2 px-3 py-[8px] border-b border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors">
       <div className="shrink-0">
-        <FurniThumb classname={item.ClassName} />
+        <FurniThumb classname={item.ClassName} size="md" />
       </div>
 
       <div

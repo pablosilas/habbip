@@ -4,7 +4,6 @@ import { searchMarketItems } from "../services/marketSearch"
 export function useFairSearch() {
   const [mobiQuery, setMobiQuery] = React.useState("")
   const [hotel, setHotel] = React.useState("br")
-  const [days, setDays] = React.useState("all")
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const [results, setResults] = React.useState([])
@@ -30,7 +29,7 @@ export function useFairSearch() {
     setResults([])
 
     try {
-      const items = await searchMarketItems({ query, hotel, days })
+      const items = await searchMarketItems({ query, hotel })
 
       if (items.length === 0) {
         setError("Nenhum mobi encontrado.")
@@ -50,8 +49,6 @@ export function useFairSearch() {
     setMobiQuery,
     hotel,
     setHotel,
-    days,
-    setDays,
     loading,
     error,
     setError,

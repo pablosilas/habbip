@@ -18,6 +18,7 @@ import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import { createPortal } from "react-dom"
 import toolIcon from "../../../assets/tool.png"
 import ToggleSwitch from "../../ui/ToggleSwitch"
+import FurnitureImage from "../../ui/FurnitureImage"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
@@ -183,37 +184,6 @@ function HistoryTimeline({ history = [] }) {
           )
         })}
       </div>
-    </div>
-  )
-}
-
-function FurnitureImage({ classname, furniName, size = "small" }) {
-  const [status, setStatus] = React.useState("loading")
-  const imageUrl = React.useMemo(() => getFurnitureImageUrl(classname), [classname])
-  const sizeClass = size === "large" ? "w-[88px] h-[88px]" : "w-[44px] h-[44px]"
-
-  React.useEffect(() => {
-    if (!imageUrl) { setStatus("error"); return }
-    setStatus("loading")
-    const img = new Image()
-    img.onload = () => setStatus("ok")
-    img.onerror = () => setStatus("error")
-    img.src = imageUrl
-    if (img.complete) setStatus("ok")
-  }, [imageUrl])
-
-  return (
-    <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden`}>
-      {status !== "ok" && (
-        <img
-          src={boxIcon}
-          alt="carregando"
-          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
-        />
-      )}
-      {status === "ok" && (
-        <img src={imageUrl} alt={furniName || "Mobi"} className="max-w-full max-h-full object-contain image-rendering-pixel" />
-      )}
     </div>
   )
 }

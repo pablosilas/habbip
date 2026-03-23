@@ -41,7 +41,7 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
     setSearchKey((v) => v + 1)
 
     try {
-      const filtered = await searchMarketItems({ query: q, hotel, days: "all" })
+      const filtered = await searchMarketItems({ query: q, hotel })
 
       if (filtered.length === 0) { setError("Nenhum mobi encontrado."); return }
 

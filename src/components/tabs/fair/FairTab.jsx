@@ -10,8 +10,6 @@ export default function FairTab({
   setMobiQuery,
   fairHotel,
   setFairHotel,
-  fairDays,
-  setFairDays,
   onSearch,
   loading,
   error,
@@ -121,16 +119,6 @@ export default function FairTab({
               {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
                 <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
               ))}
-            </select>
-            <select
-              value={fairDays}
-              onChange={(e) => setFairDays(e.target.value)}
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
-            >
-              <option value="all" className="text-black">Todos</option>
-              <option value="7" className="text-black">7 dias</option>
-              <option value="30" className="text-black">30 dias</option>
-              <option value="90" className="text-black">90 dias</option>
             </select>
           </div>
 

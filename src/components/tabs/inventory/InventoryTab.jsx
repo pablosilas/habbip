@@ -3,15 +3,11 @@ import InventoryItemCard from "../inventory/InventoryItemCard"
 import Button from "../../ui/Button"
 import SearchInput from "../../ui/SearchInput"
 import coinIcon from "../../../assets/coin.png"
-import boxIcon from "../../../assets/box.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
-import { getFurnitureImageUrl } from "../../../services/habboApi"
 import { useInventoryHistory } from "../../../hooks/useSearchHistory"
 
 function SearchResultOption({ item, onSelect }) {
-  const [imgStatus, setImgStatus] = React.useState("loading")
-  const imageUrl = getFurnitureImageUrl(item.ClassName)
   const history = item?.marketData?.history || []
   const price =
     item?.marketData?.currentPrice ??
@@ -24,20 +20,7 @@ function SearchResultOption({ item, onSelect }) {
       onClick={() => onSelect(item)}
       className="w-full flex items-center gap-3 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md px-3 py-2 text-left transition-colors cursor-pointer"
     >
-      <div className="w-9 h-9 shrink-0 flex items-center justify-center overflow-hidden">
-        {(imgStatus === "loading" || imgStatus === "error" || !imageUrl) && (
-          <img src={boxIcon} alt="" className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`} />
-        )}
-        {imageUrl && (
-          <img
-            src={imageUrl}
-            alt={item.FurniName}
-            className={`w-full h-full object-contain image-rendering-pixel ${imgStatus === "ok" ? "block" : "hidden"}`}
-            onLoad={() => setImgStatus("ok")}
-            onError={() => setImgStatus("error")}
-          />
-        )}
-      </div>
+      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" />
       <div className="flex-1 min-w-0">
         <div className="text-white text-[12px] font-bold truncate">{item.FurniName || "-"}</div>
         <div className="text-[#888] text-[10px] truncate">{item.ClassName || "-"}</div>

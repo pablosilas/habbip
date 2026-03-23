@@ -3,33 +3,6 @@ import { getFurnitureImageUrl } from "../../../services/habboApi"
 import coinIcon from "../../../assets/coin.png"
 import boxIcon from "../../../assets/box.png"
 
-function FurnitureImage({ classname, furniName }) {
-  const [status, setStatus] = React.useState("loading")
-  const imageUrl = getFurnitureImageUrl(classname)
-
-  React.useEffect(() => { setStatus("loading") }, [classname])
-
-  return (
-    <div className="w-10 h-10 shrink-0 flex items-center justify-center overflow-hidden">
-      {(status === "loading" || status === "error" || !imageUrl) && (
-        <img
-          src={boxIcon}
-          alt="carregando"
-          className={`w-full h-full object-contain image-rendering-pixel ${status === "loading" ? "opacity-40 animate-pulse" : "opacity-60"}`}
-        />
-      )}
-      {imageUrl && (
-        <img
-          src={imageUrl}
-          alt={furniName || "Mobi"}
-          className={`w-full h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
-          onLoad={() => setStatus("ok")}
-          onError={() => setStatus("error")}
-        />
-      )}
-    </div>
-  )
-}
 
 function getTrend(history = []) {
   if (!Array.isArray(history) || history.length < 2) return null
@@ -67,7 +40,7 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
   return (
     <div className="flex items-center gap-2 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-2 py-2">
       {/* Imagem */}
-      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} />
+      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" />
 
       {/* Nome + classname */}
       <div className="flex-1 min-w-0">

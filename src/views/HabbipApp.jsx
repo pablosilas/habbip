@@ -395,8 +395,6 @@ export default function HabboDeskApp() {
                   setMobiQuery={fair.setMobiQuery}
                   fairHotel={fair.hotel}
                   setFairHotel={fair.setHotel}
-                  fairDays={fair.days}
-                  setFairDays={fair.setDays}
                   onSearch={fair.handleSearch}
                   loading={fair.loading}
                   error={fair.error}
