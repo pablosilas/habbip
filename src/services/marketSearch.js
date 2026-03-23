@@ -23,7 +23,7 @@
 
 import {
   fetchMarketHistory,
-  fetchOfficialMarketBatch,
+  fetchOfficialMarketBatchSafe,
   mergeOfficialMarketData,
 } from "./habboApi"
 
@@ -65,7 +65,7 @@ export async function searchMarketItems({ query, hotel = "br", days = "all" }) {
   // ── Etapa 3: consulta a API oficial em lote (falha silenciosa) ──────────────
   let officialBatch = null
   try {
-    officialBatch = await fetchOfficialMarketBatch(batchItems, hotel)
+    officialBatch = await fetchOfficialMarketBatchSafe(batchItems, hotel)
   } catch {
     // Se a API oficial falhar, continua apenas com dados legados
   }

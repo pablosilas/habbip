@@ -102,7 +102,7 @@ function CloseButton({ onClick, title }) {
 }
 
 
-function NotifItem({ notif, onRemove }) {
+function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
   const isUp = notif.direction === "up"
 
   return (
@@ -118,7 +118,10 @@ function NotifItem({ notif, onRemove }) {
         <FurniThumb classname={notif.className} />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div
+        className="flex-1 min-w-0 cursor-pointer"
+        onClick={() => { onOpenInFair?.(notif.className); setOpen(false) }}
+      >
         <div className="text-[11px] font-bold text-white truncate">
           {notif.furniName}
         </div>
@@ -164,7 +167,7 @@ function NotifItem({ notif, onRemove }) {
   )
 }
 
-function NotifsList({ notifications, onRemove }) {
+function NotifsList({ notifications, onRemove, onOpenInFair, setOpen }) {
   if (notifications.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -180,13 +183,13 @@ function NotifsList({ notifications, onRemove }) {
   return (
     <div>
       {notifications.map((n) => (
-        <NotifItem key={n.id} notif={n} onRemove={onRemove} />
+        <NotifItem key={n.id} notif={n} onRemove={onRemove} onOpenInFair={onOpenInFair} setOpen={setOpen} />
       ))}
     </div>
   )
 }
 
-function WatchlistItem({ item, onRemove }) {
+function WatchlistItem({ item, onRemove, onOpenInFair, setOpen }) {
   const history = item?.marketData?.history || []
   const currentPrice =
     item?.marketData?.currentPrice ??
@@ -206,7 +209,10 @@ function WatchlistItem({ item, onRemove }) {
         <FurniThumb classname={item.ClassName} />
       </div>
 
-      <div className="flex-1 min-w-0">
+      <div
+        className="flex-1 min-w-0 cursor-pointer"
+        onClick={() => { onOpenInFair?.(item.ClassName); setOpen(false) }}
+      >
         <div className="text-[11px] font-bold text-white truncate">
           {item.FurniName}
         </div>
@@ -233,11 +239,11 @@ function WatchlistItem({ item, onRemove }) {
       <div className="flex items-center self-stretch">
         <CloseButton onClick={() => onRemove(item.ClassName)} title="Parar de monitorar" />
       </div>
-    </div>
+    </div >
   )
 }
 
-function WatchlistList({ watchlist, onRemove }) {
+function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen }) {
   if (watchlist.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -257,6 +263,8 @@ function WatchlistList({ watchlist, onRemove }) {
           key={item.ClassName}
           item={item}
           onRemove={onRemove}
+          onOpenInFair={onOpenInFair}
+          setOpen={setOpen}
         />
       ))}
     </div>
@@ -303,6 +311,7 @@ export default function NotificationBell({
   onRemoveNotification,
   onRemoveFromWatchlist,
   onPollNow,
+  onOpenInFair
 }) {
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("notifs")
@@ -435,11 +444,16 @@ export default function NotificationBell({
           <NotifsList
             notifications={notifications}
             onRemove={onRemoveNotification}
+            onOpenInFair={onOpenInFair}
+            setOpen={setOpen}
+
           />
         ) : (
           <WatchlistList
             watchlist={watchlist}
             onRemove={onRemoveFromWatchlist}
+            onOpenInFair={onOpenInFair}
+            setOpen={setOpen}
           />
         )}
       </div>

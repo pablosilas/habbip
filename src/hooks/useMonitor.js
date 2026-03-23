@@ -1,7 +1,7 @@
 import { useState, useReducer, useEffect, useCallback, useRef } from "react"
 import {
   fetchMarketHistory,
-  fetchOfficialMarketBatch,
+  fetchOfficialMarketBatchSafe,
   mergeOfficialMarketData,
 } from "../services/habboApi"
 
@@ -144,7 +144,7 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
 
       let officialBatch = null
       try {
-        officialBatch = await fetchOfficialMarketBatch(batchItems, watchedItem.hotel ?? "br")
+        officialBatch = await fetchOfficialMarketBatchSafe(batchItems, watchedItem.hotel ?? "br")
       } catch { /* empty */ }
 
       const merged = officialBatch

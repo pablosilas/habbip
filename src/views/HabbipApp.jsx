@@ -253,6 +253,13 @@ export default function HabboDeskApp() {
     maxHeight: "calc(var(--vh, 1dvh) * 96)",
   }
 
+  function handleOpenInFair(className) {
+    fair.setMobiQuery(className)
+    setActiveTab("feira")
+    setFairExpanded(true)
+    fair.handleSearch(className)
+  }
+
   return (
     <>
       {/* ── Modais ─────────────────────────────────────────────────────────── */}
@@ -320,6 +327,7 @@ export default function HabboDeskApp() {
                     onRemoveNotification={monitor.removeNotification}
                     onRemoveFromWatchlist={watchlist.removeFromWatchlist}
                     onPollNow={monitor.pollNow}
+                    onOpenInFair={handleOpenInFair} 
                   />
                 )}
                 <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />

@@ -37,7 +37,7 @@ export async function fetchMarketHistory({
  * Recebe um array de itens { classname, furniType: "roomItem" | "wallItem" }
  * e retorna o JSON bruto da API.
  */
-export async function fetchOfficialMarketBatch(items, hotel = "br") {
+async function fetchOfficialMarketBatch(items, hotel = "br") {
   const roomItems = []
   const wallItems = []
 
@@ -65,6 +65,41 @@ export async function fetchOfficialMarketBatch(items, hotel = "br") {
 
   return handleResponse(response, "Erro ao consultar estatísticas oficiais.")
 }
+
+function chunk(arr, size) {
+  const chunks = []
+  for (let i = 0; i < arr.length; i += size) {
+    chunks.push(arr.slice(i, i + size))
+  }
+  return chunks
+}
+
+export async function fetchOfficialMarketBatchSafe(items, hotel = "br") {
+  const roomItems = items.filter(i => i.furniType !== "wallItem")
+  const wallItems = items.filter(i => i.furniType === "wallItem")
+
+  const roomChunks = chunk(roomItems, 25)
+  const wallChunks = chunk(wallItems, 25)
+  const totalChunks = Math.max(roomChunks.length, wallChunks.length, 1)
+
+  const results = await Promise.all(
+    Array.from({ length: totalChunks }, (_, i) =>
+      fetchOfficialMarketBatch(
+        [...(roomChunks[i] ?? []), ...(wallChunks[i] ?? [])],
+        hotel
+      ).catch(() => null)
+    )
+  )
+
+  return results.reduce((acc, batch) => {
+    if (!batch) return acc
+    return {
+      roomItemData: [...(acc.roomItemData ?? []), ...(batch.roomItemData ?? [])],
+      wallItemData: [...(acc.wallItemData ?? []), ...(batch.wallItemData ?? [])],
+    }
+  }, { roomItemData: [], wallItemData: [] })
+}
+
 
 /**
  * Converte uma entrada de histórico da API oficial do Habbo para o formato
