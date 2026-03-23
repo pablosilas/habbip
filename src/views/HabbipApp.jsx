@@ -177,8 +177,9 @@ export default function HabboDeskApp() {
   const isLoggedIn = auth.isLoggedIn
 
   // ── Sincronização com servidor ────────────────────────────────────────────
-  const { serverData, loadingData, syncError, markDirty } =
+  const { serverData, loadingData, syncError, markDirty, updateLocalData } =
     useServerSync(isLoggedIn)
+
 
   // ── Hooks de dados ────────────────────────────────────────────────────────
   const inventory = useInventory(serverData, markDirty, isLoggedIn)
@@ -327,7 +328,7 @@ export default function HabboDeskApp() {
                     onRemoveNotification={monitor.removeNotification}
                     onRemoveFromWatchlist={watchlist.removeFromWatchlist}
                     onPollNow={monitor.pollNow}
-                    onOpenInFair={handleOpenInFair} 
+                    onOpenInFair={handleOpenInFair}
                   />
                 )}
                 <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />
@@ -422,6 +423,7 @@ export default function HabboDeskApp() {
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}
+                  updateLocalData={updateLocalData}
                 />
               )}
 
@@ -438,6 +440,7 @@ export default function HabboDeskApp() {
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}
+                  updateLocalData={updateLocalData}
                 />
               )}
 
@@ -468,6 +471,7 @@ export default function HabboDeskApp() {
                     serverData={serverData}
                     markDirty={markDirty}
                     isLoggedIn={isLoggedIn}
+                    updateLocalData={updateLocalData}
                   />
                 ) : (
                   <LockedFeatureOverlay onLogin={() => { auth.setLoginModalOpen(true); auth.setAuthMode("login") }} />

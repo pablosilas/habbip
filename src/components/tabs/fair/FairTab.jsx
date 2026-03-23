@@ -29,6 +29,7 @@ export default function FairTab({
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
+  const [filterQuery, setFilterQuery] = React.useState("")
   const inputRef = React.useRef(null)
 
   const {
@@ -42,6 +43,11 @@ export default function FairTab({
   } = useMobiHistory(serverData, markDirty, isLoggedIn)
 
   const lastSearchedTermRef = React.useRef(null)
+
+  // Limpa o filtro quando uma nova busca é feita
+  React.useEffect(() => {
+    setFilterQuery("")
+  }, [results])
 
   React.useEffect(() => {
     if (results.length > 0 && lastSearchedTermRef.current) {
@@ -66,6 +72,25 @@ export default function FairTab({
   }
 
   const hasDropdownItems = history.length > 0 || favorites.length > 0
+
+  const sortedResults = [...results].sort((a, b) => {
+    const aH = a.marketData?.history; const bH = b.marketData?.history
+    const aL = Array.isArray(aH) && aH.length ? aH[aH.length - 1] : null
+    const bL = Array.isArray(bH) && bH.length ? bH[bH.length - 1] : null
+    const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
+    const bP = Array.isArray(bH) && bH.length > 1 ? bH[bH.length - 2] : null
+    if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
+    if (sortBy === "trend") return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
+    if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
+    return 0
+  })
+
+  const filteredResults = filterQuery.trim()
+    ? sortedResults.filter((item) =>
+      item.FurniName?.toLowerCase().includes(filterQuery.toLowerCase()) ||
+      item.ClassName?.toLowerCase().includes(filterQuery.toLowerCase())
+    )
+    : sortedResults
 
   return (
     <div>
@@ -136,9 +161,9 @@ export default function FairTab({
       {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
 
       {results.length > 1 && (
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
-          <div className="flex gap-1 flex-wrap">
+          <div className="flex gap-1 flex-wrap flex-1">
             {[{ value: "price", label: "Preço" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
               <button key={value} type="button" onClick={() => setSortBy(value)}
                 className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
@@ -147,41 +172,43 @@ export default function FairTab({
               </button>
             ))}
           </div>
+
+          <div className="w-full">
+            <SearchInput
+              value={filterQuery}
+              onChange={(e) => setFilterQuery(e.target.value)}
+              placeholder={`Filtrar nos ${results.length} resultados...`}
+              className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
+            />
+          </div>
         </div>
       )}
 
       <div className="space-y-2 pr-1">
-        {[...results]
-          .sort((a, b) => {
-            const aH = a.marketData?.history; const bH = b.marketData?.history
-            const aL = Array.isArray(aH) && aH.length ? aH[aH.length - 1] : null
-            const bL = Array.isArray(bH) && bH.length ? bH[bH.length - 1] : null
-            const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
-            const bP = Array.isArray(bH) && bH.length > 1 ? bH[bH.length - 2] : null
-            if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
-            if (sortBy === "trend") return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
-            if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
-            return 0
-          })
-          .map((item, index) => {
-            const favKey = item.ClassName || item.FurniName || String(index)
-            return (
-              <FairResultCard
-                key={`${favKey}-${index}`}
-                item={item}
-                onTriggerFly={onTriggerFly}
-                isFavorite={isFavorite(favKey)}
-                onToggleFavorite={() => toggleFavorite(favKey)}
-                creditRate={creditRate}
-                onSetCreditRate={onSetCreditRate}
-                onAddToInventory={onAddToInventory}
-                isInInventory={isInInventory(item.ClassName)}
-                isWatching={isWatching ? isWatching(item.ClassName) : false}
-                onToggleWatchlist={onToggleWatchlist}
-                isLoggedIn={isLoggedIn}
-              />
-            )
-          })}
+        {filteredResults.map((item, index) => {
+          const favKey = item.ClassName || item.FurniName || String(index)
+          return (
+            <FairResultCard
+              key={`${favKey}-${index}`}
+              item={item}
+              onTriggerFly={onTriggerFly}
+              isFavorite={isFavorite(favKey)}
+              onToggleFavorite={() => toggleFavorite(favKey)}
+              creditRate={creditRate}
+              onSetCreditRate={onSetCreditRate}
+              onAddToInventory={onAddToInventory}
+              isInInventory={isInInventory(item.ClassName)}
+              isWatching={isWatching ? isWatching(item.ClassName) : false}
+              onToggleWatchlist={onToggleWatchlist}
+              isLoggedIn={isLoggedIn}
+            />
+          )
+        })}
+        {!loading && !filteredResults.length && filterQuery.trim() && (
+          <div className="text-[#888] text-[12px]">
+            Nenhum mobi encontrado para "{filterQuery}".
+          </div>
+        )}
         {!loading && !results.length && !error && (
           <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
         )}

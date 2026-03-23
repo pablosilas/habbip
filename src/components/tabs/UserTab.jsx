@@ -17,6 +17,7 @@ export default function UserTab({
   serverData,
   markDirty,
   isLoggedIn,
+  updateLocalData
 }) {
   const inputRef = React.useRef(null)
   const [showDropdown, setShowDropdown] = React.useState(false)
@@ -29,7 +30,7 @@ export default function UserTab({
     clearHistory,
     toggleFavorite,
     isFavorite,
-  } = useUserHistory(serverData, markDirty, isLoggedIn)
+  } = useUserHistory(serverData, markDirty, isLoggedIn, updateLocalData)
 
   function handleSearch() {
     inputRef.current?.blur()

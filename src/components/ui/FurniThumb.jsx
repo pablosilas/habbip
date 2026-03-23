@@ -4,8 +4,9 @@ import loadingIcon from "../../assets/loading.gif"
 import starOn from "../../assets/star.png"
 import { getFurnitureImageUrl } from "../../services/habboApi"
 
-export default function FurniThumb({ classname, size = "sm", isFav = false, showStar = false }) {
+export default function FurniThumb({ classname, size = "sm", angle = null, isFav = false, showStar = false }) {
   const [url, setUrl] = React.useState("")
+  const [fallbackUrl, setFallbackUrl] = React.useState("")
   const [status, setStatus] = React.useState("loading")
 
   const sizeClass = size === "md" ? "w-6 h-6" : "w-7 h-7"
@@ -14,11 +15,28 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
     if (!classname) { setStatus("error"); return }
     setStatus("loading")
     setUrl("")
+    setFallbackUrl("")
+
     getFurnitureImageUrl(classname).then(resolved => {
-      if (!resolved) setStatus("error")
-      else setUrl(resolved)
+      if (!resolved) { setStatus("error"); return }
+
+      if (angle && resolved.includes("habcat.net") && resolved.includes("/0_0.")) {
+        setUrl(resolved.replace("/0_0.", `/${angle}.`))
+        setFallbackUrl(resolved)
+      } else {
+        setUrl(resolved)
+      }
     })
-  }, [classname])
+  }, [classname, angle])
+
+  function handleError() {
+    if (fallbackUrl) {
+      setUrl(fallbackUrl)
+      setFallbackUrl("")
+    } else {
+      setStatus("error")
+    }
+  }
 
   return (
     <div className={`shrink-0 ${sizeClass} flex items-center justify-center overflow-hidden relative`}>
@@ -38,7 +56,7 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
           alt={classname}
           className={`w-full h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
           onLoad={() => setStatus("ok")}
-          onError={() => setStatus("error")}
+          onError={handleError}
         />
       )}
       {showStar && isFav && (

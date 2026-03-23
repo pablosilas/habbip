@@ -7,15 +7,6 @@ export function getEntryTerm(entry) {
   return typeof entry === "string" ? entry : entry.term ?? ""
 }
 
-// ── Reducer para history + favorites ─────────────────────────────────────────
-//
-// history e favorites sempre mudam juntos na hydratação — com dois useState
-// separados isso gerava dois renders encadeados e o warning de setState em
-// cascata dentro do useEffect de hydratação.
-//
-// useReducer unifica os dois em um único estado atômico: cada dispatch produz
-// exatamente um render, independente de quantos campos mudam.
-
 function makeInitialState(fieldKey, isLoggedIn) {
   if (!isLoggedIn) return { history: [], favorites: [] }
   try {
@@ -66,13 +57,9 @@ function historyReducer(state, action) {
   }
 }
 
-// ── Hook interno com suporte a servidor ──────────────────────────────────────
-
-function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
+function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLocalData) {
   const [{ history, favorites }, dispatch] = useReducer(
     historyReducer,
-    // Estado inicial calculado uma única vez via função init — lê localStorage
-    // para anônimos sem recalcular a cada render
     undefined,
     () => makeInitialState(fieldKey, isLoggedIn)
   )
@@ -80,10 +67,12 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
   const hydrated = useRef(false)
   const skipNextSync = useRef(false)
 
-  // Hydratação a partir do servidor — dispatch atômico, render único.
-  //
-  // skipNextSync evita que o useEffect de sync logo abaixo envie de volta ao
-  // servidor os mesmos dados que acabaram de vir dele.
+  // Sempre aponta para o favorites atual sem precisar de dependência no callback
+  const favoritesRef = useRef(favorites)
+  useEffect(() => {
+    favoritesRef.current = favorites
+  }, [favorites])
+
   useEffect(() => {
     if (!serverData || !isLoggedIn) return
     const d = serverData[fieldKey]
@@ -93,7 +82,6 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
     dispatch({ type: "HYDRATE", payload: d })
   }, [serverData, fieldKey, isLoggedIn])
 
-  // Persiste no localStorage para usuários anônimos
   useEffect(() => {
     if (isLoggedIn) return
     try {
@@ -102,10 +90,6 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
     } catch { /* empty */ }
   }, [history, favorites, fieldKey, isLoggedIn])
 
-  // Sincroniza com servidor quando logado.
-  // Não executa antes da hydratação para não sobrescrever dados do servidor
-  // com o estado local inicial. Pula a execução imediatamente após a hydratação
-  // (skipNextSync) para não fazer write com os dados recém-recebidos.
   useEffect(() => {
     if (!isLoggedIn || !hydrated.current) return
     if (skipNextSync.current) {
@@ -127,7 +111,10 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
 
   const clearHistory = useCallback(() => {
     dispatch({ type: "CLEAR_HISTORY" })
-  }, [])
+    // Atualiza serverData em memória imediatamente para que ao trocar de aba
+    // (desmonta/remonta o hook) a hydratação não restaure o histórico antigo
+    updateLocalData?.(fieldKey, { history: [], favorites: favoritesRef.current })
+  }, [fieldKey, updateLocalData])
 
   const toggleFavorite = useCallback((term) => {
     if (!term?.trim()) return
@@ -139,16 +126,14 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn) {
   return { history, favorites, addToHistory, removeFromHistory, clearHistory, toggleFavorite, isFavorite }
 }
 
-// ── Hooks públicos ────────────────────────────────────────────────────────────
-
-export function useMobiHistory(serverData, markDirty, isLoggedIn) {
-  return useHistoryStore(serverData, "mobi_history", markDirty, isLoggedIn)
+export function useMobiHistory(serverData, markDirty, isLoggedIn, updateLocalData) {
+  return useHistoryStore(serverData, "mobi_history", markDirty, isLoggedIn, updateLocalData)
 }
 
-export function useUserHistory(serverData, markDirty, isLoggedIn) {
-  return useHistoryStore(serverData, "user_history", markDirty, isLoggedIn)
+export function useUserHistory(serverData, markDirty, isLoggedIn, updateLocalData) {
+  return useHistoryStore(serverData, "user_history", markDirty, isLoggedIn, updateLocalData)
 }
 
-export function useInventoryHistory(serverData, markDirty, isLoggedIn) {
-  return useHistoryStore(serverData, "inv_history", markDirty, isLoggedIn)
+export function useInventoryHistory(serverData, markDirty, isLoggedIn, updateLocalData) {
+  return useHistoryStore(serverData, "inv_history", markDirty, isLoggedIn, updateLocalData)
 }

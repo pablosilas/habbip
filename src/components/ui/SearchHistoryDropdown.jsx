@@ -160,7 +160,7 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
       {showAvatar ? (
         <AvatarThumb nick={term} hotel={hotel} isFav={isFav} />
       ) : showFurniImage && classname ? (
-        <FurniThumb classname={classname} isFav={isFav} showStar />
+        <FurniThumb classname={classname} isFav={isFav} showStar angle="2_0" />
       ) : (
         <div className="shrink-0 w-[14px] h-[14px] flex items-center justify-center">
           {isFav

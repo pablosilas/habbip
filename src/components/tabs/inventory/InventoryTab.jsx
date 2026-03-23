@@ -58,6 +58,7 @@ export default function InventoryTab({
   serverData,
   markDirty,
   isLoggedIn,
+  updateLocalData
 }) {
   const inputRef = React.useRef(null)
   const [expanded, setExpanded] = React.useState(true)
@@ -73,7 +74,7 @@ export default function InventoryTab({
     clearHistory,
     toggleFavorite,
     isFavorite,
-  } = useInventoryHistory(serverData, markDirty, isLoggedIn)
+  } = useInventoryHistory(serverData, markDirty, isLoggedIn, updateLocalData)
 
   const lastSearchedTermRef = React.useRef(null)
 

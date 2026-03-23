@@ -88,12 +88,16 @@ function getPreviousHistoryEntry(history = []) {
   return history[history.length - 2]
 }
 
-function getTrendInfo(history = []) {
+// Tendência só faz sentido se houver ofertas ativas e preços válidos (> 0)
+function getTrendInfo(history = [], hasActiveOffers) {
+  if (!hasActiveOffers) return null
+
   const latest = getLatestHistoryEntry(history)
   const previous = getPreviousHistoryEntry(history)
   const latestPrice = latest?.[0]
   const previousPrice = previous?.[0]
-  if (latestPrice == null || previousPrice == null) {
+
+  if (!latestPrice || !previousPrice) {
     return { label: "Sem tendência", icon: "•", colorClass: "text-[#cfcfcf]" }
   }
   if (latestPrice > previousPrice) return { label: "Subindo", icon: "▲", colorClass: "text-[#7CFC8A]" }
@@ -305,7 +309,6 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     e.stopPropagation()
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      // Tenta abrir à direita; se ultrapassar a tela, abre à esquerda
       const menuWidth = 250
       const spaceRight = window.innerWidth - rect.right
       const left = spaceRight >= menuWidth
@@ -328,10 +331,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   }, [open])
 
   function action(fn) {
-    return (e) => {
-      e.stopPropagation()
-      fn?.()
-    }
+    return (e) => { e.stopPropagation(); fn?.() }
   }
 
   React.useEffect(() => {
@@ -357,7 +357,6 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         "shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]",
       ].join(" ")}
     >
-      {/* Header */}
       <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
         <span className="text-[10px] font-bold text-white">Ações</span>
         <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
@@ -376,22 +375,12 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
               boxShadow: "inset 0 0 0 1px #8c8c8c",
             }}
           >
-            <span
-              className="block w-0 h-0 translate-y-[1px]"
-              style={{
-                borderLeft: "4px solid transparent",
-                borderRight: "4px solid transparent",
-                borderTop: "6px solid #ffffff",
-              }}
-            />
+            <span className="block w-0 h-0 translate-y-[1px]" style={{ borderLeft: "4px solid transparent", borderRight: "4px solid transparent", borderTop: "6px solid #ffffff" }} />
           </button>
         </div>
       </div>
 
-      {/* Body */}
       <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
-
-        {/* Monitorar */}
         <button
           type="button"
           onClick={(e) => {
@@ -407,66 +396,35 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
             onToggleWatchlist?.(item)
           }}
           disabled={!isLoggedIn}
-          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn
-            ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
-            : "opacity-40 cursor-not-allowed"
-            }`}
+          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
         >
-          <img
-            src={watchIcon}
-            alt="Monitorar"
-            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`}
-          />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">
-            {isWatching ? "Parar de monitorar" : "Monitorar preço"}
-          </span>
+          <img src={watchIcon} alt="Monitorar" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`} />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && (
-            <ToggleSwitch checked={isWatching} />
-          )}
+          {isLoggedIn && <ToggleSwitch checked={isWatching} />}
         </button>
 
-        {/* Favoritar */}
         <button
           type="button"
           onClick={action(onToggleFavorite)}
           className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
         >
-          <img
-            src={starIcon}
-            alt="Favoritar"
-            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`}
-          />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">
-            {isFavorite ? "Remover dos favoritos" : "Favoritar"}
-          </span>
+          <img src={starIcon} alt="Favoritar" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`} />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isFavorite ? "Remover dos favoritos" : "Favoritar"}</span>
           <ToggleSwitch checked={isFavorite} />
         </button>
 
-        {/* Inventário */}
         <button
           type="button"
           onClick={isLoggedIn ? action(() => onAddToInventory?.(item)) : undefined}
           disabled={!isLoggedIn}
-          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn
-            ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
-            : "opacity-40 cursor-not-allowed"
-            }`}
+          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
         >
-          <img
-            src={plusIcon}
-            alt="Inventário"
-            className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`}
-          />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">
-            {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
-          </span>
+          <img src={plusIcon} alt="Inventário" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`} />
+          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && (
-            <ToggleSwitch checked={isInInventory} />
-          )}
+          {isLoggedIn && <ToggleSwitch checked={isInInventory} />}
         </button>
-
       </div>
     </div>
   ) : null
@@ -478,16 +436,9 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         type="button"
         title="Ações"
         onClick={handleToggle}
-        className={`w-[22px] h-[22px] shrink-0 flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${open
-          ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
-          : "border-[#555] bg-[rgba(255,255,255,0.05)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"
-          }`}
+        className={`w-[22px] h-[22px] shrink-0 flex items-center justify-center rounded-[4px] border transition-all cursor-pointer ${open ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)]" : "border-[#555] bg-[rgba(255,255,255,0.05)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]"}`}
       >
-        <img
-          src={toolIcon}
-          alt="Ações"
-          className="w-[14px] h-[14px] object-contain image-rendering-pixel"
-        />
+        <img src={toolIcon} alt="Ações" className="w-[14px] h-[14px] object-contain image-rendering-pixel" />
       </button>
       {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </>
@@ -512,11 +463,15 @@ export default function FairResultCard({
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
-  const priceNow = item?.marketData?.currentPrice ?? latestEntry?.[0] ?? item?.marketData?.averagePrice ?? "-"
+  const rawPrice = item?.marketData?.currentPrice ?? latestEntry?.[0] ?? null
   const averagePrice = item?.marketData?.averagePrice ?? "-"
-  const openOffers = item?.marketData?.currentOpenOffers ?? latestEntry?.[3] ?? "-"
+  const openOffers = item?.marketData?.currentOpenOffers ?? latestEntry?.[3] ?? 0
 
-  const trendInfo = getTrendInfo(history)
+  // Considera que há oferta ativa somente se openOffers > 0 E preço > 0
+  const hasActiveOffers = openOffers > 0 && rawPrice != null && rawPrice > 0
+  const priceNow = hasActiveOffers ? rawPrice : null
+
+  const trendInfo = getTrendInfo(history, hasActiveOffers)
   const timeAgoLabel = timeAgo(item?.marketData?.lastUpdated)
   const timeAgoColor = getTimeAgoColor(item?.marketData?.lastUpdated)
   const flag = getHotelFlag(item.hotel_domain)
@@ -536,9 +491,7 @@ export default function FairResultCard({
                 {item.ClassName || "-"}
               </div>
             </div>
-
-            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="small" />
-            {/* Menu de ações — substitui os 3 botões anteriores */}
+            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="small" angle="4_0" />
             <ActionsMenu
               onTriggerFly={onTriggerFly}
               item={item}
@@ -552,28 +505,43 @@ export default function FairResultCard({
             />
           </div>
         </div>
-
       </div>
 
       {/* ── Métricas ── */}
       <div className="grid grid-cols-3 gap-3 mb-2">
-        <MetricBlock label="Preço atual" value={priceNow} showCoin coinIcon={coinIcon}>
-          <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
-            {trendInfo.icon} {trendInfo.label}
-          </span>
-        </MetricBlock>
+
+        {/* Preço atual — trata ausência de oferta explicitamente */}
+        <div>
+          <div className="text-[11px] font-bold text-white">Preço atual</div>
+          {priceNow != null ? (
+            <div className="text-[13px] text-[#f1f1f1] flex items-center gap-1 flex-wrap">
+              <img src={coinIcon} alt="coin" className="w-4 h-4" />
+              <span>{priceNow}</span>
+              {trendInfo && (
+                <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
+                  {trendInfo.icon} {trendInfo.label}
+                </span>
+              )}
+            </div>
+          ) : (
+            <div className="text-[12px] text-[#888] italic leading-tight mt-[2px]">
+              Sem oferta
+            </div>
+          )}
+        </div>
+
         <MetricBlock label="Média" value={averagePrice} showCoin coinIcon={coinIcon} />
         <MetricBlock label="Ofertas" value={openOffers} />
       </div>
 
-      {/* ── Conversor de créditos ── */}
-      {creditRate != null && onSetCreditRate && (
+      {/* ── Conversor de créditos — só exibe quando há preço válido ── */}
+      {priceNow != null && creditRate != null && onSetCreditRate && (
         <div className="mb-3">
           <CreditConverterBlock
             rateCredits={creditRate.credits}
             rateReais={creditRate.reais}
             onSetRate={onSetCreditRate}
-            credits={typeof priceNow === "number" ? priceNow : null}
+            credits={priceNow}
             compact
           />
         </div>
@@ -587,7 +555,7 @@ export default function FairResultCard({
 
       {/* ── Rodapé ── */}
       <div className="flex items-end justify-between gap-3">
-        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="large" />
+        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="large" angle="2_0" />
         <div className="flex-1 text-right">
           <div className="flex items-center justify-end flex-wrap gap-1 text-[11px] text-[#d6d6d6]">
             {flag && <img src={flag} alt={item.hotel_domain} className="w-4 h-4" />}
