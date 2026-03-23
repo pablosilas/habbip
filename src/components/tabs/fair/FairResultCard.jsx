@@ -17,6 +17,7 @@ import starIcon from "../../../assets/star.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import { createPortal } from "react-dom"
 import toolIcon from "../../../assets/tool.png"
+import ToggleSwitch from "../../ui/ToggleSwitch"
 
 function formatDateLabel(timestampInSeconds) {
   if (!timestampInSeconds) return "-"
@@ -360,9 +361,19 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     return (e) => {
       e.stopPropagation()
       fn?.()
-      setOpen(false)
     }
   }
+
+  React.useEffect(() => {
+    if (!open) return
+    function handleClose() { setOpen(false) }
+    window.addEventListener("scroll", handleClose, true)
+    window.addEventListener("touchmove", handleClose, true)
+    return () => {
+      window.removeEventListener("scroll", handleClose, true)
+      window.removeEventListener("touchmove", handleClose, true)
+    }
+  }, [open])
 
   const menu = open ? (
     <div
@@ -409,6 +420,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
 
       {/* Body */}
       <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+
         {/* Monitorar */}
         <button
           type="button"
@@ -423,7 +435,6 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
               }
             }
             onToggleWatchlist?.(item)
-            setOpen(false)
           }}
           disabled={!isLoggedIn}
           className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn
@@ -440,10 +451,8 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
             {isWatching ? "Parar de monitorar" : "Monitorar preço"}
           </span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && isWatching && (
-            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
-              ativo
-            </span>
+          {isLoggedIn && (
+            <ToggleSwitch checked={isWatching} />
           )}
         </button>
 
@@ -455,17 +464,13 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         >
           <img
             src={starIcon}
-            alt="Monitorar"
+            alt="Favoritar"
             className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`}
           />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">
             {isFavorite ? "Remover dos favoritos" : "Favoritar"}
           </span>
-          {isFavorite && (
-            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(255,214,77,0.12)] text-[#ffd64d]">
-              favoritado
-            </span>
-          )}
+          <ToggleSwitch checked={isFavorite} />
         </button>
 
         {/* Inventário */}
@@ -480,19 +485,18 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         >
           <img
             src={plusIcon}
-            alt="Monitorar"
+            alt="Inventário"
             className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`}
           />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">
             {isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}
           </span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && isInInventory && (
-            <span className="text-[9px] font-bold px-[6px] py-[2px] rounded-full bg-[rgba(124,252,138,0.12)] text-[#7CFC8A]">
-              no inv.
-            </span>
+          {isLoggedIn && (
+            <ToggleSwitch checked={isInInventory} />
           )}
         </button>
+
       </div>
     </div>
   ) : null
