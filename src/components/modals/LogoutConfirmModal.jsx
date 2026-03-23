@@ -11,7 +11,7 @@ export default function LogoutConfirmModal({ open, onConfirm, onCancel }) {
         <div className="h-8 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden">
           <div className="absolute left-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
           <div className="absolute right-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-          <div className="text-[12px] font-bold text-[#7c4e00] tracking-wide z-10">Sair da conta?</div>
+          <div className="text-[12px] font-bold text-[#7c4e00] tracking-wide z-10">Sair</div>
         </div>
 
         {/* Body */}
@@ -22,7 +22,7 @@ export default function LogoutConfirmModal({ open, onConfirm, onCancel }) {
           >
             <div className="rounded-[10px] border border-[#8a8a8a] bg-[rgba(0,0,0,0.08)] p-4">
               <div className="text-white text-[12px] leading-5 text-center mb-4">
-                Seus dados estão salvos e estarão disponíveis no próximo login.
+                Tem certeza que deseja sair?
               </div>
               <div className="flex flex-col gap-2">
                 <Button variant="danger" onClick={onConfirm}>Confirmar saída</Button>

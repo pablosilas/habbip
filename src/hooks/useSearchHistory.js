@@ -1,6 +1,6 @@
 import { useReducer, useEffect, useCallback, useRef } from "react"
 
-const MAX_HISTORY = 10
+const MAX_HISTORY = 4
 
 export function getEntryTerm(entry) {
   if (!entry) return ""

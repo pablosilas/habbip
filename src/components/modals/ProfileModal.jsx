@@ -128,7 +128,7 @@ export default function ProfileModal({ open, user, onClose, onUserUpdated, onLog
     <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
       <ConsoleCard
         title="Minha conta"
-        onClose={onClose}
+        onClose={() => { setActiveTab("perfil"); onClose(); }}
         expand
         className="w-full max-w-[600px] h-[90vh] flex flex-col"
         innerClassName="flex flex-col overflow-hidden"
@@ -140,8 +140,8 @@ export default function ProfileModal({ open, user, onClose, onUserUpdated, onLog
               type="button"
               onClick={() => setActiveTab(tab.key)}
               className={`px-3 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer ${activeTab === tab.key
-                  ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                  : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
+                ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
                 }`}
             >
               {tab.label}
@@ -186,7 +186,7 @@ export default function ProfileModal({ open, user, onClose, onUserUpdated, onLog
 
         <div className="pt-4 shrink-0">
           <div className="flex gap-2">
-            <Button onClick={onClose}>Fechar</Button>
+            <Button onClick={() => { setActiveTab("perfil"); onClose(); }}>Fechar</Button>
             <Button variant="danger" onClick={() => setConfirmingLogout(true)}>Sair da conta</Button>
           </div>
         </div>

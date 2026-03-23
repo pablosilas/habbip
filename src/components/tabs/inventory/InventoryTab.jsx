@@ -134,49 +134,55 @@ export default function InventoryTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="mb-2">
-            <SearchInput
-              inputRef={inputRef}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  if (hasResults) onCancelSearch()
-                  setShowDropdown(false)
-                }
-              }}
-              onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
-              onBlur={() => setShowDropdown(false)}
-              placeholder="Nome ou classname do mobi"
-              inputMode="search"
-              enterKeyHint="search"
-            >
-              <SearchHistoryDropdown
-                show={showDropdown}
-                history={history}
-                favorites={favorites}
-                onSelect={handleSelectFromDropdown}
-                onRemove={removeFromHistory}
-                onToggleFav={toggleFavorite}
-                isFavorite={isFavorite}
-                onClear={clearHistory}
-                showFurniImage
-              />
-            </SearchInput>
-          </div>
+          <div className="flex gap-2 mb-2">
+            <div className="flex-1">
+              <SearchInput
+                inputRef={inputRef}
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    if (hasResults) onCancelSearch()
+                    setShowDropdown(false)
+                  }
+                }}
+                onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
+                onBlur={() => setShowDropdown(false)}
+                placeholder="Nome ou classname do mobi"
+                inputMode="search"
+                enterKeyHint="search"
+              >
+                <SearchHistoryDropdown
+                  show={showDropdown}
+                  history={history}
+                  favorites={favorites}
+                  onSelect={handleSelectFromDropdown}
+                  onRemove={removeFromHistory}
+                  onToggleFav={toggleFavorite}
+                  isFavorite={isFavorite}
+                  onClear={clearHistory}
+                  showFurniImage
+                />
+              </SearchInput>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3">
             <select
               value={hotel}
               onChange={(e) => setHotel(e.target.value)}
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
+              className="h-9 w-16 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
             >
               {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
                 <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
               ))}
             </select>
+          </div>
+
+          <div className="grid grid-cols-2 gap-2 mb-3">
             <Button type="submit" disabled={!query.trim() || loading}>
               {loading ? "Buscando..." : "Buscar"}
+            </Button>
+            <Button variant="secondary" type="button" onClick={() => setQuery("")}>
+              Limpar
             </Button>
           </div>
         </form>

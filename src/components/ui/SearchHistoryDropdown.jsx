@@ -58,6 +58,7 @@ export default function SearchHistoryDropdown({
         {history.length > 0 && (
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             onClick={onClear}
             className="text-[10px] text-[#888] hover:text-[#ffd64d] cursor-pointer"
           >

@@ -84,37 +84,37 @@ export default function FairTab({
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="mb-2">
-            <SearchInput
-              inputRef={inputRef}
-              value={mobiQuery}
-              onChange={(e) => setMobiQuery(e.target.value)}
-              onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
-              onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
-              onBlur={() => setShowDropdown(false)}
-              placeholder="Digite o nome do mobi"
-              inputMode="search"
-              enterKeyHint="search"
-            >
-              <SearchHistoryDropdown
-                show={showDropdown}
-                history={history}
-                favorites={favorites}
-                onSelect={handleSelectFromDropdown}
-                onRemove={removeFromHistory}
-                onToggleFav={toggleFavorite}
-                isFavorite={isFavorite}
-                onClear={clearHistory}
-                showFurniImage
-              />
-            </SearchInput>
-          </div>
+          <div className="flex gap-2 mb-2">
+            <div className="flex-1">
+              <SearchInput
+                inputRef={inputRef}
+                value={mobiQuery}
+                onChange={(e) => setMobiQuery(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
+                onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
+                onBlur={() => setShowDropdown(false)}
+                placeholder="Digite o nome do mobi"
+                inputMode="search"
+                enterKeyHint="search"
+              >
+                <SearchHistoryDropdown
+                  show={showDropdown}
+                  history={history}
+                  favorites={favorites}
+                  onSelect={handleSelectFromDropdown}
+                  onRemove={removeFromHistory}
+                  onToggleFav={toggleFavorite}
+                  isFavorite={isFavorite}
+                  onClear={clearHistory}
+                  showFurniImage
+                />
+              </SearchInput>
+            </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3">
             <select
               value={fairHotel}
               onChange={(e) => setFairHotel(e.target.value)}
-              className="w-full h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
+              className="h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none w-16"
             >
               {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
                 <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
@@ -123,8 +123,12 @@ export default function FairTab({
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button type="submit" disabled={loading}>{loading ? "Consultando..." : "Consultar feira"}</Button>
-            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>Limpar</Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? "Consultando..." : "Consultar feira"}
+            </Button>
+            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>
+              Limpar
+            </Button>
           </div>
         </form>
       )}
