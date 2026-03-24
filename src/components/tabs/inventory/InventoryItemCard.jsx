@@ -39,7 +39,7 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
   return (
     <div className="flex items-center gap-2 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-2 py-2">
       {/* Imagem */}
-      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" />
+      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
 
       {/* Nome + classname */}
       <div className="flex-1 min-w-0">
