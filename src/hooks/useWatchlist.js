@@ -85,5 +85,9 @@ export function useWatchlist(serverData, markDirty, isLoggedIn) {
     }))
   }, [])
 
-  return { watchlist: items, isWatching, addToWatchlist, removeFromWatchlist, toggleWatchlist, updateWatchlistItem, updateWatchlistConfig }
+  const clearWatchlist = useCallback(() => {
+    setItems([])
+  }, [])
+
+  return { watchlist: items, isWatching, addToWatchlist, removeFromWatchlist, toggleWatchlist, updateWatchlistItem, updateWatchlistConfig, clearWatchlist }
 }

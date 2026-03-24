@@ -335,6 +335,7 @@ export default function HabboDeskApp() {
                     onPollNow={monitor.pollNow}
                     onOpenInFair={handleOpenInFair}
                     onUpdateConfig={watchlist.updateWatchlistConfig}
+                    onClearWatchlist={watchlist.clearWatchlist}
                   />
                 )}
                 <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />

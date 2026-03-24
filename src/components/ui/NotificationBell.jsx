@@ -170,7 +170,7 @@ function NotifsList({ notifications, onRemove, onOpenInFair, setOpen, expanded, 
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#ffd64d] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#f1f1f1] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
         >
           ver mais ({notifications.length - LIMIT})
         </button>
@@ -304,7 +304,7 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
         <button
           type="button"
           onClick={() => setExpanded(true)}
-          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#ffd64d] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#f1f1f1] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
         >
           ver mais ({watchlist.length - LIMIT})
         </button>
@@ -364,6 +364,7 @@ export default function NotificationBell({
   onPollNow,
   onOpenInFair,
   onUpdateConfig,
+  onClearWatchlist
 }) {
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("notifs")
@@ -494,6 +495,15 @@ export default function NotificationBell({
             <button
               type="button"
               onClick={onClearNotifications}
+              className="text-[8px] font-bold text-[#e7e7e7] hover:text-[#ffffff] cursor-pointer transition-colors"
+            >
+              limpar tudo
+            </button>
+          )}
+          {tab === "watchlist" && watchlist.length > 0 && (   // <-- bloco novo
+            <button
+              type="button"
+              onClick={onClearWatchlist}
               className="text-[8px] font-bold text-[#e7e7e7] hover:text-[#ffffff] cursor-pointer transition-colors"
             >
               limpar tudo
