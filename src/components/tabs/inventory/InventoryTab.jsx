@@ -66,6 +66,7 @@ export default function InventoryTab({
   const inputRef = React.useRef(null)
   const [footerExpanded, setFooterExpanded] = React.useState(false)
   const [inventoryFilter, setInventoryFilter] = React.useState("")
+  const [searchResultsFilter, setSearchResultsFilter] = React.useState("")
   const [showDropdown, setShowDropdown] = React.useState(false)
 
   const {
@@ -88,8 +89,19 @@ export default function InventoryTab({
     }
   }, [addToHistory, searchResults, searchKey])
 
+  React.useEffect(() => {
+    setSearchResultsFilter("")
+  }, [searchResults])
+
   const hasResults = searchResults.length > 0
   const hasDropdownItems = history.length > 0 || favorites.length > 0
+
+  const filteredSearchResults = searchResultsFilter.trim()
+    ? searchResults.filter((item) =>
+      item.FurniName?.toLowerCase().includes(searchResultsFilter.toLowerCase()) ||
+      item.ClassName?.toLowerCase().includes(searchResultsFilter.toLowerCase())
+    )
+    : searchResults
 
   function handleSearch() {
     inputRef.current?.blur()
@@ -198,7 +210,7 @@ export default function InventoryTab({
         <div className="mb-3">
           <div className="flex items-center justify-between mb-2">
             <span className="text-[11px] font-bold text-[#fff2c1]">
-              {searchResults.length} mobis encontrados — clique para adicionar
+              {filteredSearchResults.length} mobis encontrados — clique para adicionar
             </span>
             <button
               type="button"
@@ -208,8 +220,20 @@ export default function InventoryTab({
               cancelar
             </button>
           </div>
+
+          {searchResults.length > 1 && (
+            <div className="mb-2">
+              <SearchInput
+                value={searchResultsFilter}
+                onChange={(e) => setSearchResultsFilter(e.target.value)}
+                placeholder={`Filtrar nos ${searchResults.length} resultados...`}
+                className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)] [&_input]:rounded-sm"
+              />
+            </div>
+          )}
+
           <div className="space-y-[6px] max-h-[200px] overflow-y-auto pr-1">
-            {[...searchResults]
+            {[...filteredSearchResults]
               .sort((a, b) => {
                 const getPrice = (item) => {
                   const h = item?.marketData?.history || []
