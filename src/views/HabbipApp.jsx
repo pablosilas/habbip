@@ -1,4 +1,4 @@
-import React from "react"
+import React, { useCallback, useEffect, useRef } from "react"
 import { createPortal } from "react-dom"
 import feiraIcon from "../assets/feira.png"
 import usuarioIcon from "../assets/usuario.png"
@@ -29,6 +29,7 @@ import { useCreditConverter } from "../hooks/useCreditConverter"
 import { useWatchlist } from "../hooks/useWatchlist"
 import { useMonitor } from "../hooks/useMonitor"
 import { useServerSync } from "../hooks/useServerSync"
+import { useSSE } from "../hooks/useSSE"
 
 const BG_OPTIONS = [bg3, bg2, bgPattern]
 
@@ -84,7 +85,6 @@ function BgSelector({ bgIndex, onBgChange, bgs }) {
         "shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]",
       ].join(" ")}
     >
-      {/* Header */}
       <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
         <span className="text-[10px] font-bold text-white">Fundo</span>
         <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
@@ -114,8 +114,6 @@ function BgSelector({ bgIndex, onBgChange, bgs }) {
           </button>
         </div>
       </div>
-
-      {/* Body */}
       <div className="px-3 py-3 bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
         <div className="flex gap-[6px] justify-center">
           {bgs.map((bg, i) => (
@@ -165,14 +163,6 @@ export default function HabboDeskApp() {
   const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
 
-  // ── Hooks declarados antes de qualquer função que os use ──────────────────
-  //
-  // Problema original: doLogout era declarado antes dos hooks auth/fair/user,
-  // referenciando fair.setMobiQuery, user.setNickQuery etc. antes de existirem.
-  // Funcionava em runtime porque doLogout só era *chamado* depois da montagem,
-  // mas era uma armadilha de leitura — mover para depois dos hooks elimina
-  // a dependência implícita na ordem de declaração.
-
   // ── Auth ──────────────────────────────────────────────────────────────────
   const auth = useAuth()
   const isLoggedIn = auth.isLoggedIn
@@ -181,34 +171,100 @@ export default function HabboDeskApp() {
   const { serverData, loadingData, syncError, markDirty, updateLocalData } =
     useServerSync(isLoggedIn)
 
-
   // ── Hooks de dados ────────────────────────────────────────────────────────
   const inventory = useInventory(serverData, markDirty, isLoggedIn)
-  const watchlist = useWatchlist(serverData, markDirty, isLoggedIn)
   const converter = useCreditConverter(serverData, markDirty, isLoggedIn)
 
-  const monitor = useMonitor({
-    watchlist: watchlist.watchlist,
-    updateWatchlistItem: watchlist.updateWatchlistItem,
-    serverData,
-    markDirty,
-    isLoggedIn,
-  })
+  // ── Watchlist — desestruturado diretamente para evitar warning do Compiler
+  const {
+    watchlist: watchlistItems,
+    isWatching,
+    removeFromWatchlist,
+    toggleWatchlist,
+    updateWatchlistConfig,
+    clearWatchlist,
+    handlePriceChanged: watchlistHandlePriceChanged,
+  } = useWatchlist(isLoggedIn)
 
-  // ── Busca (sem servidor) ──────────────────────────────────────────────────
+  // ── Monitor (notificações) ────────────────────────────────────────────────
+  const {
+    notifications,
+    unreadCount,
+    addNotification,
+    markAllRead,
+    clearNotifications,
+    removeNotification,
+    removeNotificationsByClassName
+  } = useMonitor({ serverData, markDirty, isLoggedIn })
+
+  // ── Busca ─────────────────────────────────────────────────────────────────
   const fair = useFairSearch()
   const user = useUserSearch()
 
+  // ── Refs estáveis para o SSE ──────────────────────────────────────────────
+  const watchlistRef = useRef(watchlistItems)
+  useEffect(() => { watchlistRef.current = watchlistItems }, [watchlistItems])
+
+  const addNotificationRef = useRef(addNotification)
+  useEffect(() => { addNotificationRef.current = addNotification }, [addNotification])
+
+  // ── Handler SSE — estável, lê estado via refs ─────────────────────────────
+  const handlePriceChanged = useCallback((event) => {
+    watchlistHandlePriceChanged(event)
+
+    const sub = watchlistRef.current.find(
+      (i) => i.ClassName.toLowerCase() === event.className.toLowerCase()
+    )
+    const cfg = sub?.alertConfig ?? { alertMode: 'any' }
+
+    let shouldNotify = cfg.alertMode === 'any'
+    if (cfg.alertMode === 'price' && cfg.targetPrice != null) {
+      const margin = cfg.priceMargin ?? 0
+      shouldNotify =
+        event.newPrice >= cfg.targetPrice - margin &&
+        event.newPrice <= cfg.targetPrice + margin
+    }
+
+    if (shouldNotify) {
+      addNotificationRef.current({
+        id: `${event.className}-${Date.now()}`,
+        className: event.className,
+        furniName: event.furniName,
+        oldPrice: event.oldPrice,
+        newPrice: event.newPrice,
+        diff: event.diff,
+        pct: event.pct,
+        direction: event.direction,
+        hotel: event.hotel,
+        read: false,
+        createdAt: Date.now(),
+      })
+    }
+  }, [watchlistHandlePriceChanged])
+
+  useSSE({ isLoggedIn, onPriceChanged: handlePriceChanged })
+
+  const handleStopMonitoring = useCallback(
+    async (className) => {
+      removeNotificationsByClassName(className)
+      await removeFromWatchlist(className)
+    },
+    [removeNotificationsByClassName, removeFromWatchlist]
+  )
+
   // ── Logout ────────────────────────────────────────────────────────────────
-  // Declarado após todos os hooks que usa, eliminando a dependência implícita
-  // na ordem de declaração que existia na versão original.
   function doLogout() {
     auth.handleLogout(() => {
       setProfileModalOpen(false)
       setConfirmingLogout(false)
-      fair.setMobiQuery(""); fair.setResults([]); fair.setError(null)
-      user.setNickQuery(""); user.setSearchedUser(null); user.setError(null)
-      setFairExpanded(true); setUserExpanded(true)
+      fair.setMobiQuery("")
+      fair.setResults([])
+      fair.setError(null)
+      user.setNickQuery("")
+      user.setSearchedUser(null)
+      user.setError(null)
+      setFairExpanded(true)
+      setUserExpanded(true)
       setActiveTab("feira")
     })
   }
@@ -249,6 +305,13 @@ export default function HabboDeskApp() {
     auth.setAuthMode("login")
   }
 
+  function handleOpenInFair(className) {
+    fair.setMobiQuery(className)
+    setActiveTab("feira")
+    setFairExpanded(true)
+    fair.handleSearch(className)
+  }
+
   const processedResultsCount =
     activeTab === "feira" ? fair.results.length
       : activeTab === "usuario" ? (user.searchedUser ? 1 : 0)
@@ -259,16 +322,8 @@ export default function HabboDeskApp() {
     maxHeight: "calc(var(--vh, 1dvh) * 96)",
   }
 
-  function handleOpenInFair(className) {
-    fair.setMobiQuery(className)
-    setActiveTab("feira")
-    setFairExpanded(true)
-    fair.handleSearch(className)
-  }
-
   return (
     <>
-      {/* ── Modais ─────────────────────────────────────────────────────────── */}
       <LoginModal
         open={auth.loginModalOpen}
         mode={auth.authMode}
@@ -288,14 +343,12 @@ export default function HabboDeskApp() {
         onLogout={doLogout}
       />
       <InfoModal open={infoModalOpen} onClose={() => setInfoModalOpen(false)} />
-
       <LogoutConfirmModal
         open={confirmingLogout}
         onConfirm={doLogout}
         onCancel={() => setConfirmingLogout(false)}
       />
 
-      {/* ── App ────────────────────────────────────────────────────────────── */}
       <div
         className="h-screen overflow-hidden flex items-center justify-center py-0 px-2 sm:p-2"
         style={{
@@ -324,22 +377,21 @@ export default function HabboDeskApp() {
                 )}
                 {isLoggedIn && (
                   <NotificationBell
-                    notifications={monitor.notifications}
-                    unreadCount={monitor.unreadCount}
-                    watchlist={watchlist.watchlist}
-                    isPolling={monitor.isPolling}
-                    onMarkAllRead={monitor.markAllRead}
-                    onClearNotifications={monitor.clearNotifications}
-                    onRemoveNotification={monitor.removeNotification}
-                    onRemoveFromWatchlist={watchlist.removeFromWatchlist}
-                    onPollNow={monitor.pollNow}
+                    notifications={notifications}
+                    unreadCount={unreadCount}
+                    watchlist={watchlistItems}
+                    isPolling={false}
+                    onMarkAllRead={markAllRead}
+                    onClearNotifications={clearNotifications}
+                    onRemoveNotification={removeNotification}
+                    onRemoveFromWatchlist={handleStopMonitoring}
+                    onPollNow={() => { }}
                     onOpenInFair={handleOpenInFair}
-                    onUpdateConfig={watchlist.updateWatchlistConfig}
-                    onClearWatchlist={watchlist.clearWatchlist}
+                    onUpdateConfig={updateWatchlistConfig}
+                    onClearWatchlist={clearWatchlist}
                   />
                 )}
                 <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />
-                {/* Botão X: confirma logout se logado, não faz nada se anônimo */}
                 {isLoggedIn && (
                   <span
                     onClick={() => setConfirmingLogout(true)}
@@ -370,7 +422,7 @@ export default function HabboDeskApp() {
                     icon={<img src={inventarioIcon} className="w-7 h-6 image-rendering-pixel icon-dark" alt="Inventário" />}
                     active={activeTab === "inventario"}
                     onClick={() => {
-                      if (!isLoggedIn) { handleLockedAction("inventario"); return }
+                      if (!isLoggedIn) { handleLockedAction(); return }
                       setActiveTab("inventario")
                     }}
                     locked={!isLoggedIn}
@@ -419,14 +471,11 @@ export default function HabboDeskApp() {
                         inventory.addToInventory(item)
                       }
                     }
-                    : () => handleLockedAction("inventory")
+                    : () => handleLockedAction()
                   }
                   isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
-                  isWatching={isLoggedIn ? watchlist.isWatching : () => false}
-                  onToggleWatchlist={isLoggedIn
-                    ? watchlist.toggleWatchlist
-                    : () => handleLockedAction("watchlist")
-                  }
+                  isWatching={isLoggedIn ? isWatching : () => false}
+                  onToggleWatchlist={isLoggedIn ? toggleWatchlist : () => handleLockedAction()}
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}

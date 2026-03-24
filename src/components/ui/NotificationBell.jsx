@@ -216,7 +216,7 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
 
       <div
         className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => { onOpenInFair?.(item.ClassName); setOpen(false) }}
+        onClick={() => { onOpenInFair?.(item.FurniName); setOpen(false) }}
       >
         <div className="text-[11px] font-bold text-white truncate">
           {item.FurniName}
