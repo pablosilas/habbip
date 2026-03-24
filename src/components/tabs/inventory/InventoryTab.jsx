@@ -59,10 +59,11 @@ export default function InventoryTab({
   serverData,
   markDirty,
   isLoggedIn,
-  updateLocalData
+  updateLocalData,
+  expanded,
+  setExpanded
 }) {
   const inputRef = React.useRef(null)
-  const [expanded, setExpanded] = React.useState(true)
   const [footerExpanded, setFooterExpanded] = React.useState(false)
   const [inventoryFilter, setInventoryFilter] = React.useState("")
   const [showDropdown, setShowDropdown] = React.useState(false)

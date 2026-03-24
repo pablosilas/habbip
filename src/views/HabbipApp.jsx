@@ -161,6 +161,7 @@ export default function HabboDeskApp() {
   const [infoModalOpen, setInfoModalOpen] = React.useState(false)
   const [fairExpanded, setFairExpanded] = React.useState(true)
   const [userExpanded, setUserExpanded] = React.useState(true)
+  const [inventoryExpanded, setInventoryExpanded] = React.useState(true)
   const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
 
@@ -225,6 +226,10 @@ export default function HabboDeskApp() {
   React.useEffect(() => {
     if (user.searchedUser) setUserExpanded(false)
   }, [user.searchedUser])
+
+  React.useEffect(() => {
+    if (inventory.searchResults.length > 0) setInventoryExpanded(false)
+  }, [inventory.searchResults])
 
   React.useEffect(() => {
     function setVh() {
@@ -469,6 +474,8 @@ export default function HabboDeskApp() {
                     creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
                     onSetCreditRate={converter.setRate}
                     searchKey={inventory.searchKey}
+                    expanded={inventoryExpanded}
+                    setExpanded={setInventoryExpanded}
                     serverData={serverData}
                     markDirty={markDirty}
                     isLoggedIn={isLoggedIn}
