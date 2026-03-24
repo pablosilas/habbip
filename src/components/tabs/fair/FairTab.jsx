@@ -29,7 +29,7 @@ export default function FairTab({
   onTriggerFly
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
-  const [sortBy, setSortBy] = React.useState("price")
+  const [sortBy, setSortBy] = React.useState("priceValue")
   const [filterQuery, setFilterQuery] = React.useState("")
   const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
   const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
@@ -82,7 +82,14 @@ export default function FairTab({
     const bL = Array.isArray(bH) && bH.length ? bH[bH.length - 1] : null
     const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
     const bP = Array.isArray(bH) && bH.length > 1 ? bH[bH.length - 2] : null
+
     if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
+    if (sortBy === "priceValue") {
+      // Prioridade: preço em circulação, senão média histórica
+      const aPrice = a.marketData?.currentPrice ?? a.marketData?.averagePrice ?? 0
+      const bPrice = b.marketData?.currentPrice ?? b.marketData?.averagePrice ?? 0
+      return bPrice - aPrice
+    }
     if (sortBy === "trend") return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
     if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
     return 0
@@ -181,7 +188,7 @@ export default function FairTab({
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
           <div className="flex gap-1 flex-wrap flex-1">
-            {[{ value: "price", label: "Preço" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
+            {[{ value: "priceValue", label: "Preço" }, { value: "price", label: "Média" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
               <button key={value} type="button" onClick={() => setSortBy(value)}
                 className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
               >

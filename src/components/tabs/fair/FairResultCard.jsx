@@ -489,7 +489,7 @@ export default function FairResultCard({
   const latestEntry = getLatestHistoryEntry(history)
 
   const rawPrice = item?.marketData?.currentPrice ?? latestEntry?.[0] ?? null
-  const averagePrice = item?.marketData?.averagePrice ?? "-"
+  const averagePrice = (item?.marketData?.averagePrice && item?.marketData?.averagePrice > 0) ? item?.marketData?.averagePrice : "sem média"
   const openOffers = item?.marketData?.currentOpenOffers ?? latestEntry?.[3] ?? 0
 
   // Considera que há oferta ativa somente se openOffers > 0 E preço > 0
@@ -556,7 +556,20 @@ export default function FairResultCard({
           )}
         </div>
 
-        <MetricBlock label="Média" value={averagePrice} showCoin coinIcon={coinIcon} />
+        {/* Média — mesma estilização de "Sem oferta" quando não há ofertas ativas */}
+        <div>
+          <div className="text-[11px] font-bold text-white">Média</div>
+          {averagePrice === "sem média" ? (
+            <div className="text-[12px] text-[#888] italic leading-tight mt-[2px]">
+              {averagePrice}
+            </div>
+          ) : (
+            <div className="text-[13px] text-[#f1f1f1] flex items-center gap-1 flex-wrap">
+              <img src={coinIcon} alt="coin" className="w-4 h-4" />
+              <span>{averagePrice}</span>
+            </div>
+          )}
+        </div>
         <MetricBlock label="Ofertas" value={openOffers} />
       </div>
 

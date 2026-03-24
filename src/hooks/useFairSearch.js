@@ -1,5 +1,6 @@
 import React from "react"
 import { searchMarketItems } from "../services/marketSearch"
+import { debounce } from "../utils/debounce"
 
 export function useFairSearch() {
   const [mobiQuery, setMobiQuery] = React.useState("")
@@ -8,6 +9,9 @@ export function useFairSearch() {
   const [error, setError] = React.useState("")
   const [results, setResults] = React.useState([])
 
+  // Cria a versão debounced do handleSearch (500ms delay)
+  const debouncedSearchRef = React.useRef(null)
+
   React.useEffect(() => {
     if (!mobiQuery.trim()) {
       setResults([])
@@ -15,7 +19,7 @@ export function useFairSearch() {
     }
   }, [mobiQuery])
 
-  const handleSearch = async (term) => {
+  const handleSearch = React.useCallback(async (term) => {
     const query = (term ?? mobiQuery).trim()
 
     if (!query) {
@@ -42,7 +46,18 @@ export function useFairSearch() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [mobiQuery, hotel])
+
+  // Cria debounce com cleanup
+  React.useEffect(() => {
+    debouncedSearchRef.current = debounce(handleSearch, 500)
+    return () => debouncedSearchRef.current?.cancel()
+  }, [handleSearch])
+
+  const debouncedSearch = React.useCallback(
+    (term) => debouncedSearchRef.current?.(term),
+    []
+  )
 
   return {
     mobiQuery,
@@ -54,6 +69,6 @@ export function useFairSearch() {
     setError,
     results,
     setResults,
-    handleSearch,
+    handleSearch: debouncedSearch,
   }
 }

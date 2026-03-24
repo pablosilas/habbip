@@ -1,6 +1,9 @@
 const HABBO_PUBLIC_API_BASE = "https://www.habbo.com.br/api/public"
 const HABBIP_API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
+import { fetchWithRetry } from "../utils/fetchWithRetry"
+import { fetchWithQueue } from "../utils/requestQueue"
+
 async function handleResponse(response, defaultMessage) {
   if (!response.ok) throw new Error(defaultMessage)
   return response.json()
@@ -17,7 +20,7 @@ async function fetchOfficialMarketBatch(items, hotel = "br") {
   }
   const body = { roomItems, wallItems }
   const baseUrl = getHotelBaseUrl(hotel)
-  const response = await fetch(`${baseUrl}/api/public/marketplace/stats/batch`, {
+  const response = await fetchWithQueue(`${baseUrl}/api/public/marketplace/stats/batch`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
@@ -125,7 +128,7 @@ export async function getFurnitureImageUrl(classname, hotel = "br") {
   if (imageMemoryCache.has(key)) return imageMemoryCache.get(key)
 
   if (!imagePendingMap.has(key)) {
-    const promise = fetch(`${HABBIP_API_BASE}/furnidata/image-url?classname=${encodeURIComponent(base)}&hotel=${hotel}`)
+    const promise = fetchWithQueue(`${HABBIP_API_BASE}/furnidata/image-url?classname=${encodeURIComponent(base)}&hotel=${hotel}`)
       .then(r => r.ok ? r.json() : null)
       .then(data => {
         const url = data?.url || ""
@@ -163,27 +166,27 @@ export function getFurnitureImageNextFallback(currentUrl, classname, revision) {
 // ── Usuários ──────────────────────────────────────────────────────────────────
 
 export async function fetchUserByName(nick) {
-  const response = await fetch(`${HABBO_PUBLIC_API_BASE}/users?name=${encodeURIComponent(nick.trim())}`)
+  const response = await fetchWithRetry(`${HABBO_PUBLIC_API_BASE}/users?name=${encodeURIComponent(nick.trim())}`)
   return handleResponse(response, "Erro ao buscar usuário.")
 }
 
 export async function fetchUserProfileById(userId) {
-  const response = await fetch(`${HABBO_PUBLIC_API_BASE}/users/${userId}/profile`)
+  const response = await fetchWithRetry(`${HABBO_PUBLIC_API_BASE}/users/${userId}/profile`)
   return handleResponse(response, "Erro ao buscar perfil do usuário.")
 }
 
 export async function fetchUserGroupsById(userId) {
-  const response = await fetch(`${HABBO_PUBLIC_API_BASE}/users/${userId}/groups`)
+  const response = await fetchWithRetry(`${HABBO_PUBLIC_API_BASE}/users/${userId}/groups`)
   return handleResponse(response, "Erro ao buscar grupos do usuário.")
 }
 
 export async function fetchUserBadgesById(userId) {
-  const response = await fetch(`${HABBO_PUBLIC_API_BASE}/users/${userId}/badges`)
+  const response = await fetchWithRetry(`${HABBO_PUBLIC_API_BASE}/users/${userId}/badges`)
   return handleResponse(response, "Erro ao buscar badges do usuário.")
 }
 
 export async function fetchUserRoomsById(userId) {
-  const response = await fetch(`${HABBO_PUBLIC_API_BASE}/users/${userId}/rooms`)
+  const response = await fetchWithRetry(`${HABBO_PUBLIC_API_BASE}/users/${userId}/rooms`)
   return handleResponse(response, "Erro ao buscar quartos do usuário.")
 }
 

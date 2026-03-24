@@ -6,6 +6,7 @@ import coinIcon from "../../assets/coin.png"
 export default function AlertConfigModal({ open, item, config, onSave, onClose }) {
   const [alertMode, setAlertMode] = useState("any")
   const [targetPrice, setTargetPrice] = useState("")
+  const [priceMargin, setPriceMargin] = useState("")
   const [, startTransition] = useTransition()
 
   // Calcula o preço atual baseado na estrutura do item
@@ -17,11 +18,21 @@ export default function AlertConfigModal({ open, item, config, onSave, onClose }
     item?.marketData?.averagePrice ??
     "-"
 
+  // Calcula a média histórica (não mais usada, mantida para compatibilidade)
+  // const averagePrice = item?.marketData?.averagePrice ??
+  //   (item?.marketData?.history?.length > 0
+  //     ? Math.round(
+  //         item.marketData.history.reduce((sum, h) => sum + (h[0] || 0), 0) /
+  //           item.marketData.history.length
+  //       )
+  //     : null)
+
   useEffect(() => {
     if (open && config) {
       startTransition(() => {
         setAlertMode(config.alertMode || "any")
         setTargetPrice(config.targetPrice ? String(config.targetPrice) : "")
+        setPriceMargin(config.priceMargin ? String(config.priceMargin) : "")
       })
     }
   }, [open, config])
@@ -29,7 +40,8 @@ export default function AlertConfigModal({ open, item, config, onSave, onClose }
   function handleSave() {
     const newConfig = {
       alertMode,
-      targetPrice: alertMode === "price" && targetPrice ? parseInt(targetPrice, 10) : null,
+      targetPrice: (alertMode === "price" && targetPrice) ? parseInt(targetPrice, 10) : null,
+      priceMargin: (alertMode === "price" && priceMargin) ? parseInt(priceMargin, 10) : null,
     }
     onSave?.(newConfig)
   }
@@ -119,7 +131,7 @@ export default function AlertConfigModal({ open, item, config, onSave, onClose }
                   className="cursor-pointer"
                 />
                 <span className="text-[11px] text-[#d0d0d0]">
-                  Quando alcançar um preço específico
+                  Preço com margem
                 </span>
               </label>
             </div>
@@ -129,22 +141,50 @@ export default function AlertConfigModal({ open, item, config, onSave, onClose }
           {alertMode === "price" && (
             <div className="mb-4">
               <label htmlFor="targetPrice" className="text-[10px] font-bold text-white uppercase tracking-wider mb-[8px] block">
-                Preço Alvo (moedas)
+                Preço Alvo
               </label>
-              <input
-                id="targetPrice"
-                type="number"
-                min="1"
-                value={targetPrice}
-                onChange={(e) => setTargetPrice(e.target.value)}
-                placeholder="Digite o preço desejado..."
-                className="w-full h-8 border border-[#555] bg-[rgba(255,255,255,0.06)] px-2 text-[12px] text-white placeholder:text-[#666] outline-none focus:border-[#7A7A7A]"
-              />
-              <div className="text-[9px] text-[#888] mt-[4px]">
-                Você receberá um alerta quando o preço atingir este valor ou menor.
+              <div className="flex items-center gap-2 mb-3">
+                <img src={coinIcon} alt="coin" className="w-4 h-4 object-contain" />
+                <input
+                  id="targetPrice"
+                  type="number"
+                  min="1"
+                  value={targetPrice}
+                  onChange={(e) => setTargetPrice(e.target.value)}
+                  placeholder="Digite o preço desejado..."
+                  className="flex-1 h-8 border border-[#555] bg-[rgba(255,255,255,0.06)] px-2 text-[12px] text-white placeholder:text-[#666] outline-none focus:border-[#7A7A7A]"
+                />
               </div>
+
+              <label htmlFor="priceMargin" className="text-[10px] font-bold text-white uppercase tracking-wider mb-[8px] block">
+                Margem (±)
+              </label>
+              <div className="flex items-center gap-2">
+                <img src={coinIcon} alt="coin" className="w-4 h-4 object-contain" />
+                <input
+                  id="priceMargin"
+                  type="number"
+                  min="0"
+                  value={priceMargin}
+                  onChange={(e) => setPriceMargin(e.target.value)}
+                  placeholder="Ex: 5 para aceitar ±5"
+                  className="flex-1 h-8 border border-[#555] bg-[rgba(255,255,255,0.06)] px-2 text-[12px] text-white placeholder:text-[#666] outline-none focus:border-[#7A7A7A]"
+                />
+              </div>
+              {targetPrice && priceMargin && (
+                <div className="text-[9px] text-[#888] mt-[4px]">
+                  Notifica entre {parseInt(targetPrice, 10) - parseInt(priceMargin, 10)} e {parseInt(targetPrice, 10) + parseInt(priceMargin, 10)}.
+                </div>
+              )}
+              {targetPrice && !priceMargin && (
+                <div className="text-[9px] text-[#888] mt-[4px]">
+                  Notifica quando atingir este valor ou menor.
+                </div>
+              )}
             </div>
           )}
+
+          {/* Average Discount Input - REMOVIDO */}
 
           {/* Current Price Info */}
           <div className="mb-4 p-2 bg-[rgba(255,255,255,0.04)] rounded border border-[#3f3f3f]">
@@ -168,7 +208,10 @@ export default function AlertConfigModal({ open, item, config, onSave, onClose }
             <Button
               variant="primary"
               onClick={handleSave}
-              disabled={alertMode === "price" && !targetPrice}
+              disabled={!(
+                (alertMode === "any") ||
+                (alertMode === "price" && targetPrice && priceMargin)
+              )}
             >
               Salvar
             </Button>

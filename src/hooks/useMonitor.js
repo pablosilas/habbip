@@ -158,13 +158,19 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
       const pct = ((diff / oldPrice) * 100).toFixed(1)
 
       // ─── Verificar configuração de alerta ─────────────────────────────────
-      const alertConfig = watchedItem.alertConfig || { alertMode: "any", targetPrice: null }
-      const shouldNotify = alertConfig.alertMode === "any" ||
-        (alertConfig.alertMode === "price" &&
-          alertConfig.targetPrice !== null &&
-          alertConfig.targetPrice !== undefined &&
-          ((diff > 0 && newPrice >= alertConfig.targetPrice) ||
-            (diff < 0 && newPrice <= alertConfig.targetPrice)))
+      const alertConfig = watchedItem.alertConfig || { alertMode: "any", targetPrice: null, priceMargin: null }
+
+      let shouldNotify = false
+
+      if (alertConfig.alertMode === "any") {
+        shouldNotify = true
+      } else if (alertConfig.alertMode === "price" && alertConfig.targetPrice !== null && alertConfig.targetPrice !== undefined) {
+        // Modo preço com margem: notificar quando dentro da faixa
+        const margin = alertConfig.priceMargin ?? 0
+        const minPrice = alertConfig.targetPrice - margin
+        const maxPrice = alertConfig.targetPrice + margin
+        shouldNotify = newPrice >= minPrice && newPrice <= maxPrice
+      }
 
       if (!shouldNotify) {
         updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
