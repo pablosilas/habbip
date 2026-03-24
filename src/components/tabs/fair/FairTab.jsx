@@ -4,6 +4,7 @@ import Button from "../../ui/Button"
 import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useMobiHistory } from "../../../hooks/useSearchHistory"
+import AlertConfigModal from "../../modals/AlertConfigModal"
 
 export default function FairTab({
   mobiQuery,
@@ -30,6 +31,8 @@ export default function FairTab({
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("price")
   const [filterQuery, setFilterQuery] = React.useState("")
+  const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
+  const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
   const inputRef = React.useRef(null)
 
   const {
@@ -160,6 +163,20 @@ export default function FairTab({
 
       {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
 
+      {typeof document !== "undefined" && (
+        <AlertConfigModal
+          open={alertConfigOpen}
+          item={selectedItemForConfig}
+          config={selectedItemForConfig?.alertConfig || { alertMode: "any", targetPrice: null }}
+          onSave={(newConfig) => {
+            // Config será salva direto no watchlist quando se clica em monitorar
+            // Aqui apenas fechamos o modal
+            setAlertConfigOpen(false)
+          }}
+          onClose={() => setAlertConfigOpen(false)}
+        />
+      )}
+
       {results.length > 1 && (
         <div className="flex items-center gap-2 mb-2 flex-wrap">
           <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
@@ -201,6 +218,10 @@ export default function FairTab({
               isWatching={isWatching ? isWatching(item.ClassName) : false}
               onToggleWatchlist={onToggleWatchlist}
               isLoggedIn={isLoggedIn}
+              onConfigureAlert={(item) => {
+                setSelectedItemForConfig(item)
+                setAlertConfigOpen(true)
+              }}
             />
           )
         })}

@@ -48,6 +48,10 @@ export function useWatchlist(serverData, markDirty, isLoggedIn) {
         basePrice: price,
         addedAt: Date.now(),
         marketData: item.marketData ?? null,
+        alertConfig: {
+          alertMode: "any",
+          targetPrice: null,
+        },
       }]
     })
   }, [])
@@ -74,5 +78,12 @@ export function useWatchlist(serverData, markDirty, isLoggedIn) {
     }))
   }, [])
 
-  return { watchlist: items, isWatching, addToWatchlist, removeFromWatchlist, toggleWatchlist, updateWatchlistItem }
+  const updateWatchlistConfig = useCallback((className, newConfig) => {
+    setItems((prev) => prev.map((i) => {
+      if (i.ClassName !== className) return i
+      return { ...i, alertConfig: { ...i.alertConfig, ...newConfig } }
+    }))
+  }, [])
+
+  return { watchlist: items, isWatching, addToWatchlist, removeFromWatchlist, toggleWatchlist, updateWatchlistItem, updateWatchlistConfig }
 }

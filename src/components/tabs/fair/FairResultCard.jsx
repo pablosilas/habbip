@@ -17,6 +17,7 @@ import starIcon from "../../../assets/star.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import { createPortal } from "react-dom"
 import toolIcon from "../../../assets/tool.png"
+import configIcon from "../../../assets/config.png"
 import ToggleSwitch from "../../ui/ToggleSwitch"
 import FurnitureImage from "../../ui/FurnitureImage"
 
@@ -299,7 +300,7 @@ function PriceSparkline({ history = [] }) {
 
 // ─── ActionsMenu ──────────────────────────────────────────────────────────────
 
-function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn }) {
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn, onConfigureAlert }) {
   const [open, setOpen] = React.useState(false)
   const [pos, setPos] = React.useState({ top: 0, left: 0 })
   const btnRef = React.useRef(null)
@@ -401,7 +402,30 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           <img src={watchIcon} alt="Monitorar" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && <ToggleSwitch checked={isWatching} />}
+          {isLoggedIn && (
+            <div className="flex items-center gap-[6px]">
+              {isWatching && (
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); onConfigureAlert?.(item) }}
+                  title="Configurar alertas"
+                  className="flex items-center justify-center cursor-pointer hover:brightness-125 transition-all"
+                  style={{
+                    width: 16,
+                    height: 16,
+                    fontSize: "10px",
+                    padding: 0,
+                    background: "none",
+                    border: "none",
+                    color: "#d0d0d0"
+                  }}
+                >
+                  <img src={configIcon} alt="Configurar" className="w-[14px] h-[14px] object-contain" />
+                </button>
+              )}
+              <ToggleSwitch checked={isWatching} />
+            </div>
+          )}
         </button>
 
         <button
@@ -458,7 +482,8 @@ export default function FairResultCard({
   isWatching = false,
   onToggleWatchlist,
   onTriggerFly,
-  isLoggedIn = false
+  isLoggedIn = false,
+  onConfigureAlert
 }) {
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
@@ -502,6 +527,7 @@ export default function FairResultCard({
               onToggleWatchlist={onToggleWatchlist}
               onAddToInventory={onAddToInventory}
               isLoggedIn={isLoggedIn}
+              onConfigureAlert={onConfigureAlert}
             />
           </div>
         </div>

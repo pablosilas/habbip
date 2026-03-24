@@ -157,6 +157,20 @@ export function useMonitor({ watchlist, updateWatchlistItem, serverData, markDir
       const diff = newPrice - oldPrice
       const pct = ((diff / oldPrice) * 100).toFixed(1)
 
+      // ─── Verificar configuração de alerta ─────────────────────────────────
+      const alertConfig = watchedItem.alertConfig || { alertMode: "any", targetPrice: null }
+      const shouldNotify = alertConfig.alertMode === "any" ||
+        (alertConfig.alertMode === "price" &&
+          alertConfig.targetPrice !== null &&
+          alertConfig.targetPrice !== undefined &&
+          ((diff > 0 && newPrice >= alertConfig.targetPrice) ||
+            (diff < 0 && newPrice <= alertConfig.targetPrice)))
+
+      if (!shouldNotify) {
+        updateWatchlistItemRef.current(watchedItem.ClassName, found.marketData)
+        return
+      }
+
       addNotification({
         id: `${watchedItem.ClassName}-${Date.now()}`,
         className: watchedItem.ClassName,

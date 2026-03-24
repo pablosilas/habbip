@@ -4,7 +4,9 @@ import coinIcon from "../../assets/coin.png"
 import closeIcon from "../../assets/close.png"
 import alertIcon from "../../assets/alert.png"
 import watchIcon from "../../assets/watch.png"
+import configIcon from "../../assets/config.png"
 import FurniThumb from "./FurniThumb"
+import AlertConfigModal from "../modals/AlertConfigModal"
 
 function timeAgo(ms) {
   const diff = Date.now() - ms
@@ -164,7 +166,8 @@ function NotifsList({ notifications, onRemove, onOpenInFair, setOpen }) {
   )
 }
 
-function WatchlistItem({ item, onRemove, onOpenInFair, setOpen }) {
+function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }) {
+  const [configModalOpen, setConfigModalOpen] = React.useState(false)
   const history = item?.marketData?.history || []
   const currentPrice =
     item?.marketData?.currentPrice ??
@@ -177,6 +180,11 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen }) {
     typeof currentPrice === "number" && item.basePrice
       ? currentPrice - item.basePrice
       : null
+
+  function handleSaveConfig(newConfig) {
+    onUpdateConfig?.(item.ClassName, newConfig)
+    setConfigModalOpen(false)
+  }
 
   return (
     <div className="flex items-center gap-2 px-3 py-[8px] border-b border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors">
@@ -211,14 +219,37 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen }) {
           )}
         </div>
       </div>
-      <div className="flex items-center self-stretch">
+      <div className="flex items-center gap-1 self-stretch">
+        <button
+          type="button"
+          onClick={(e) => { e.stopPropagation(); setConfigModalOpen(true) }}
+          title="Configurar alertas"
+          className="flex items-center justify-center cursor-pointer hover:brightness-110 active:translate-y-[1px] transition-all"
+          style={{
+            width: 18,
+            height: 18,
+            fontSize: "10px",
+          }}
+        >
+          <img src={configIcon} alt="Configurar" className="w-[14px] h-[14px] object-contain" />
+        </button>
         <CloseButton onClick={() => onRemove(item.ClassName)} title="Parar de monitorar" />
       </div>
+
+      {typeof document !== "undefined" && (
+        <AlertConfigModal
+          open={configModalOpen}
+          item={item}
+          config={item.alertConfig || { alertMode: "any", targetPrice: null }}
+          onSave={handleSaveConfig}
+          onClose={() => setConfigModalOpen(false)}
+        />
+      )}
     </div >
   )
 }
 
-function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen }) {
+function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateConfig }) {
   if (watchlist.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -240,6 +271,7 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen }) {
           onRemove={onRemove}
           onOpenInFair={onOpenInFair}
           setOpen={setOpen}
+          onUpdateConfig={onUpdateConfig}
         />
       ))}
     </div>
@@ -286,7 +318,8 @@ export default function NotificationBell({
   onRemoveNotification,
   onRemoveFromWatchlist,
   onPollNow,
-  onOpenInFair
+  onOpenInFair,
+  onUpdateConfig,
 }) {
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("notifs")
@@ -429,6 +462,7 @@ export default function NotificationBell({
             onRemove={onRemoveFromWatchlist}
             onOpenInFair={onOpenInFair}
             setOpen={setOpen}
+            onUpdateConfig={onUpdateConfig}
           />
         )}
       </div>
