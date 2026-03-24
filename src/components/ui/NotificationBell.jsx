@@ -502,7 +502,7 @@ export default function NotificationBell({
         </div>
       </div>
 
-      <div className="max-h-[370px] overflow-y-auto bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+      <div className="max-h-[400px] overflow-y-auto bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
         {tab === "notifs" ? (
           <NotifsList
             notifications={notifications}
