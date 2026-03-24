@@ -144,7 +144,7 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
   )
 }
 
-function NotifsList({ notifications, onRemove, onOpenInFair, setOpen }) {
+function NotifsList({ notifications, onRemove, onOpenInFair, setOpen, expanded, setExpanded }) {
   if (notifications.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -157,11 +157,33 @@ function NotifsList({ notifications, onRemove, onOpenInFair, setOpen }) {
     )
   }
 
+  const LIMIT = 3
+  const notificationsToShow = expanded ? notifications : notifications.slice(0, LIMIT)
+  const hasMore = notifications.length > LIMIT
+
   return (
     <div>
-      {notifications.map((n) => (
+      {notificationsToShow.map((n) => (
         <NotifItem key={n.id} notif={n} onRemove={onRemove} onOpenInFair={onOpenInFair} setOpen={setOpen} />
       ))}
+      {hasMore && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#ffd64d] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+        >
+          ver mais ({notifications.length - LIMIT})
+        </button>
+      )}
+      {expanded && hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#888] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+        >
+          ver menos
+        </button>
+      )}
     </div>
   )
 }
@@ -249,7 +271,7 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
   )
 }
 
-function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateConfig }) {
+function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateConfig, expanded, setExpanded }) {
   if (watchlist.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -262,9 +284,13 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
     )
   }
 
+  const LIMIT = 4
+  const watchlistToShow = expanded ? watchlist : watchlist.slice(0, LIMIT)
+  const hasMore = watchlist.length > LIMIT
+
   return (
     <div>
-      {watchlist.map((item) => (
+      {watchlistToShow.map((item) => (
         <WatchlistItem
           key={item.ClassName}
           item={item}
@@ -274,6 +300,24 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
           onUpdateConfig={onUpdateConfig}
         />
       ))}
+      {hasMore && !expanded && (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#ffd64d] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+        >
+          ver mais ({watchlist.length - LIMIT})
+        </button>
+      )}
+      {expanded && hasMore && (
+        <button
+          type="button"
+          onClick={() => setExpanded(false)}
+          className="w-full px-3 py-[10px] text-[11px] font-bold text-[#888] hover:bg-[rgba(255,255,255,0.04)] transition-colors text-center border-t border-[#3f3f3f]"
+        >
+          ver menos
+        </button>
+      )}
     </div>
   )
 }
@@ -324,6 +368,8 @@ export default function NotificationBell({
   const [open, setOpen] = React.useState(false)
   const [tab, setTab] = React.useState("notifs")
   const [dropdownPos, setDropdownPos] = React.useState({ top: 0, right: 0 })
+  const [expandedNotifs, setExpandedNotifs] = React.useState(false)
+  const [expandedWatchlist, setExpandedWatchlist] = React.useState(false)
   const internalRef = React.useRef(null)
   const panelRef = React.useRef(null)
 
@@ -369,6 +415,15 @@ export default function NotificationBell({
     document.addEventListener("mousedown", handleClickOutside)
     return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [open, btnRef])
+
+  // Reset expanded states when switching tabs
+  React.useEffect(() => {
+    if (tab === "notifs") {
+      setExpandedWatchlist(false)
+    } else {
+      setExpandedNotifs(false)
+    }
+  }, [tab])
 
   const currentCount =
     tab === "notifs" ? notifications.length : watchlist.length
@@ -447,14 +502,15 @@ export default function NotificationBell({
         </div>
       </div>
 
-      <div className="max-h-[340px] overflow-y-auto bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+      <div className="max-h-[370px] overflow-y-auto bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
         {tab === "notifs" ? (
           <NotifsList
             notifications={notifications}
             onRemove={onRemoveNotification}
             onOpenInFair={onOpenInFair}
             setOpen={setOpen}
-
+            expanded={expandedNotifs}
+            setExpanded={setExpandedNotifs}
           />
         ) : (
           <WatchlistList
@@ -463,6 +519,8 @@ export default function NotificationBell({
             onOpenInFair={onOpenInFair}
             setOpen={setOpen}
             onUpdateConfig={onUpdateConfig}
+            expanded={expandedWatchlist}
+            setExpanded={setExpandedWatchlist}
           />
         )}
       </div>
