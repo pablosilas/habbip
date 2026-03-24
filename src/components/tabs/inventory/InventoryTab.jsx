@@ -7,6 +7,7 @@ import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useInventoryHistory } from "../../../hooks/useSearchHistory"
 import FurnitureImage from "../../ui/FurnitureImage"
+import loadingGif from "../../../assets/loading.gif"
 
 function SearchResultOption({ item, onSelect }) {
   const history = item?.marketData?.history || []
@@ -61,7 +62,8 @@ export default function InventoryTab({
   isLoggedIn,
   updateLocalData,
   expanded,
-  setExpanded
+  setExpanded,
+  loadingData
 }) {
   const inputRef = React.useRef(null)
   const [footerExpanded, setFooterExpanded] = React.useState(false)
@@ -138,7 +140,7 @@ export default function InventoryTab({
       >
         <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">Meu Inventário</div>
-          <div className="text-[#d2d2d2] text-[11px]">
+          <div className="text-[#d2d2d2] text-[11px] leading-4">
             Monte seu inventário e calcule o valor total baseado na feira livre.
           </div>
         </div>
@@ -263,7 +265,14 @@ export default function InventoryTab({
 
       {/* Lista do inventário */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
-        {items.length === 0 ? (
+        {loadingData ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <img src={loadingGif} alt="Carregando" className="w-12 h-12" />
+              <div className="text-[#d2d2d2] text-[12px]">Sincronizando dados...</div>
+            </div>
+          </div>
+        ) : items.length === 0 ? (
           !loading && !hasResults && (
             <div className="text-[#e0e0e0] text-[12px]">
               Nenhum mobi no inventário. Adicione acima.

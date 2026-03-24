@@ -11,6 +11,23 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
   const [searchKey, setSearchKey] = useState(0)
   const hydrated = useRef(false)
 
+  // ── Ref de parâmetros ────────────────────────────────────────────────────
+  //
+  // Problema original: handleSearch tinha [query, hotel] no useCallback,
+  // recriando a função a cada tecla digitada. Componentes filhos que recebiam
+  // handleSearch como prop sofriam re-renders desnecessários a cada caractere
+  // digitado, mesmo que a busca ainda não tivesse sido disparada.
+  //
+  // Solução: query e hotel ficam numa ref sempre sincronizada. handleSearch
+  // não tem dependências instáveis e tem identidade estável durante todo o
+  // ciclo de vida do componente.
+  const searchParamsRef = useRef({ query, hotel })
+
+  // Mantém a ref sincronizada com o estado mais recente
+  useEffect(() => {
+    searchParamsRef.current = { query, hotel }
+  }, [query, hotel])
+
   // Hidrata o estado a partir dos dados do servidor
   useEffect(() => {
     if (!serverData || !isLoggedIn) return
@@ -31,33 +48,10 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
     setError("")
   }, [query])
 
-  const handleSearch = useCallback(async (term) => {
-    const q = (term ?? query).trim()
-    if (!q) { setError("Digite o nome ou classname do mobi."); return }
-
-    setLoading(true)
-    setError("")
-    setSearchResults([])
-    setSearchKey((v) => v + 1)
-
-    try {
-      const filtered = await searchMarketItems({ query: q, hotel })
-
-      if (filtered.length === 0) { setError("Nenhum mobi encontrado."); return }
-
-      if (filtered.length === 1) {
-        addToInventory(filtered[0])
-        setQuery("")
-      } else {
-        setSearchResults(filtered)
-      }
-    } catch (err) {
-      setError(err.message || "Erro ao buscar mobi.")
-    } finally {
-      setLoading(false)
-    }
-  }, [query, hotel])
-
+  // ── addToInventory declarado antes de handleSearch ────────────────────────
+  //
+  // handleSearch chama addToInventory diretamente quando há resultado único,
+  // então precisa estar disponível via ref para evitar dependência circular.
   const addToInventory = useCallback((found) => {
     setItems((prev) => {
       const existing = prev.findIndex((i) => i.ClassName === found.ClassName)
@@ -71,6 +65,44 @@ export function useInventory(serverData, markDirty, isLoggedIn) {
     setSearchResults([])
     setQuery("")
   }, [])
+
+  // Ref para addToInventory — permite que handleSearch a chame sem dependência
+  const addToInventoryRef = useRef(addToInventory)
+  useEffect(() => { addToInventoryRef.current = addToInventory }, [addToInventory])
+
+  // ── handleSearch estável ─────────────────────────────────────────────────
+  //
+  // Lê query e hotel da ref, não do closure. O argumento `term` permite
+  // disparar a busca com um valor externo (ex: clique no dropdown do histórico)
+  // sem depender do estado do input.
+  const handleSearch = useCallback(async (term) => {
+    const { query: currentQuery, hotel: currentHotel } = searchParamsRef.current
+    const q = (term ?? currentQuery).trim()
+
+    if (!q) { setError("Digite o nome ou classname do mobi."); return }
+
+    setLoading(true)
+    setError("")
+    setSearchResults([])
+    setSearchKey((v) => v + 1)
+
+    try {
+      const filtered = await searchMarketItems({ query: q, hotel: currentHotel })
+
+      if (filtered.length === 0) { setError("Nenhum mobi encontrado."); return }
+
+      if (filtered.length === 1) {
+        addToInventoryRef.current(filtered[0])
+        setQuery("")
+      } else {
+        setSearchResults(filtered)
+      }
+    } catch (err) {
+      setError(err.message || "Erro ao buscar mobi.")
+    } finally {
+      setLoading(false)
+    }
+  }, []) // sem dependências — lê tudo via ref
 
   const cancelSearch = useCallback(() => { setSearchResults([]); setError("") }, [])
 

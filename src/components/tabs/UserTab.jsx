@@ -4,6 +4,7 @@ import Button from "../ui/Button"
 import SearchInput from "../ui/SearchInput"
 import SearchHistoryDropdown from "../ui/SearchHistoryDropdown"
 import { useUserHistory } from "../../hooks/useSearchHistory"
+import loadingGif from "../../assets/loading.gif"
 
 export default function UserTab({
   nickQuery,
@@ -17,7 +18,8 @@ export default function UserTab({
   serverData,
   markDirty,
   isLoggedIn,
-  updateLocalData
+  updateLocalData,
+  loadingData
 }) {
   const inputRef = React.useRef(null)
   const [showDropdown, setShowDropdown] = React.useState(false)
@@ -108,7 +110,14 @@ export default function UserTab({
       {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
 
       <div className="flex-1 min-h-0">
-        {userData ? (
+        {loadingData ? (
+          <div className="h-full flex items-center justify-center">
+            <div className="flex flex-col items-center gap-4">
+              <img src={loadingGif} alt="Carregando" className="w-12 h-12" />
+              <div className="text-[#d2d2d2] text-[12px]">Sincronizando dados...</div>
+            </div>
+          </div>
+        ) : userData ? (
           <ProfileContent
             user={userData}
             hotel="br"

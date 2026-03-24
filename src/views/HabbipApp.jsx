@@ -448,6 +448,7 @@ export default function HabboDeskApp() {
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}
                   updateLocalData={updateLocalData}
+                  loadingData={loadingData}
                 />
               )}
 
@@ -481,6 +482,7 @@ export default function HabboDeskApp() {
                     markDirty={markDirty}
                     isLoggedIn={isLoggedIn}
                     updateLocalData={updateLocalData}
+                    loadingData={loadingData}
                   />
                 ) : (
                   <LockedFeatureOverlay onLogin={() => { auth.setLoginModalOpen(true); auth.setAuthMode("login") }} />

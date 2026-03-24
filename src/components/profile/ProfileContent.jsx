@@ -185,43 +185,50 @@ export default function ProfileContent({ user, hotel = "br", isFavorite = false,
     <div className="text-white">
 
       {/* ── Modais de seção ── */}
-      <SectionModal
-        open={modal === "badges"}
-        onClose={() => setModal(null)}
-        title="Emblemas"
-        items={badges}
-        renderItem={(badge) => <BadgeItem badge={badge} hotel={hotel} />}
-        filterFn={filters.badges}
-        emptyText="Nenhum emblema disponível."
-      />
-      <SectionModal
-        open={modal === "friends"}
-        onClose={() => setModal(null)}
-        title="Amigos"
-        items={friends}
-        renderItem={(friend) => <FriendItem friend={friend} hotel={hotel} />}
-        filterFn={filters.friends}
-        emptyText="Nenhum amigo disponível."
-      />
-      <SectionModal
-        open={modal === "groups"}
-        onClose={() => setModal(null)}
-        title="Grupos"
-        items={groups}
-        renderItem={(group) => <GroupItem group={group} hotel={hotel} />}
-        filterFn={filters.groups}
-        emptyText="Nenhum grupo disponível."
-      />
-      <SectionModal
-        open={modal === "rooms"}
-        onClose={() => setModal(null)}
-        title="Quartos"
-        items={rooms}
-        renderItem={(room) => <RoomItem room={room} hotel={hotel} />}
-        filterFn={filters.rooms}
-        emptyText="Nenhum quarto disponível."
-      />
-
+      {modal === "badges" && (
+        <SectionModal
+          open={modal === "badges"}
+          onClose={() => setModal(null)}
+          title="Emblemas"
+          items={badges}
+          renderItem={(badge) => <BadgeItem badge={badge} hotel={hotel} />}
+          filterFn={filters.badges}
+          emptyText="Nenhum emblema disponível."
+        />
+      )}
+      {modal === "friends" && (
+        <SectionModal
+          open={modal === "friends"}
+          onClose={() => setModal(null)}
+          title="Amigos"
+          items={friends}
+          renderItem={(friend) => <FriendItem friend={friend} hotel={hotel} />}
+          filterFn={filters.friends}
+          emptyText="Nenhum amigo disponível."
+        />
+      )}
+      {modal === "groups" && (
+        <SectionModal
+          open={modal === "groups"}
+          onClose={() => setModal(null)}
+          title="Grupos"
+          items={groups}
+          renderItem={(group) => <GroupItem group={group} hotel={hotel} />}
+          filterFn={filters.groups}
+          emptyText="Nenhum grupo disponível."
+        />
+      )}
+      {modal === "rooms" && (
+        <SectionModal
+          open={modal === "rooms"}
+          onClose={() => setModal(null)}
+          title="Quartos"
+          items={rooms}
+          renderItem={(room) => <RoomItem room={room} hotel={hotel} />}
+          filterFn={filters.rooms}
+          emptyText="Nenhum quarto disponível."
+        />
+      )}
       {/* ── Cabeçalho do perfil ── */}
       <div className="flex items-start gap-4">
         <div className="w-24 h-24 rounded-[10px] flex items-center justify-center overflow-hidden shrink-0">

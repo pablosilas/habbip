@@ -121,8 +121,8 @@ const imagePendingMap = new Map()
 
 export async function getFurnitureImageUrl(classname, hotel = "br") {
   if (!classname) return ""
+
   const base = classname
-  console.log(base, 'base')
   const key = `${base}:${hotel}`
 
   if (imageMemoryCache.has(key)) return imageMemoryCache.get(key)
@@ -137,6 +137,36 @@ export async function getFurnitureImageUrl(classname, hotel = "br") {
         return url
       })
       .catch(() => { imagePendingMap.delete(key); return "" })
+    imagePendingMap.set(key, promise)
+  }
+
+  return imagePendingMap.get(key)
+}
+
+export async function getFurnitureIconUrl(classname, hotel = "br") {
+  if (!classname) return ""
+
+  const base = classname
+  const key = `icon:${base}:${hotel}`
+
+  if (imageMemoryCache.has(key)) return imageMemoryCache.get(key)
+
+  if (!imagePendingMap.has(key)) {
+    const promise = fetchWithQueue(
+      `${HABBIP_API_BASE}/furnidata/image-icon?classname=${encodeURIComponent(base)}&hotel=${hotel}`
+    )
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        const url = data?.url || ""
+        imageMemoryCache.set(key, url)
+        imagePendingMap.delete(key)
+        return url
+      })
+      .catch(() => {
+        imagePendingMap.delete(key)
+        return ""
+      })
+
     imagePendingMap.set(key, promise)
   }
 
