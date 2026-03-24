@@ -86,6 +86,7 @@ export default function SearchHistoryDropdown({
               showAvatar={showAvatar}
               hotel={hotel}
               showFurniImage={showFurniImage}
+              history={history}
             />
           ))}
         </>
@@ -148,9 +149,12 @@ function AvatarThumb({ nick, hotel, isFav }) {
   )
 }
 
-function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvatar = false, hotel = "br", showFurniImage = false }) {
+function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvatar = false, hotel = "br", showFurniImage = false, history = [] }) {
   const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
-  const classname = typeof entry === "object" ? entry?.classname : null
+  const classname = typeof entry === "object"
+    ? entry?.classname
+    : history?.find((h) => getEntryTerm(h) === term)?.classname ?? null
+
   return (
     <div
       className="group flex items-center gap-1 px-2 py-[6px] hover:bg-[rgba(255,214,77,0.12)] cursor-pointer"

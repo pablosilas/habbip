@@ -9,26 +9,20 @@ export function useFairSearch() {
   const [error, setError] = React.useState("")
   const [results, setResults] = React.useState([])
 
-  // ── Ref de parâmetros ────────────────────────────────────────────────────
-  //
-  // Problema original: handleSearch dependia de [mobiQuery, hotel] no
-  // useCallback, então recriava a função a cada tecla digitada. Isso fazia
-  // o useEffect recriar e cancelar o debounce prematuramente — uma busca
-  // podia ser cancelada logo antes de disparar porque o usuário ainda estava
-  // digitando e o debounce foi reiniciado.
-  //
-  // Solução: mobiQuery e hotel ficam numa ref sempre atualizada. A função de
-  // busca (stableSearch) não tem dependências instáveis, então o debounce é
-  // criado uma única vez e permanece estável durante toda a vida do componente.
+  // ── Todas as refs juntas no topo ──────────────────────────────────────────
   const searchParamsRef = React.useRef({ mobiQuery, hotel })
   const debouncedSearchRef = React.useRef(null)
+  const hasResultsRef = React.useRef(false)
+  const lastSearchRef = React.useRef(Date.now())
 
-  // Mantém a ref sincronizada com o estado mais recente
   React.useEffect(() => {
     searchParamsRef.current = { mobiQuery, hotel }
   }, [mobiQuery, hotel])
 
-  // Limpa resultados e erros ao apagar a query
+  React.useEffect(() => {
+    hasResultsRef.current = results.length > 0
+  }, [results.length])
+
   React.useEffect(() => {
     if (!mobiQuery.trim()) {
       setResults([])
@@ -36,12 +30,6 @@ export function useFairSearch() {
     }
   }, [mobiQuery])
 
-  // ── Função de busca estável ──────────────────────────────────────────────
-  //
-  // Lê mobiQuery e hotel da ref em vez do closure, garantindo que sempre usa
-  // os valores mais recentes sem precisar ser recriada quando eles mudam.
-  // O argumento `term` permite disparar a busca com um valor externo (ex:
-  // clique no dropdown do histórico) sem depender do estado do input.
   const stableSearch = React.useCallback(async (term) => {
     const { mobiQuery: currentQuery, hotel: currentHotel } = searchParamsRef.current
     const query = (term ?? currentQuery).trim()
@@ -52,40 +40,82 @@ export function useFairSearch() {
       return
     }
 
+    lastSearchRef.current = Date.now()
     setLoading(true)
     setError("")
-    setResults([])
 
     try {
       const items = await searchMarketItems({ query, hotel: currentHotel })
 
       if (items.length === 0) {
         setError("Nenhum mobi encontrado.")
+        setResults([])
         return
       }
 
-      setResults(items)
+      setResults((prev) => {
+        if (prev.length === 0) return items
+
+        let changed = false
+        const merged = prev.map((old) => {
+          const fresh = items.find((i) => i.ClassName === old.ClassName)
+          if (!fresh) return old
+
+          const oldPrice = old?.marketData?.currentPrice
+          const newPrice = fresh?.marketData?.currentPrice
+          const oldAvg = old?.marketData?.averagePrice
+          const newAvg = fresh?.marketData?.averagePrice
+          const oldOffers = old?.marketData?.currentOpenOffers
+          const newOffers = fresh?.marketData?.currentOpenOffers
+
+          if (oldPrice !== newPrice || oldAvg !== newAvg || oldOffers !== newOffers) {
+            changed = true
+            return { ...fresh, _updatedAt: Date.now() }
+          }
+
+          return old
+        })
+
+        const hasNew = items.some((i) => !prev.find((p) => p.ClassName === i.ClassName))
+        if (hasNew) {
+          changed = true
+          return items.map((fresh) => {
+            const old = prev.find((p) => p.ClassName === fresh.ClassName)
+            return old ? { ...fresh, _updatedAt: old._updatedAt } : fresh
+          })
+        }
+
+        return changed ? merged : prev
+      })
     } catch (err) {
       setError(err.message || "Erro ao consultar a feira.")
     } finally {
       setLoading(false)
     }
-  }, []) // sem dependências — lê tudo via ref
+  }, [])
 
-  // ── Debounce criado uma única vez ────────────────────────────────────────
-  //
-  // Como stableSearch nunca muda, o debounce também nunca é recriado.
-  // Isso garante que o timer de 500ms não é reiniciado desnecessariamente.
   React.useEffect(() => {
     debouncedSearchRef.current = debounce(stableSearch, 500)
     return () => debouncedSearchRef.current?.cancel()
   }, [stableSearch])
 
-  // handleSearch é o que os componentes chamam — estável e seguro de passar
-  // como prop sem causar re-renders em filhos memoizados.
   const handleSearch = React.useCallback((term) => {
     debouncedSearchRef.current?.(term)
   }, [])
+
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      const timeSinceLastSearch = Date.now() - lastSearchRef.current
+      if (
+        hasResultsRef.current &&
+        document.visibilityState === "visible" &&
+        timeSinceLastSearch > 20000
+      ) {
+        stableSearch()
+      }
+    }, 20000)
+    return () => clearInterval(interval)
+  }, [stableSearch])
 
   return {
     mobiQuery,

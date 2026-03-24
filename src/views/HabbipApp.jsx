@@ -212,6 +212,8 @@ export default function HabboDeskApp() {
   const handlePriceChanged = useCallback((event) => {
     watchlistHandlePriceChanged(event)
 
+    if (event.oldPrice == null) return
+
     const sub = watchlistRef.current.find(
       (i) => i.ClassName.toLowerCase() === event.className.toLowerCase()
     )
@@ -475,7 +477,17 @@ export default function HabboDeskApp() {
                   }
                   isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
                   isWatching={isLoggedIn ? isWatching : () => false}
-                  onToggleWatchlist={isLoggedIn ? toggleWatchlist : () => handleLockedAction()}
+                  onToggleWatchlist={isLoggedIn
+                    ? (item) => {
+                      if (isWatching(item.ClassName)) {
+                        handleStopMonitoring(item.ClassName)
+                      } else {
+                        const freshItem = fair.results.find((r) => r.ClassName === item.ClassName) ?? item
+                        toggleWatchlist(freshItem)
+                      }
+                    }
+                    : () => handleLockedAction()
+                  }
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}

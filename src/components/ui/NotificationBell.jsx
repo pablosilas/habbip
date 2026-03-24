@@ -97,7 +97,7 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
 
       <div
         className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => { onOpenInFair?.(notif.className); setOpen(false) }}
+        onClick={() => { onOpenInFair?.(notif.furniName); setOpen(false) }}
       >
         <div className="text-[11px] font-bold text-white truncate">
           {notif.furniName}

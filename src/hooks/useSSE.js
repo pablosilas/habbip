@@ -40,25 +40,6 @@ export function useSSE({ isLoggedIn, onPriceChanged }) {
             ...event,
             clientReceivedAt,
           }
-
-          if (event.detectedAt) {
-            console.log(
-              `[Front] ${event.className}/${event.hotel} detectado -> browser: ${clientReceivedAt - event.detectedAt}ms`
-            )
-          }
-
-          if (event.publishAt) {
-            console.log(
-              `[Front] ${event.className}/${event.hotel} publish -> browser: ${clientReceivedAt - event.publishAt}ms`
-            )
-          }
-
-          if (event.sseSentAt) {
-            console.log(
-              `[Front] ${event.className}/${event.hotel} SSE write -> browser: ${clientReceivedAt - event.sseSentAt}ms`
-            )
-          }
-
           onPriceChangedRef.current?.(enrichedEvent)
         }
       } catch {}

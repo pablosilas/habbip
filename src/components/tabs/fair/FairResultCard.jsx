@@ -356,6 +356,36 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     }
   }, [open])
 
+  function FakeToggle({ checked }) {
+    return (
+      <div
+        className="relative shrink-0 flex items-center"
+        style={{
+          width: 28, height: 14, borderRadius: 3,
+          background: checked ? "#3a9e3a" : "#6b6b6b",
+          borderTop: "1.5px solid #4a4a4a",
+          borderLeft: "1.5px solid #4a4a4a",
+          borderRight: "1.5px solid #8a8a8a",
+          borderBottom: "1.5px solid #8a8a8a",
+          boxShadow: "inset 0 2px 4px rgba(0,0,0,0.35)",
+          pointerEvents: "none",
+        }}
+      >
+        <span style={{
+          position: "absolute",
+          left: checked ? 16 : 2,
+          width: 10, height: 10, borderRadius: 2,
+          background: "#e0e0e0",
+          borderTop: "1.5px solid #fff",
+          borderLeft: "1.5px solid #fff",
+          borderRight: "1.5px solid #888",
+          borderBottom: "1.5px solid #888",
+          transition: "left 0.12s ease",
+        }} />
+      </div>
+    )
+  }
+
   const menu = open ? (
     <div
       ref={menuRef}
@@ -392,6 +422,8 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       </div>
 
       <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+
+        {/* ── Monitorar ── */}
         <button
           type="button"
           onClick={(e) => {
@@ -404,7 +436,10 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
                 onTriggerFly(rect, imgUrl)
               }
             }
-            onToggleWatchlist?.(item)
+            onToggleWatchlist?.({
+              ...item,
+              basePrice: item?.marketData?.currentPrice ?? item?.basePrice,
+            })
           }}
           disabled={!isLoggedIn}
           className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer" : "opacity-40 cursor-not-allowed"}`}
@@ -415,29 +450,24 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           {isLoggedIn && (
             <div className="flex items-center gap-[6px]">
               {isWatching && (
-                <button
-                  type="button"
+                <div
+                  role="button"
+                  tabIndex={0}
                   onClick={(e) => { e.stopPropagation(); onConfigureAlert?.(item) }}
+                  onKeyDown={(e) => { if (e.key === "Enter") onConfigureAlert?.(item) }}
                   title="Configurar alertas"
                   className="flex items-center justify-center cursor-pointer hover:brightness-125 transition-all"
-                  style={{
-                    width: 16,
-                    height: 16,
-                    fontSize: "10px",
-                    padding: 0,
-                    background: "none",
-                    border: "none",
-                    color: "#d0d0d0"
-                  }}
+                  style={{ width: 16, height: 16, color: "#d0d0d0" }}
                 >
                   <img src={configIcon} alt="Configurar" className="w-[14px] h-[14px] object-contain" />
-                </button>
+                </div>
               )}
-              <ToggleSwitch checked={isWatching} />
+              <FakeToggle checked={isWatching} />
             </div>
           )}
         </button>
 
+        {/* ── Favoritar ── */}
         <button
           type="button"
           onClick={action(onToggleFavorite)}
@@ -445,9 +475,10 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         >
           <img src={starIcon} alt="Favoritar" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isFavorite ? "Remover dos favoritos" : "Favoritar"}</span>
-          <ToggleSwitch checked={isFavorite} />
+          <FakeToggle checked={isFavorite} />
         </button>
 
+        {/* ── Inventário ── */}
         <button
           type="button"
           onClick={isLoggedIn ? action(() => onAddToInventory?.(item)) : undefined}
@@ -457,8 +488,9 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           <img src={plusIcon} alt="Inventário" className={`w-[16px] h-[16px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           {!isLoggedIn && <span className="text-[9px] text-[#888]">Login necessário</span>}
-          {isLoggedIn && <ToggleSwitch checked={isInInventory} />}
+          {isLoggedIn && <FakeToggle checked={isInInventory} />}
         </button>
+
       </div>
     </div>
   ) : null
@@ -512,8 +544,22 @@ export default function FairResultCard({
   const flag = getHotelFlag(item.hotel_domain)
   const formattedDate = formatLastUpdatedDate(item?.marketData?.lastUpdated)
 
+  const [flash, setFlash] = React.useState(false)
+  const prevUpdatedAt = React.useRef(item._updatedAt)
+
+  React.useEffect(() => {
+    if (item._updatedAt && item._updatedAt !== prevUpdatedAt.current) {
+      prevUpdatedAt.current = item._updatedAt
+      setFlash(true)
+      setTimeout(() => setFlash(false), 1500)
+    }
+  }, [item._updatedAt])
+
   return (
-    <div className="border border-[#8a8a8a] rounded-md px-3 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
+    <div className={`border rounded-md px-3 py-3 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.04)] transition-colors duration-700 ${flash
+      ? "border-[#ffd64d] bg-[rgba(255,214,77,0.08)]"
+      : "border-[#8a8a8a]"
+      }`}>
       {/* ── Cabeçalho ── */}
       <div className="flex items-start justify-between gap-3 mb-2">
         <div className="min-w-0 flex-1">
