@@ -1,7 +1,6 @@
 import React from "react"
-import { getFurnitureImageUrl } from "../../../services/habboApi"
 import coinIcon from "../../../assets/coin.png"
-import boxIcon from "../../../assets/box.png"
+import FurnitureImage from "../../ui/FurnitureImage"
 
 
 function getTrend(history = []) {

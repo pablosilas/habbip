@@ -90,10 +90,20 @@ function getPreviousHistoryEntry(history = []) {
 }
 
 // Tendência só faz sentido se houver ofertas ativas e preços válidos (> 0)
-function getTrendInfo(history = [], hasActiveOffers) {
+function getTrendInfo(history = [], hasActiveOffers, currentPrice) {
   if (!hasActiveOffers) return null
 
   const latest = getLatestHistoryEntry(history)
+
+  // Se temos currentPrice, comparar com o último registro histórico (mais preciso)
+  if (currentPrice != null && latest?.[0]) {
+    const latestPrice = latest[0]
+    if (currentPrice > latestPrice) return { label: "Subindo", icon: "▲", colorClass: "text-[#7CFC8A]" }
+    if (currentPrice < latestPrice) return { label: "Caindo", icon: "▼", colorClass: "text-[#FF8A8A]" }
+    return { label: "Estável", icon: "•", colorClass: "text-[#f1d97a]" }
+  }
+
+  // Fallback: comparar últimos dois registros históricos
   const previous = getPreviousHistoryEntry(history)
   const latestPrice = latest?.[0]
   const previousPrice = previous?.[0]
@@ -496,7 +506,7 @@ export default function FairResultCard({
   const hasActiveOffers = openOffers > 0 && rawPrice != null && rawPrice > 0
   const priceNow = hasActiveOffers ? rawPrice : null
 
-  const trendInfo = getTrendInfo(history, hasActiveOffers)
+  const trendInfo = getTrendInfo(history, hasActiveOffers, rawPrice)
   const timeAgoLabel = timeAgo(item?.marketData?.lastUpdated)
   const timeAgoColor = getTimeAgoColor(item?.marketData?.lastUpdated)
   const flag = getHotelFlag(item.hotel_domain)

@@ -6,6 +6,7 @@ import coinIcon from "../../../assets/coin.png"
 import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useInventoryHistory } from "../../../hooks/useSearchHistory"
+import FurnitureImage from "../../ui/FurnitureImage"
 
 function SearchResultOption({ item, onSelect }) {
   const history = item?.marketData?.history || []

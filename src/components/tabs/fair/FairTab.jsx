@@ -33,7 +33,9 @@ export default function FairTab({
   const [filterQuery, setFilterQuery] = React.useState("")
   const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
   const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
+  const [isStuck, setIsStuck] = React.useState(false)
   const inputRef = React.useRef(null)
+  const sentinelRef = React.useRef(null)
 
   const {
     history,
@@ -47,7 +49,17 @@ export default function FairTab({
 
   const lastSearchedTermRef = React.useRef(null)
 
-  // Limpa o filtro quando uma nova busca é feita
+  React.useEffect(() => {
+    const sentinel = sentinelRef.current
+    if (!sentinel) return
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsStuck(!entry.isIntersecting),
+      { threshold: 1 }
+    )
+    observer.observe(sentinel)
+    return () => observer.disconnect()
+  }, [results])
+
   React.useEffect(() => {
     setFilterQuery("")
   }, [results])
@@ -85,7 +97,6 @@ export default function FairTab({
 
     if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
     if (sortBy === "priceValue") {
-      // Prioridade: preço em circulação, senão média histórica
       const aPrice = a.marketData?.currentPrice ?? a.marketData?.averagePrice ?? 0
       const bPrice = b.marketData?.currentPrice ?? b.marketData?.averagePrice ?? 0
       return bPrice - aPrice
@@ -175,29 +186,37 @@ export default function FairTab({
           open={alertConfigOpen}
           item={selectedItemForConfig}
           config={selectedItemForConfig?.alertConfig || { alertMode: "any", targetPrice: null }}
-          onSave={(newConfig) => {
-            // Config será salva direto no watchlist quando se clica em monitorar
-            // Aqui apenas fechamos o modal
-            setAlertConfigOpen(false)
-          }}
+          onSave={() => setAlertConfigOpen(false)}
           onClose={() => setAlertConfigOpen(false)}
         />
       )}
 
       {results.length > 1 && (
-        <div className="flex items-center gap-2 mb-2 flex-wrap">
-          <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
-          <div className="flex gap-1 flex-wrap flex-1">
-            {[{ value: "priceValue", label: "Preço" }, { value: "price", label: "Média" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
-              <button key={value} type="button" onClick={() => setSortBy(value)}
-                className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
-              >
-                {label}
-              </button>
-            ))}
+        <>
+          {/* Ordenar — fica no fluxo normal, scrolla junto com a página */}
+          <div className="flex items-center gap-2 mb-2 flex-wrap">
+            <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
+            <div className="flex gap-1 flex-wrap flex-1">
+              {[{ value: "priceValue", label: "Preço" }, { value: "price", label: "Média" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
+                <button key={value} type="button" onClick={() => setSortBy(value)}
+                  className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="w-full">
+          {/* Sentinel: quando sair da viewport o input "gruda" */}
+          <div ref={sentinelRef} className="h-px" />
+
+          {/* Apenas o input de filtro é sticky */}
+          <div
+            className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck
+              ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
+                : "py-0 bg-transparent"
+              }`}
+          >
             <SearchInput
               value={filterQuery}
               onChange={(e) => setFilterQuery(e.target.value)}
@@ -205,7 +224,7 @@ export default function FairTab({
               className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
             />
           </div>
-        </div>
+        </>
       )}
 
       <div className="space-y-2 pr-1">
