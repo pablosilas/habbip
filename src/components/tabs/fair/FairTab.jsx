@@ -5,6 +5,7 @@ import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import AlertConfigModal from "../../modals/AlertConfigModal"
+
 export default function FairTab({
   mobiQuery,
   setMobiQuery,
