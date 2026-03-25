@@ -6,6 +6,8 @@ import inventarioIcon from "../assets/inventario.png"
 import bgPattern from "../assets/bg.png"
 import bg2 from "../assets/bg_2.png"
 import bg3 from "../assets/bg_3.png"
+import arrowUpIcon from "../assets/arrow_up.gif"
+
 
 import HeaderCard from "../components/layout/HeaderCard"
 import FairTab from "../components/tabs/fair/FairTab"
@@ -162,6 +164,9 @@ export default function HabboDeskApp() {
   const [inventoryExpanded, setInventoryExpanded] = React.useState(true)
   const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
+  const [showScrollTop, setShowScrollTop] = React.useState(false)
+
+  const mainScrollRef = React.useRef(null)
 
   // ── Auth ──────────────────────────────────────────────────────────────────
   const auth = useAuth()
@@ -450,7 +455,12 @@ export default function HabboDeskApp() {
 
             <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-2 shrink-0" />
 
-            <div className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1">
+            <div
+              ref={mainScrollRef}
+              data-scroll="main"
+              className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1"
+              onScroll={(e) => setShowScrollTop(e.currentTarget.scrollTop > 300)}
+            >
               {activeTab === "feira" && (
                 <FairTab
                   mobiQuery={fair.mobiQuery}
@@ -492,6 +502,8 @@ export default function HabboDeskApp() {
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}
                   updateLocalData={updateLocalData}
+                  isStale={fair.isStale}
+                  onRefresh={() => fair.refreshResults()}
                 />
               )}
 
@@ -552,9 +564,20 @@ export default function HabboDeskApp() {
             </div>
 
             <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-3 shrink-0" />
-
             <div className="shrink-0 space-y-1 text-[12px] text-white leading-5">
-              <div>{processedResultsCount} resultados processados</div>
+              <div className="flex items-center justify-between">
+                <div>{processedResultsCount} resultados processados</div>
+                {showScrollTop && (
+                  <button
+                    type="button"
+                    onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
+                    title="Voltar ao topo"
+                    className="cursor-pointer hover:brightness-110 transition-all"
+                  >
+                    <img src={arrowUpIcon} alt="Voltar ao topo" className="w-4 h-5 image-rendering-pixel" />
+                  </button>
+                )}
+              </div>
             </div>
           </ConsoleCard>
         </div>

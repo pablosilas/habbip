@@ -6,43 +6,58 @@ import { getFurnitureIconUrl } from "../../services/habboApi"
 
 export default function FurniThumb({ classname, size = "sm", isFav = false, showStar = false }) {
   const [url, setUrl] = React.useState("")
-  const [status, setStatus] = React.useState("loading")
+  const [status, setStatus] = React.useState("idle") // idle | loading | ok | error
+  const containerRef = React.useRef(null)
 
   const sizeClass = size === "md" ? "w-6 h-6" : "w-7 h-7"
 
   React.useEffect(() => {
-    if (!classname) {
+    const el = containerRef.current
+    if (!el || !classname) {
       setStatus("error")
       return
     }
 
-    setStatus("loading")
+    setStatus("idle")
     setUrl("")
 
-    getFurnitureIconUrl(classname).then(resolved => {
-      if (!resolved) {
-        setStatus("error")
-        return
-      }
+    const scrollRoot = el.closest('[data-scroll="main"]') ?? null
 
-      setUrl(resolved)
-    })
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        observer.disconnect()
+
+        setStatus("loading")
+
+        getFurnitureIconUrl(classname).then(resolved => {
+          if (!resolved) { setStatus("error"); return }
+          setUrl(resolved)
+        })
+      },
+      {
+        root: scrollRoot,
+        rootMargin: "300px",
+        threshold: 0,
+      }
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [classname])
 
   return (
-    <div className={`shrink-0 ${sizeClass} flex items-center justify-center overflow-hidden relative`}>
+    <div ref={containerRef} className={`shrink-0 ${sizeClass} flex items-center justify-center overflow-hidden relative`}>
+      {status === "idle" && <div className="w-full h-full" />}
+
       {status === "loading" && (
-        <img
-          src={loadingIcon}
-          alt="carregando"
+        <img src={loadingIcon} alt="carregando"
           className="w-full h-full object-contain image-rendering-pixel opacity-60 animate-pulse"
         />
       )}
 
       {status === "error" && (
-        <img
-          src={boxIcon}
-          alt="sem imagem"
+        <img src={boxIcon} alt="sem imagem"
           className="w-full h-full object-contain opacity-50 image-rendering-pixel"
         />
       )}
@@ -58,9 +73,7 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
       )}
 
       {showStar && isFav && (
-        <img
-          src={starOn}
-          alt="favorito"
+        <img src={starOn} alt="favorito"
           className="absolute bottom-0 right-0 w-[8px] h-[8px] image-rendering-pixel"
         />
       )}

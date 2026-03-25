@@ -8,12 +8,15 @@ export function useFairSearch() {
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const [results, setResults] = React.useState([])
+  const [isStale, setIsStale] = React.useState(false)
 
   // ── Todas as refs juntas no topo ──────────────────────────────────────────
   const searchParamsRef = React.useRef({ mobiQuery, hotel })
   const debouncedSearchRef = React.useRef(null)
   const hasResultsRef = React.useRef(false)
   const lastSearchRef = React.useRef(Date.now())
+
+  const STALE_AFTER_MS = 3 * 60 * 1000 // 3 minutos
 
   React.useEffect(() => {
     searchParamsRef.current = { mobiQuery, hotel }
@@ -36,6 +39,12 @@ export function useFairSearch() {
 
     if (!query) {
       setError("Digite um nome para pesquisar o mobi.")
+      setResults([])
+      return
+    }
+
+    if (query.length < 2) {
+      setError("Digite pelo menos 2 caracteres para pesquisar.")
       setResults([])
       return
     }
@@ -87,8 +96,15 @@ export function useFairSearch() {
 
         return changed ? merged : prev
       })
+
+      setIsStale(false)
     } catch (err) {
-      setError(err.message || "Erro ao consultar a feira.")
+      if (err.tooMany) {
+        setError(err.message)
+      } else {
+        setError(err.message || "Erro ao consultar a feira.")
+      }
+      setResults([])
     } finally {
       setLoading(false)
     }
@@ -104,18 +120,16 @@ export function useFairSearch() {
   }, [])
 
   React.useEffect(() => {
+    if (!hasResultsRef.current) return
+
     const interval = setInterval(() => {
-      const timeSinceLastSearch = Date.now() - lastSearchRef.current
-      if (
-        hasResultsRef.current &&
-        document.visibilityState === "visible" &&
-        timeSinceLastSearch > 20000
-      ) {
-        stableSearch()
+      if (hasResultsRef.current && Date.now() - lastSearchRef.current > STALE_AFTER_MS) {
+        setIsStale(true)
       }
-    }, 20000)
+    }, 30000) // checa a cada 30s, mas só sinaliza — não busca
+
     return () => clearInterval(interval)
-  }, [stableSearch])
+  }, [results.length])
 
   return {
     mobiQuery,
@@ -128,5 +142,7 @@ export function useFairSearch() {
     results,
     setResults,
     handleSearch,
+    isStale,
+    refreshResults: stableSearch
   }
 }

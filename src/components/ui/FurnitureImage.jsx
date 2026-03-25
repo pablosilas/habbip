@@ -4,9 +4,9 @@ import loadingIcon from "../../assets/loading.gif"
 import { getFurnitureImageUrl } from "../../services/habboApi"
 
 export default function FurnitureImage({ classname, furniName, size = "small", angle = null, className = "" }) {
-  const [status, setStatus] = React.useState("loading")
+  const [status, setStatus] = React.useState("idle")
   const [imageUrl, setImageUrl] = React.useState("")
-  const [fallbackUrl, setFallbackUrl] = React.useState("")
+  const containerRef = React.useRef(null)
 
   const sizeClass = {
     small: "w-[44px] h-[44px]",
@@ -16,36 +16,46 @@ export default function FurnitureImage({ classname, furniName, size = "small", a
   }[size] ?? "w-[44px] h-[44px]"
 
   React.useEffect(() => {
-    if (!classname) { setStatus("error"); return }
-    setStatus("loading")
-    setImageUrl("")
-    setFallbackUrl("")
+    const el = containerRef.current
+    if (!el || !classname) {
+      setStatus("error")
+      return
+    }
 
-    getFurnitureImageUrl(classname).then(url => {
-      if (!url) { setStatus("error"); return }
+    const scrollRoot = el.closest('[data-scroll="main"]') ?? null
 
-      // Só tenta rotacionar se for habcat com padrão 0_0 e angle foi fornecido
-      if (angle && url.includes("habcat.net") && url.includes("/0_0.")) {
-        setImageUrl(url.replace("/0_0.", `/${angle}.`))
-        setFallbackUrl(url) // fallback para 0_0 se o ângulo não existir
-      } else {
-        setImageUrl(url)
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        observer.disconnect()
+
+        setStatus("loading")
+        setImageUrl("")
+
+        getFurnitureImageUrl(classname).then(url => {
+          if (!url) { setStatus("error"); return }
+
+          if (angle && url.includes("habcat.net") && url.includes("/0_0.")) {
+            setImageUrl(url.replace("/0_0.", `/${angle}.`))
+          } else {
+            setImageUrl(url)
+          }
+        })
+      },
+      {
+        root: scrollRoot,
+        rootMargin: "300px",
+        threshold: 0,
       }
-    })
+    )
+
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [classname, angle])
 
-  function handleError() {
-    if (fallbackUrl) {
-      // Ângulo falhou → cai no 0_0
-      setImageUrl(fallbackUrl)
-      setFallbackUrl("")
-    } else {
-      setStatus("error")
-    }
-  }
-
   return (
-    <div className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden ${className}`}>
+    <div ref={containerRef} className={`${sizeClass} shrink-0 flex items-center justify-center overflow-hidden ${className}`}>
+      {status === "idle" && <div className="w-full h-full" />}
       {status === "loading" && (
         <img src={loadingIcon} alt="carregando"
           className="max-w-full max-h-full object-contain image-rendering-pixel opacity-60 animate-pulse"
@@ -62,7 +72,7 @@ export default function FurnitureImage({ classname, furniName, size = "small", a
           alt={furniName || classname || "Mobi"}
           className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
           onLoad={() => setStatus("ok")}
-          onError={handleError}
+          onError={() => setStatus("error")}
         />
       )}
     </div>

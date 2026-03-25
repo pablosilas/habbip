@@ -5,7 +5,6 @@ import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import AlertConfigModal from "../../modals/AlertConfigModal"
-
 export default function FairTab({
   mobiQuery,
   setMobiQuery,
@@ -26,7 +25,9 @@ export default function FairTab({
   serverData,
   markDirty,
   isLoggedIn,
-  onTriggerFly
+  onTriggerFly,
+  isStale,
+  onRefresh
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("priceValue")
@@ -34,6 +35,8 @@ export default function FairTab({
   const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
   const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
   const [isStuck, setIsStuck] = React.useState(false)
+  const [showScrollTop, setShowScrollTop] = React.useState(false)
+  const wrapperRef = React.useRef(null)
   const inputRef = React.useRef(null)
   const sentinelRef = React.useRef(null)
 
@@ -71,6 +74,23 @@ export default function FairTab({
       lastSearchedTermRef.current = null
     }
   }, [addToHistory, results])
+
+  React.useEffect(() => {
+    const scrollEl = wrapperRef.current?.closest('[data-scroll="main"]')
+    if (!scrollEl) return
+
+    function onScroll() {
+      setShowScrollTop(scrollEl.scrollTop > 300)
+    }
+
+    scrollEl.addEventListener("scroll", onScroll, { passive: true })
+    return () => scrollEl.removeEventListener("scroll", onScroll)
+  }, [results.length])
+
+  function scrollToTop() {
+    const scrollEl = wrapperRef.current?.closest('[data-scroll="main"]')
+    scrollEl?.scrollTo({ top: 0, behavior: "smooth" })
+  }
 
   function handleSearch() {
     inputRef.current?.blur()
@@ -114,7 +134,7 @@ export default function FairTab({
     : sortedResults
 
   return (
-    <div>
+    <div ref={wrapperRef}>
       <div
         className="flex items-center justify-between mb-2 cursor-pointer"
         onClick={() => setExpanded((v) => !v)}
@@ -214,7 +234,7 @@ export default function FairTab({
           <div
             className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck
               ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-                : "py-0 bg-transparent"
+              : "py-0 bg-transparent"
               }`}
           >
             <SearchInput
@@ -223,10 +243,18 @@ export default function FairTab({
               placeholder={`Filtrar nos ${results.length} resultados...`}
               className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
             />
+            {isStale && (
+              <button
+                type="button"
+                onClick={onRefresh}
+                className="w-full flex items-center justify-center gap-2 mt-1 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] text-[11px] font-bold cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
+              >
+                <span>↻</span> Dados podem estar desatualizados — clique para atualizar
+              </button>
+            )}
           </div>
         </>
       )}
-
       <div className="space-y-2 pr-1">
         {filteredResults.map((item, index) => {
           const favKey = item.ClassName || item.FurniName || String(index)

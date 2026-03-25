@@ -241,19 +241,19 @@ function PriceSparkline({ history = [] }) {
   return (
     <div className="mt-2 mb-3">
       <div
-        className="flex items-center justify-between mb-1 cursor-pointer group"
+        className="mb-1 cursor-pointer group"
         onClick={() => setExpanded((v) => !v)}
       >
-        <span className="text-[9px] font-bold text-[#aaa] uppercase tracking-wider group-hover:text-[#ccc] transition-colors">
-          Histórico de preços
-        </span>
-        <div className="flex items-center gap-2">
-          <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
-            {points.length} registros • {coords[0].date} → {coords[coords.length - 1].date}
+        <div className="flex items-center justify-between">
+          <span className="text-[9px] font-bold text-[#aaa] uppercase tracking-wider group-hover:text-[#ccc] transition-colors">
+            Histórico de preços
           </span>
           <span className="text-[9px] text-[#aaa] group-hover:text-[#ccc] transition-colors">
             {expanded ? "▲ recolher" : "▼ expandir"}
           </span>
+        </div>
+        <div className="text-[9px] text-[#777] group-hover:text-[#999] transition-colors mt-[1px]">
+          {points.length} registros • {coords[0].date} → {coords[coords.length - 1].date}
         </div>
       </div>
       {expanded && (

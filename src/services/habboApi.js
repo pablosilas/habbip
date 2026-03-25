@@ -115,6 +115,28 @@ export function mergeOfficialMarketData(legacyItems, officialBatch) {
   })
 }
 
+let imageUrlActiveRequests = 0
+const IMAGE_URL_MAX_CONCURRENT = 5
+const imageUrlQueue = []
+
+function processImageUrlQueue() {
+  while (imageUrlQueue.length > 0 && imageUrlActiveRequests < IMAGE_URL_MAX_CONCURRENT) {
+    const { resolve, fn } = imageUrlQueue.shift()
+    imageUrlActiveRequests++
+    fn().then(resolve).catch(() => resolve("")).finally(() => {
+      imageUrlActiveRequests--
+      processImageUrlQueue()
+    })
+  }
+}
+
+function queueImageUrlRequest(fn) {
+  return new Promise((resolve) => {
+    imageUrlQueue.push({ resolve, fn })
+    processImageUrlQueue()
+  })
+}
+
 // ── Imagens de furniture ──────────────────────────────────────────────────────
 const imageMemoryCache = new Map()
 const imagePendingMap = new Map()
@@ -128,15 +150,31 @@ export async function getFurnitureImageUrl(classname, hotel = "br") {
   if (imageMemoryCache.has(key)) return imageMemoryCache.get(key)
 
   if (!imagePendingMap.has(key)) {
-    const promise = fetchWithQueue(`${HABBIP_API_BASE}/furnidata/image-url?classname=${encodeURIComponent(base)}&hotel=${hotel}`)
-      .then(r => r.ok ? r.json() : null)
-      .then(data => {
-        const url = data?.url || ""
-        imageMemoryCache.set(key, url)
-        imagePendingMap.delete(key)
-        return url
-      })
-      .catch(() => { imagePendingMap.delete(key); return "" })
+    const promise = queueImageUrlRequest(() =>
+      fetchWithQueue(`${HABBIP_API_BASE}/furnidata/image-url?classname=${encodeURIComponent(base)}&hotel=${hotel}`)
+        .then(r => r.ok ? r.json() : null)
+        .then(async data => {
+          let url = data?.url || ""
+
+          // Fallback para /image-icon se /image-url não encontrou nada
+          if (!url) {
+            try {
+              const iconRes = await fetchWithQueue(
+                `${HABBIP_API_BASE}/furnidata/image-icon?classname=${encodeURIComponent(base)}&hotel=${hotel}`
+              )
+              if (iconRes.ok) {
+                const iconData = await iconRes.json()
+                url = iconData?.url || ""
+              }
+            } catch { /* empty */ }
+          }
+
+          imageMemoryCache.set(key, url)
+          imagePendingMap.delete(key)
+          return url
+        })
+        .catch(() => { imagePendingMap.delete(key); return "" })
+    )
     imagePendingMap.set(key, promise)
   }
 
@@ -171,26 +209,6 @@ export async function getFurnitureIconUrl(classname, hotel = "br") {
   }
 
   return imagePendingMap.get(key)
-}
-
-
-// Retorna a próxima URL a tentar quando a atual falha
-export function getFurnitureImageNextFallback(currentUrl, classname, revision) {
-  const base = classname.split("*")[0].replace("*", "_")
-
-  if (currentUrl.includes("habcat.net")) {
-    // habcat falhou → tenta habboapi.site
-    return `https://habboapi.site/api/image/${encodeURIComponent(classname)}`
-  }
-
-  if (currentUrl.includes("habboapi.site")) {
-    // habboapi falhou → tenta icon CDN oficial
-    if (!revision) return null
-    return `https://images.habbo.com/dcr/hof_furni/${revision}/${base}_icon.png`
-  }
-
-  // CDN oficial também falhou
-  return null
 }
 
 // ── Usuários ──────────────────────────────────────────────────────────────────

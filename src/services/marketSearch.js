@@ -30,6 +30,14 @@ async function searchByFurnidata(query, hotel) {
 export async function searchMarketItems({ query, hotel = "br" }) {
   // Remove o parâmetro days — API oficial não suporta
   const furniItems = await searchByFurnidata(query, hotel)
+
+  // Backend sinalizou resultados demais
+  if (furniItems?.tooMany) {
+    const err = new Error("Sua busca retornou mais de 400 resultados. Tente um nome mais específico.")
+    err.tooMany = true
+    throw err
+  }
+
   if (furniItems.length === 0) return []
 
   const batchItems = furniItems.map(i => ({
