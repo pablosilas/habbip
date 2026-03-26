@@ -1,66 +1,58 @@
-import { useEffect, useRef, useCallback } from 'react'
-import { getAccessToken } from '../services/authService'
+import { useEffect, useRef } from "react"
+import { getAccessToken } from "../services/authService"
 
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:3001/api'
+const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
 export function useSSE({ isLoggedIn, onPriceChanged }) {
   const esRef = useRef(null)
   const onPriceChangedRef = useRef(onPriceChanged)
-  const retryRef = useRef(null)
 
   useEffect(() => {
     onPriceChangedRef.current = onPriceChanged
   }, [onPriceChanged])
 
-  const disconnect = useCallback(() => {
-    clearTimeout(retryRef.current)
-    esRef.current?.close()
-    esRef.current = null
-  }, [])
+  useEffect(() => {
+    if (!isLoggedIn) {
+      esRef.current?.close()
+      esRef.current = null
+      return
+    }
 
-  const connect = useCallback(() => {
-    if (!isLoggedIn) return
     const token = getAccessToken()
     if (!token) return
 
-    disconnect()
+    if (esRef.current) return
 
     const url = `${API_BASE}/stream?token=${encodeURIComponent(token)}`
     const es = new EventSource(url)
 
-      es.onmessage = (e) => {
-      if (!e.data || e.data.startsWith(':')) return
+    es.onmessage = (e) => {
+      if (!e.data || e.data.startsWith(":")) return
 
       try {
         const event = JSON.parse(e.data)
         const clientReceivedAt = Date.now()
 
-        if (event.type === 'price_changed') {
-          const enrichedEvent = {
+        if (event.type === "price_changed") {
+          onPriceChangedRef.current?.({
             ...event,
             clientReceivedAt,
-          }
-          onPriceChangedRef.current?.(enrichedEvent)
+          })
         }
-      } catch {}
+      } catch (err) {
+        console.error("[SSE] Erro ao processar mensagem:", err)
+      }
     }
 
     es.onerror = () => {
-      es.close()
-      esRef.current = null
-      // Reconecta após 5s
-      retryRef.current = setTimeout(connect, 5000)
+      console.warn("[SSE] Erro na conexão")
     }
 
     esRef.current = es
-  }, [isLoggedIn, disconnect])
 
-  useEffect(() => {
-    if (isLoggedIn) {
-      connect()
-    } else {
-      disconnect()
+    return () => {
+      es.close()
+      esRef.current = null
     }
-    return disconnect
-  }, [isLoggedIn, connect, disconnect])
+  }, [isLoggedIn])
 }

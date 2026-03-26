@@ -180,7 +180,7 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
       </span>
 
       {/* Ações */}
-      <div className="flex items-center gap-[6px] opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
+      <div className="flex items-center gap-[6px] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
         {/* Toggle favorito */}
         <button
           type="button"

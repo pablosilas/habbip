@@ -598,7 +598,7 @@ export default function FairResultCard({
           {priceNow != null ? (
             <div className="text-[13px] text-[#f1f1f1] flex items-center gap-1 flex-wrap">
               <img src={coinIcon} alt="coin" className="w-4 h-4" />
-              <span>{priceNow}</span>
+              <span>{priceNow.toLocaleString("pt-BR")}</span>
               {trendInfo && (
                 <span className={`text-[11px] font-bold ${trendInfo.colorClass}`}>
                   {trendInfo.icon} {trendInfo.label}
