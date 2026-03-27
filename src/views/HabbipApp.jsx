@@ -504,6 +504,15 @@ export default function HabboDeskApp() {
                   updateLocalData={updateLocalData}
                   isStale={fair.isStale}
                   onRefresh={() => fair.refreshResults()}
+                  onCategoryResults={(items) => {
+                    fair.setResults(items)
+                    fair.setIsStale(false)
+                    setFairExpanded(false)
+                  }}
+                  onCategoryReset={() => {
+                    fair.setResults([])
+                    fair.setError("")
+                  }}
                 />
               )}
 

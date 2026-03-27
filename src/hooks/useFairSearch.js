@@ -143,6 +143,7 @@ export function useFairSearch() {
     setResults,
     handleSearch,
     isStale,
+    setIsStale,
     refreshResults: stableSearch
   }
 }

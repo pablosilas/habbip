@@ -5,6 +5,34 @@ import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import AlertConfigModal from "../../modals/AlertConfigModal"
+import { searchMarketItems } from "../../../services/marketSearch"
+import traxIcon from "../../../assets/trax.png"
+import plasticIcon from "../../../assets/plastic.png"
+
+// ── Categorias ────────────────────────────────────────────────────────────────
+const FAIR_CATEGORIES = [
+  {
+    id: "cartuchos",
+    label: "Cartuchos",
+    icon: traxIcon,
+    searchTerms: ["sound_set"],
+  },
+  {
+    id: "plasticos",
+    label: "Plásticos",
+    icon: plasticIcon,
+    searchTerms: ["chair_plasto", "table_plasto", "plasty"],
+    subcategories: [
+      { id: "plasticos_todos", label: "Todos", searchTerms: ["chair_plasto", "table_plasto", "plasty"] },
+      { id: "plasticos_cadeira", label: "Cadeira", searchTerms: ["chair_plasto"] },
+      { id: "plasticos_pufe", label: "Pufe", searchTerms: ["plasty"] },
+      { id: "plasticos_mesinha", label: "Mesinha", searchTerms: ["table_plasto_square"] },
+      { id: "plasticos_redonda", label: "Mesa redonda", searchTerms: ["table_plasto_round"] },
+      { id: "plasticos_4pernas", label: "Mesa 4 pernas", searchTerms: ["table_plasto_4leg"] },
+      { id: "plasticos_quadrada", label: "Mesa quadrada", searchTerms: ["table_plasto_bigsquare"] }
+    ],
+  },
+]
 
 export default function FairTab({
   mobiQuery,
@@ -28,7 +56,9 @@ export default function FairTab({
   isLoggedIn,
   onTriggerFly,
   isStale,
-  onRefresh
+  onRefresh,
+  onCategoryResults,
+  onCategoryReset,
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("priceValue")
@@ -36,7 +66,11 @@ export default function FairTab({
   const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
   const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
   const [isStuck, setIsStuck] = React.useState(false)
-  const [showScrollTop, setShowScrollTop] = React.useState(false)
+
+  const [activeCategory, setActiveCategory] = React.useState(null)
+  const [activeSubcategory, setActiveSubcategory] = React.useState(null)
+  const [categoryLoading, setCategoryLoading] = React.useState(false)
+
   const wrapperRef = React.useRef(null)
   const inputRef = React.useRef(null)
   const sentinelRef = React.useRef(null)
@@ -77,24 +111,44 @@ export default function FairTab({
   }, [addToHistory, results])
 
   React.useEffect(() => {
-    const scrollEl = wrapperRef.current?.closest('[data-scroll="main"]')
-    if (!scrollEl) return
+    setActiveCategory(null)
+    setActiveSubcategory(null)
+    onCategoryReset?.()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [fairHotel])
 
-    function onScroll() {
-      setShowScrollTop(scrollEl.scrollTop > 300)
+  // ── Busca central por lista de searchTerms ────────────────────────────────
+  async function fetchByTerms(searchTerms) {
+    setCategoryLoading(true)
+    try {
+      const searches = await Promise.all(
+        searchTerms.map((term) =>
+          searchMarketItems({ query: term, hotel: fairHotel })
+        )
+      )
+      const seen = new Set()
+      const merged = []
+      for (const list of searches) {
+        for (const item of list) {
+          if (seen.has(item.ClassName)) continue
+          seen.add(item.ClassName)
+          merged.push(item)
+        }
+      }
+      onCategoryResults?.(merged)
+    } catch (err) {
+      console.error("[Categoria]", err?.message || err)
+      setActiveCategory(null)
+      setActiveSubcategory(null)
+    } finally {
+      setCategoryLoading(false)
     }
-
-    scrollEl.addEventListener("scroll", onScroll, { passive: true })
-    return () => scrollEl.removeEventListener("scroll", onScroll)
-  }, [results.length])
-
-  function scrollToTop() {
-    const scrollEl = wrapperRef.current?.closest('[data-scroll="main"]')
-    scrollEl?.scrollTo({ top: 0, behavior: "smooth" })
   }
 
   function handleSearch() {
     inputRef.current?.blur()
+    setActiveCategory(null)
+    setActiveSubcategory(null)
     if (mobiQuery.trim()) lastSearchedTermRef.current = mobiQuery.trim()
     onSearch()
     setShowDropdown(false)
@@ -103,14 +157,74 @@ export default function FairTab({
   function handleSelectFromDropdown(term) {
     setMobiQuery(term)
     setShowDropdown(false)
+    setActiveCategory(null)
+    setActiveSubcategory(null)
     lastSearchedTermRef.current = term
     onSearch(term)
   }
 
+  async function handleCategoryClick(cat) {
+    // Toggle: desmarca se já ativo
+    if (activeCategory === cat.id) {
+      setActiveCategory(null)
+      setActiveSubcategory(null)
+      setMobiQuery("")
+      onCategoryReset?.()
+      return
+    }
+
+    setActiveCategory(cat.id)
+    setMobiQuery("")
+    setFilterQuery("")
+
+    // Se tem subcategorias, ativa "Todos" automaticamente
+    if (cat.subcategories) {
+      const todos = cat.subcategories.find(s => s.id.endsWith("_todos"))
+      setActiveSubcategory(todos?.id ?? null)
+      await fetchByTerms(todos?.searchTerms ?? cat.searchTerms)
+    } else {
+      setActiveSubcategory(null)
+      await fetchByTerms(cat.searchTerms)
+    }
+  }
+
+  async function handleSubcategoryClick(sub) {
+    // Toggle: se já ativo, volta pra "Todos"
+    if (activeSubcategory === sub.id) {
+      const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+      const todos = cat?.subcategories?.find(s => s.id.endsWith("_todos"))
+      setActiveSubcategory(todos?.id ?? null)
+      setFilterQuery("")
+      if (todos) await fetchByTerms(todos.searchTerms)
+      return
+    }
+
+    setActiveSubcategory(sub.id)
+    setFilterQuery("")
+    await fetchByTerms(sub.searchTerms)
+  }
+
+  async function handleRefresh() {
+    if (activeCategory) {
+      const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+      if (cat) {
+        const sub = cat.subcategories?.find(s => s.id === activeSubcategory)
+        await fetchByTerms(sub ? sub.searchTerms : cat.searchTerms)
+        return
+      }
+    }
+    onRefresh?.()
+  }
+
+  const activeCategoryObj = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+  const subcategories = activeCategoryObj?.subcategories ?? null
+
   const hasDropdownItems = history.length > 0 || favorites.length > 0
+  const isLoadingAny = loading || categoryLoading
 
   const sortedResults = [...results].sort((a, b) => {
-    const aH = a.marketData?.history; const bH = b.marketData?.history
+    const aH = a.marketData?.history
+    const bH = b.marketData?.history
     const aL = Array.isArray(aH) && aH.length ? aH[aH.length - 1] : null
     const bL = Array.isArray(bH) && bH.length ? bH[bH.length - 1] : null
     const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
@@ -122,8 +236,18 @@ export default function FairTab({
       const bPrice = b.marketData?.currentPrice ?? b.marketData?.averagePrice ?? 0
       return bPrice - aPrice
     }
-    if (sortBy === "trend") return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
-    if (sortBy === "offers") return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
+    if (sortBy === "trend") {
+      return (
+        ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) -
+        ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
+      )
+    }
+    if (sortBy === "offers") {
+      return (
+        (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) -
+        (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
+      )
+    }
     return 0
   })
 
@@ -146,8 +270,65 @@ export default function FairTab({
             Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">{expanded ? "▲ recolher" : "▼ expandir"}</span>
+        <span className="text-[#d2d2d2] text-[11px]">
+          {expanded ? "▲ recolher" : "▼ expandir"}
+        </span>
       </div>
+
+      {/* ── Chips de categoria ──────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-[6px] mb-2">
+        {FAIR_CATEGORIES.map((cat) => (
+          <button
+            key={cat.id}
+            type="button"
+            onClick={() => handleCategoryClick(cat)}
+            disabled={isLoadingAny}
+            className={[
+              "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
+              "disabled:opacity-50 disabled:cursor-not-allowed",
+              activeCategory === cat.id
+                ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                : "border-[#555] text-[#bbb] hover:border-[#888] hover:text-[#eee]",
+            ].join(" ")}
+          >
+            <img
+              src={cat.icon}
+              alt={cat.label}
+              className="w-3 h-3 object-contain"
+              style={{ imageRendering: "pixelated" }}
+            />
+            <span>{cat.label}</span>
+            {activeCategory === cat.id && categoryLoading && (
+              <span className="text-[9px] animate-pulse ml-1">carregando...</span>
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Subcategorias (só aparece quando categoria ativa tem subcats) ───── */}
+      {subcategories && (
+        <div className="flex flex-wrap gap-[5px] mb-3 pl-2 border-l-2 border-[#ffd64d44]">
+          {subcategories.map((sub) => (
+            <button
+              key={sub.id}
+              type="button"
+              onClick={() => handleSubcategoryClick(sub)}
+              disabled={isLoadingAny}
+              className={[
+                "flex items-center px-2 py-[3px] text-[10px] font-bold border transition-colors cursor-pointer",
+                "disabled:opacity-50 disabled:cursor-not-allowed",
+                activeSubcategory === sub.id
+                  ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
+                  : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
+              ].join(" ")}
+            >
+              {sub.label}
+            </button>
+          ))}
+        </div>
+      )}
+
+      {!subcategories && <div className="mb-1" />}
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
@@ -183,17 +364,28 @@ export default function FairTab({
               onChange={(e) => setFairHotel(e.target.value)}
               className="h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none w-16"
             >
-              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
-                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
+              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map((h) => (
+                <option key={h} value={h} className="text-black">
+                  {h.toUpperCase()}
+                </option>
               ))}
             </select>
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button type="submit" disabled={loading}>
+            <Button type="submit" disabled={isLoadingAny}>
               {loading ? "Consultando..." : "Consultar feira"}
             </Button>
-            <Button variant="secondary" type="button" onClick={() => setMobiQuery("")}>
+            <Button
+              variant="secondary"
+              type="button"
+              onClick={() => {
+                setMobiQuery("")
+                setActiveCategory(null)
+                setActiveSubcategory(null)
+                onCategoryReset?.()
+              }}
+            >
               Limpar
             </Button>
           </div>
@@ -214,13 +406,25 @@ export default function FairTab({
 
       {results.length > 1 && (
         <>
-          {/* Ordenar — fica no fluxo normal, scrolla junto com a página */}
           <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">Ordenar</span>
+            <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">
+              Ordenar
+            </span>
             <div className="flex gap-1 flex-wrap flex-1">
-              {[{ value: "priceValue", label: "Preço" }, { value: "price", label: "Média" }, { value: "trend", label: "Tendência" }, { value: "offers", label: "Ofertas" }].map(({ value, label }) => (
-                <button key={value} type="button" onClick={() => setSortBy(value)}
-                  className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]" : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"}`}
+              {[
+                { value: "priceValue", label: "Preço" },
+                { value: "price", label: "Média" },
+                { value: "trend", label: "Tendência" },
+                { value: "offers", label: "Ofertas" },
+              ].map(({ value, label }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setSortBy(value)}
+                  className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value
+                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
+                    }`}
                 >
                   {label}
                 </button>
@@ -228,10 +432,8 @@ export default function FairTab({
             </div>
           </div>
 
-          {/* Sentinel: quando sair da viewport o input "gruda" */}
           <div ref={sentinelRef} className="h-px" />
 
-          {/* Apenas o input de filtro é sticky */}
           <div
             className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck
               ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
@@ -247,7 +449,7 @@ export default function FairTab({
             {isStale && (
               <button
                 type="button"
-                onClick={onRefresh}
+                onClick={handleRefresh}
                 className="w-full flex items-center justify-center gap-2 mt-1 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] text-[11px] font-bold cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
               >
                 <span>↻</span> Dados podem estar desatualizados — clique para atualizar
@@ -256,6 +458,7 @@ export default function FairTab({
           </div>
         </>
       )}
+
       <div className="space-y-2 pr-1">
         {filteredResults.map((item, index) => {
           const favKey = item.ClassName || item.FurniName || String(index)
@@ -280,12 +483,14 @@ export default function FairTab({
             />
           )
         })}
-        {!loading && !filteredResults.length && filterQuery.trim() && (
+
+        {!isLoadingAny && !filteredResults.length && filterQuery.trim() && (
           <div className="text-[#888] text-[12px]">
             Nenhum mobi encontrado para "{filterQuery}".
           </div>
         )}
-        {!loading && !results.length && !error && (
+
+        {!isLoadingAny && !results.length && !error && (
           <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
         )}
       </div>
