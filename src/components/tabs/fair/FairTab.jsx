@@ -338,12 +338,14 @@ export default function FairTab({
           <div ref={sentinelRef} className="h-px" />
           <div className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]" : "py-0 bg-transparent"}`}>
             <div className="flex gap-2 mb-1">
-              <SearchInput
-                value={filterQuery}
-                onChange={(e) => setFilterQuery(e.target.value)}
-                placeholder={`Filtrar nos ${results.length} resultados...`}
-                className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
-              />
+              <div className="flex-1 min-w-0">
+                <SearchInput
+                  value={filterQuery}
+                  onChange={(e) => setFilterQuery(e.target.value)}
+                  placeholder={`Filtrar nos ${results.length} resultados...`}
+                  className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
+                />
+              </div>
               {/* Ordenação */}
               <select
                 value={sortBy}

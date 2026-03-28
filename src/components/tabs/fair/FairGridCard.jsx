@@ -188,7 +188,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         >
           <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
-          {!isLoggedIn ? <span className="text-[9px] text-[#ffd64d] opacity-80">conta necessária</span> : (
+          {!isLoggedIn ? <span className="text-[9px] text-[#ffd64d] opacity-80">login necessário</span> : (
             <div className="flex items-center gap-[6px]">
               {isWatching && (
                 <div role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onConfigureAlert?.(item) }}
@@ -256,129 +256,133 @@ export default function FairGridCard({
   const trendInfo = getTrendInfo(hasActiveOffers, priceNow, averagePrice)
 
   return (
-    <div
-      className="relative flex flex-col rounded-[6px] overflow-hidden cursor-pointer border border-[#4a4a4a] hover:border-[#ffd64d66] transition-all"
-      style={{ background: "#3a3a3a" }}
-      onClick={onClick}
-    >
-      {/* Badges de estado — topo direito */}
-      {(isWatching || isInInventory || isFavorite) && (
-        <div className="absolute top-[10px] right-[10px] flex flex-col gap-[3px] z-10">
-          {isWatching && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.2)] border border-[#ffd64d55]" title="Monitorando">
-              <img src={watchIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-            </div>
-          )}
-          {isInInventory && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(124,252,138,0.15)] border border-[#7CFC8A44]" title="No inventário">
-              <img src={plusIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-            </div>
-          )}
-          {isFavorite && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.15)] border border-[#ffd64d44]" title="Favorito">
-              <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-            </div>
-          )}
-        </div>
-      )}
+    <Tooltip text="Clique para mais informações">
 
-      {/* ── Corpo: métricas esquerda + imagem direita ── */}
-      <div className="flex items-stretch px-[10px] pt-[10px] pb-[8px]">
 
-        {/* Métricas — coluna esquerda */}
-        <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
+      <div
+        className="relative flex flex-col rounded-[6px] overflow-hidden cursor-pointer border border-[#4a4a4a] hover:border-[#ffd64d66] transition-all"
+        style={{ background: "#3a3a3a" }}
+        onClick={onClick}
+      >
+        {/* Badges de estado — topo direito */}
+        {(isWatching || isInInventory || isFavorite) && (
+          <div className="absolute top-[10px] right-[10px] flex flex-col gap-[3px] z-10">
+            {isWatching && (
+              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.2)] border border-[#ffd64d55]" title="Monitorando">
+                <img src={watchIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+              </div>
+            )}
+            {isInInventory && (
+              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(124,252,138,0.15)] border border-[#7CFC8A44]" title="No inventário">
+                <img src={plusIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+              </div>
+            )}
+            {isFavorite && (
+              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.15)] border border-[#ffd64d44]" title="Favorito">
+                <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+              </div>
+            )}
+          </div>
+        )}
 
-          <Tooltip text="Preço atual">
-            <div className="flex items-center gap-[5px]">
-              <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
-              <div className="flex items-center gap-[3px] min-w-0">
-                {priceNow != null ? (
+        {/* ── Corpo: métricas esquerda + imagem direita ── */}
+        <div className="flex items-stretch px-[10px] pt-[10px] pb-[8px]">
+
+          {/* Métricas — coluna esquerda */}
+          <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
+
+            <Tooltip text="Preço atual">
+              <div className="flex items-center gap-[5px]">
+                <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                <div className="flex items-center gap-[3px] min-w-0">
+                  {priceNow != null ? (
+                    <>
+                      <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
+                      {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
+                      <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-80 shrink-0" />
+                    </>
+                  ) : (
+                    <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
+                  )}
+                </div>
+              </div>
+            </Tooltip>
+
+            <Tooltip text="Média">
+              <div className="flex items-center gap-[5px]">
+                <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                {averagePrice != null ? (
                   <>
-                    <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
-                    {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
-                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-80 shrink-0" />
+                    <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
+                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-60 shrink-0" />
                   </>
                 ) : (
-                  <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
+                  <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
                 )}
               </div>
-            </div>
-          </Tooltip>
+            </Tooltip>
 
-          <Tooltip text="Média">
-            <div className="flex items-center gap-[5px]">
-              <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
-              {averagePrice != null ? (
-                <>
-                  <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                  <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-60 shrink-0" />
-                </>
-              ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
-              )}
-            </div>
-          </Tooltip>
+            <Tooltip text="Ofertas">
+              <div className="flex items-center gap-[5px]">
+                <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                {openOffers != null && openOffers > 0 ? (
+                  <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
+                ) : (
+                  <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
+                )}
+              </div>
+            </Tooltip>
 
-          <Tooltip text="Ofertas">
-            <div className="flex items-center gap-[5px]">
-              <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
-              {openOffers != null && openOffers > 0 ? (
-                <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
-              ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
-              )}
-            </div>
-          </Tooltip>
+          </div>
 
+          {/* Imagem — coluna direita */}
+          <div className="w-[64px] h-[64px] shrink-0 flex items-center justify-center pr-5">
+            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
+          </div>
         </div>
 
-        {/* Imagem — coluna direita */}
-        <div className="w-[64px] h-[64px] shrink-0 flex items-center justify-center pr-5">
-          <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
-        </div>
-      </div>
+        {/* ── Rodapé escuro: ícone + nome + classname + ⚙ ── */}
+        <div
+          className="flex items-center gap-[8px] px-[8px] py-[7px]"
+          style={{ background: "#2e2e2e", borderTop: "1px solid #444" }}
+          onClick={(e) => e.stopPropagation()}
+        >
+          {/* Ícone do mobi */}
+          <div className="shrink-0" onClick={onClick}>
+            <FurniIcon classname={item.ClassName} />
+          </div>
 
-      {/* ── Rodapé escuro: ícone + nome + classname + ⚙ ── */}
-      <div
-        className="flex items-center gap-[8px] px-[8px] py-[7px]"
-        style={{ background: "#2e2e2e", borderTop: "1px solid #444" }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        {/* Ícone do mobi */}
-        <div className="shrink-0" onClick={onClick}>
-          <FurniIcon classname={item.ClassName} />
-        </div>
+          {/* Nome + classname */}
+          <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
+            <Tooltip text={item.FurniName || "—"}>
+              <div className="text-white text-[10px] font-bold leading-tight truncate">
+                {item.FurniName || "—"}
+              </div>
+            </Tooltip>
+            <Tooltip text={item.ClassName || "—"}>
+              <div className="text-[#777] text-[9px] leading-tight truncate font-mono mt-[1px]">
+                {item.ClassName || "—"}
+              </div>
+            </Tooltip>
+          </div>
 
-        {/* Nome + classname */}
-        <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-          <Tooltip text={item.FurniName || "—"}>
-            <div className="text-white text-[10px] font-bold leading-tight truncate">
-              {item.FurniName || "—"}
-            </div>
-          </Tooltip>
-          <Tooltip text={item.ClassName || "—"}>
-            <div className="text-[#777] text-[9px] leading-tight truncate font-mono mt-[1px]">
-              {item.ClassName || "—"}
-            </div>
-          </Tooltip>
-        </div>
-
-        {/* ⚙ Ações */}
-        <div className="shrink-0">
-          <ActionsMenu
-            item={item}
-            isFavorite={isFavorite}
-            isWatching={isWatching}
-            isInInventory={isInInventory}
-            onToggleFavorite={onToggleFavorite}
-            onToggleWatchlist={onToggleWatchlist}
-            onAddToInventory={onAddToInventory}
-            onTriggerFly={onTriggerFly}
-            isLoggedIn={isLoggedIn}
-            onConfigureAlert={onConfigureAlert}
-          />
+          {/* ⚙ Ações */}
+          <div className="shrink-0">
+            <ActionsMenu
+              item={item}
+              isFavorite={isFavorite}
+              isWatching={isWatching}
+              isInInventory={isInInventory}
+              onToggleFavorite={onToggleFavorite}
+              onToggleWatchlist={onToggleWatchlist}
+              onAddToInventory={onAddToInventory}
+              onTriggerFly={onTriggerFly}
+              isLoggedIn={isLoggedIn}
+              onConfigureAlert={onConfigureAlert}
+            />
+          </div>
         </div>
       </div>
-    </div>
+    </Tooltip>
   )
 }

@@ -31,12 +31,17 @@ function formatDateShort(ts) {
   return new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "2-digit" }).format(new Date(ts * 1000))
 }
 
+// ✅ DEPOIS
 function formatLastUpdated(lastUpdated) {
   if (!lastUpdated) return "-"
-  const [datePart] = lastUpdated.split(" at ")
+  const [datePart, timePart] = lastUpdated.split(" at ")
   if (!datePart) return "-"
   const [y, m, d] = datePart.split("-")
-  return `${d}/${m}/${y}`
+  if (!y || !m || !d) return "-"
+  const dateStr = `${d}/${m}/${y}`
+  if (!timePart) return dateStr
+  const [hh, mm] = timePart.split(":")
+  return `${dateStr} às ${hh}:${mm}`
 }
 
 function timeAgo(lastUpdated) {
@@ -257,9 +262,10 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
 
   const trendInfo = getTrendInfo(hasActiveOffers, priceNow, averagePrice)
   const flag = getHotelFlag(item.hotel_domain)
-  const formattedDate = formatLastUpdated(item.lastUpdated)
-  const timeAgoLabel = timeAgo(item.lastUpdated)
-  const timeAgoColor = getTimeAgoColor(item.lastUpdated)
+  const lastUpdated = item.marketData?.lastUpdated ?? null
+  const formattedDate = formatLastUpdated(lastUpdated)
+  const timeAgoLabel = timeAgo(lastUpdated)
+  const timeAgoColor = getTimeAgoColor(lastUpdated)
 
   const modal = (
     <div

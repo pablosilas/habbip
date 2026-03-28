@@ -99,6 +99,35 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
     markDirty?.(fieldKey, { history, favorites })
   }, [history, favorites, isLoggedIn, fieldKey, markDirty])
 
+  // ✅ ADICIONAR após os useEffects existentes, dentro de useHistoryStore:
+
+  // Quando faz logout (isLoggedIn true → false), reseta para o estado anônimo
+  const prevIsLoggedInRef = useRef(isLoggedIn)
+  useEffect(() => {
+    const wasLoggedIn = prevIsLoggedInRef.current
+    prevIsLoggedInRef.current = isLoggedIn
+
+    // Só age na transição logado → deslogado
+    if (!wasLoggedIn || isLoggedIn) return
+
+    // Rebusca o localStorage anônimo (pode estar vazio ou ter histórico anterior)
+    try {
+      const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
+      const f = localStorage.getItem(`habbip:anon:favorites:${fieldKey}`)
+      dispatch({
+        type: "HYDRATE",
+        payload: {
+          history: h ? JSON.parse(h) : [],
+          favorites: f ? JSON.parse(f) : [],
+        },
+      })
+    } catch {
+      dispatch({ type: "HYDRATE", payload: { history: [], favorites: [] } })
+    }
+
+    hydrated.current = false
+  }, [isLoggedIn, fieldKey])
+
   const addToHistory = useCallback((entry) => {
     const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
     if (!term?.trim()) return
