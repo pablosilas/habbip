@@ -10,6 +10,7 @@ import FurnitureImage from "../../ui/FurnitureImage"
 import loadingGif from "../../../assets/loading.gif"
 import HotelSelect from "../../ui/HotelSelect"
 
+// DEPOIS
 function SearchResultOption({ item, onSelect }) {
   const history = item?.marketData?.history || []
   const price =
@@ -21,16 +22,17 @@ function SearchResultOption({ item, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(item)}
-      className="w-full flex items-center gap-3 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md px-3 py-2 text-left transition-colors cursor-pointer"
+      className="flex flex-col items-center gap-[6px] border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md p-2 text-center transition-colors cursor-pointer w-full"
     >
-      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
-      <div className="flex-1 min-w-0">
-        <div className="text-white text-[12px] font-bold truncate">{item.FurniName || "-"}</div>
-        <div className="text-[#888] text-[10px] truncate">{item.ClassName || "-"}</div>
+      <div className="flex items-center justify-center w-[48px] h-[48px] shrink-0">
+        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
       </div>
-      <div className="flex items-center gap-1 shrink-0">
-        <img src={coinIcon} alt="coin" className="w-3 h-3" />
-        <span className="text-[12px] text-[#ffd64d] font-bold">{price}</span>
+      <div className="w-full min-w-0">
+        <div className="text-white text-[10px] font-bold truncate leading-tight">{item.FurniName || "-"}</div>
+        <div className="flex items-center justify-center gap-[3px] mt-[2px]">
+          <img src={coinIcon} alt="coin" className="w-[10px] h-[10px]" />
+          <span className="text-[11px] text-[#ffd64d] font-bold">{price}</span>
+        </div>
       </div>
     </button>
   )
@@ -39,6 +41,12 @@ function SearchResultOption({ item, onSelect }) {
 // Banner de sincronização para anônimos com itens no inventário
 function AnonSyncBanner({ onLoginToSync }) {
   const [dismissed, setDismissed] = React.useState(false)
+
+  React.useEffect(() => {
+    const timer = setTimeout(() => setDismissed(true), 30000)
+    return () => clearTimeout(timer)
+  }, [])
+
   if (dismissed) return null
 
   return (
@@ -264,7 +272,7 @@ export default function InventoryTab({
             </div>
           )}
 
-          <div className="space-y-[6px] max-h-[200px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-4 gap-[6px] max-h-[220px] overflow-y-auto pr-1">
             {[...filteredSearchResults]
               .sort((a, b) => {
                 const getPrice = (item) => {
@@ -294,7 +302,7 @@ export default function InventoryTab({
       )}
 
       {/* Lista do inventário */}
-      <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-2">
+      <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {loadingData ? (
           <div className="h-full flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
@@ -313,15 +321,28 @@ export default function InventoryTab({
             Nenhum mobi encontrado para "{inventoryFilter}".
           </div>
         ) : (
-          filteredItems.map((item) => (
-            <InventoryItemCard
-              key={item.ClassName}
-              item={item}
-              onUpdateQty={onUpdateQty}
-              onSetQty={onSetQty}
-              onRemove={onRemove}
-            />
-          ))
+          <div className="grid grid-cols-3 gap-[6px]">
+            {filteredItems.map((item) => (
+              <InventoryItemCard
+                key={item.ClassName}
+                item={item}
+                onUpdateQty={onUpdateQty}
+                onSetQty={onSetQty}
+                onRemove={onRemove}
+              />
+            ))}
+            {!inventoryFilter.trim() && (
+              <button
+                type="button"
+                onClick={() => setExpanded(true)}
+                title="Adicionar mobi"
+                className="flex flex-col items-center justify-center border border-dashed border-[#555] bg-[rgba(255,255,255,0.02)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] rounded-md p-2 gap-[4px] cursor-pointer transition-colors min-h-[90px]"
+              >
+                <span className="text-[#555] hover:text-[#ffd64d] text-[22px] leading-none transition-colors">+</span>
+                <span className="text-[#666] text-[9px] leading-tight text-center">adicionar</span>
+              </button>
+            )}
+          </div>
         )}
       </div>
 

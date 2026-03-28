@@ -22,9 +22,7 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
   }, [editingQty])
 
   React.useEffect(() => {
-    if (!editingQty) {
-      setQtyInput(String(item.qty))
-    }
+    if (!editingQty) setQtyInput(String(item.qty))
   }, [item.qty, editingQty])
 
   const history = item?.marketData?.history || []
@@ -43,28 +41,43 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
   }
 
   return (
-    <div className="flex items-center gap-2 border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-2 py-2">
-      <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
+    <div className="relative flex flex-col items-center border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md p-2 gap-[4px]">
 
-      <div className="flex-1 min-w-0">
-        <div className="text-white text-[12px] font-bold truncate">{item.FurniName || "-"}</div>
-        <div className="text-[#888] text-[10px] truncate">{item.ClassName || "-"}</div>
+      {/* Botão remover */}
+      <button
+        type="button"
+        onClick={() => onRemove(item.ClassName)}
+        className="absolute top-1 right-1 w-4 h-4 flex items-center justify-center text-[#666] hover:text-[#ff8a8a] cursor-pointer text-[9px] transition-colors leading-none"
+        title="Remover"
+      >
+        ✕
+      </button>
 
-        <div className="flex items-center gap-1 mt-[2px]">
-          <img src={coinIcon} alt="coin" className="w-3 h-3" />
-          <span className="text-[11px] text-[#f1f1f1]">{price}</span>
-          {trend && (
-            <span className={`text-[10px] font-bold ${trend.colorClass}`}>{trend.icon}</span>
-          )}
-          <span className="text-[#666] text-[10px]">cada</span>
-        </div>
+      {/* Imagem */}
+      <div className="flex items-center justify-center w-[40px] h-[40px]">
+        <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
       </div>
 
-      <div className="flex items-center gap-[3px] shrink-0">
+      {/* Nome */}
+      <div className="w-full text-center text-white text-[9px] font-bold truncate leading-tight px-1">
+        {item.FurniName || "-"}
+      </div>
+
+      {/* Preço unitário + trend */}
+      <div className="flex items-center justify-center gap-[3px]">
+        <img src={coinIcon} alt="coin" className="w-[9px] h-[9px]" />
+        <span className="text-[10px] text-[#f1f1f1]">{price}</span>
+        {trend && (
+          <span className={`text-[9px] font-bold ${trend.colorClass}`}>{trend.icon}</span>
+        )}
+      </div>
+
+      {/* Controles de quantidade */}
+      <div className="flex items-center gap-[2px]">
         <button
           type="button"
           onClick={() => onUpdateQty(item.ClassName, -1)}
-          className="w-5 h-5 flex items-center justify-center border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] text-white text-[12px] font-bold cursor-pointer hover:brightness-125"
+          className="w-4 h-4 flex items-center justify-center border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] text-white text-[11px] font-bold cursor-pointer hover:brightness-125"
         >
           −
         </button>
@@ -79,16 +92,13 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
               if (e.key === "Enter") commitQty()
               if (e.key === "Escape") setEditingQty(false)
             }}
-            className="w-8 h-5 text-center text-[11px] text-white bg-[rgba(255,255,255,0.12)] border border-[#ffd64d] outline-none"
+            className="w-7 h-4 text-center text-[10px] text-white bg-[rgba(255,255,255,0.12)] border border-[#ffd64d] outline-none"
           />
         ) : (
           <button
             type="button"
-            onClick={() => {
-              setQtyInput(String(item.qty))
-              setEditingQty(true)
-            }}
-            className="w-8 h-5 text-center text-[11px] text-white border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] cursor-pointer hover:border-[#ffd64d]"
+            onClick={() => { setQtyInput(String(item.qty)); setEditingQty(true) }}
+            className="w-7 h-4 text-center text-[10px] text-white border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] cursor-pointer hover:border-[#ffd64d]"
             title="Clique para editar"
           >
             {item.qty}
@@ -98,30 +108,17 @@ export default function InventoryItemCard({ item, onUpdateQty, onSetQty, onRemov
         <button
           type="button"
           onClick={() => onUpdateQty(item.ClassName, 1)}
-          className="w-5 h-5 flex items-center justify-center border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] text-white text-[12px] font-bold cursor-pointer hover:brightness-125"
+          className="w-4 h-4 flex items-center justify-center border border-[#6d6d6d] bg-[rgba(255,255,255,0.08)] text-white text-[11px] font-bold cursor-pointer hover:brightness-125"
         >
           +
         </button>
       </div>
 
-      <div className="shrink-0 text-right min-w-[48px]">
-        <div className="flex items-center justify-end gap-[3px]">
-          <img src={coinIcon} alt="coin" className="w-3 h-3" />
-          <span className="text-[12px] font-bold text-[#ffd64d]">
-            {subtotal.toLocaleString("pt-BR")}
-          </span>
-        </div>
-        <div className="text-[9px] text-[#666]">subtotal</div>
+      {/* Subtotal */}
+      <div className="flex items-center justify-center gap-[3px]">
+        <img src={coinIcon} alt="coin" className="w-[9px] h-[9px]" />
+        <span className="text-[10px] font-bold text-[#ffd64d]">{subtotal.toLocaleString("pt-BR")}</span>
       </div>
-
-      <button
-        type="button"
-        onClick={() => onRemove(item.ClassName)}
-        className="shrink-0 w-5 h-5 flex items-center justify-center text-white hover:text-[#ff8a8a] cursor-pointer text-[12px] transition-colors"
-        title="Remover"
-      >
-        X
-      </button>
     </div>
   )
 }

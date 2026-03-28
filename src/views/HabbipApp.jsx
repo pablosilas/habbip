@@ -295,8 +295,8 @@ export default function HabboDeskApp() {
   }
 
   React.useEffect(() => {
-    if (fair.results.length > 0) setFairExpanded(false)
-  }, [fair.results])
+    setFairExpanded(fair.results.length === 0)
+  }, [activeTab, fair.results])
 
   React.useEffect(() => {
     if (user.searchedUser) setUserExpanded(false)
@@ -474,7 +474,7 @@ export default function HabboDeskApp() {
                 />
               )}
 
-              {activeTab === "feira" && (
+              <div className={activeTab === "feira" ? "" : "hidden"}>
                 <FairTab
                   mobiQuery={fair.mobiQuery}
                   setMobiQuery={fair.setMobiQuery}
@@ -527,9 +527,9 @@ export default function HabboDeskApp() {
                     fair.setError("")
                   }}
                 />
-              )}
+              </div>
 
-              {activeTab === "usuario" && (
+              <div className={activeTab === "usuario" ? "" : "hidden"}>
                 <UserTab
                   nickQuery={user.nickQuery}
                   setNickQuery={user.setNickQuery}
@@ -545,10 +545,9 @@ export default function HabboDeskApp() {
                   updateLocalData={updateLocalData}
                   loadingData={loadingData}
                 />
-              )}
+              </div>
 
-              {activeTab === "inventario" && (
-                // Inventário disponível para todos — anônimos salvam no localStorage
+              <div className={activeTab === "inventario" ? "" : "hidden"}>
                 <InventoryTab
                   items={inventory.items}
                   query={inventory.query}
@@ -582,7 +581,7 @@ export default function HabboDeskApp() {
                   isAnonymous={!isLoggedIn}
                   onLoginToSync={() => openLogin("register")}
                 />
-              )}
+              </div>
             </div>
 
             <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-3 shrink-0" />
