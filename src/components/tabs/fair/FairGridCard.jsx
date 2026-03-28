@@ -255,6 +255,16 @@ export default function FairGridCard({
   const priceNow = hasActiveOffers ? rawPrice : null
   const trendInfo = getTrendInfo(hasActiveOffers, priceNow, averagePrice)
 
+  function useIsMobile() {
+    const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 640)
+    React.useEffect(() => {
+      const fn = () => setIsMobile(window.innerWidth < 640)
+      window.addEventListener("resize", fn)
+      return () => window.removeEventListener("resize", fn)
+    }, [])
+    return isMobile
+  }
+
   return (
     <Tooltip text="Clique para mais informações">
 
@@ -297,9 +307,9 @@ export default function FairGridCard({
                 <div className="flex items-center gap-[3px] min-w-0">
                   {priceNow != null ? (
                     <>
-                      <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
+                      <span className="text-[10px] sm:text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
                       {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
-                      <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain  opacity-80 shrink-0" />
+                      <img src={coinIcon} alt="coin" className="w-[11px] h-[11px] sm:w-[15px] sm:h-[15px] object-contain  opacity-80 shrink-0" />
                     </>
                   ) : (
                     <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
@@ -313,8 +323,8 @@ export default function FairGridCard({
                 <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain " />
                 {averagePrice != null ? (
                   <>
-                    <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain  opacity-60 shrink-0" />
+                    <span className="text-[10px] sm:text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
+                    <img src={coinIcon} alt="coin" className="w-[11px] h-[11px] sm:w-[15px] sm:h-[15px] object-contain  opacity-60 shrink-0" />
                   </>
                 ) : (
                   <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
@@ -326,7 +336,7 @@ export default function FairGridCard({
               <div className="flex items-center gap-[5px]">
                 <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain " />
                 {openOffers != null && openOffers > 0 ? (
-                  <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
+                  <span className="text-[10px] sm:text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
                 ) : (
                   <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
                 )}
@@ -336,8 +346,8 @@ export default function FairGridCard({
           </div>
 
           {/* Imagem — coluna direita */}
-          <div className="w-[64px] h-[64px] shrink-0 flex items-center justify-center pr-5">
-            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
+          <div className="w-[64px] h-[64px] shrink-0 flex items-center justify-center pr-1 sm:pr-5">
+            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size={useIsMobile() ? "small" : "medium"} angle="4_0" />
           </div>
         </div>
 
