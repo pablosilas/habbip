@@ -59,9 +59,9 @@ function FurniIcon({ classname, hotel = "br" }) {
   return (
     <div ref={ref} className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
       {error || url === null ? (
-        <img src={boxIcon} alt="mobi" className="w-full h-full object-contain image-rendering-pixel opacity-40" />
+        <img src={boxIcon} alt="mobi" className="w-full h-full object-contain  opacity-40" />
       ) : url ? (
-        <img src={url} alt={classname} className="w-full h-full object-contain image-rendering-pixel" onError={() => setError(true)} />
+        <img src={url} alt={classname} className="w-full h-full object-contain " onError={() => setError(true)} />
       ) : null}
     </div>
   )
@@ -186,7 +186,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           }}
           className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] transition-colors cursor-pointer ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)]" : "hover:bg-[rgba(255,214,77,0.06)]"}`}
         >
-          <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain image-rendering-pixel ${isWatching ? "brightness-100" : "opacity-50"}`} />
+          <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain  ${isWatching ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
           {!isLoggedIn ? <span className="text-[9px] text-[#ffd64d] opacity-80">login necessário</span> : (
             <div className="flex items-center gap-[6px]">
@@ -202,13 +202,13 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         </button>
         <button type="button" onClick={action(onToggleFavorite)}
           className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={starIcon} alt="Favoritar" className={`w-[14px] h-[14px] object-contain image-rendering-pixel ${isFavorite ? "brightness-100" : "opacity-50"}`} />
+          <img src={starIcon} alt="Favoritar" className={`w-[14px] h-[14px] object-contain  ${isFavorite ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isFavorite ? "Remover dos favoritos" : "Favoritar"}</span>
           <FakeToggle checked={isFavorite} />
         </button>
         <button type="button" onClick={action(() => onAddToInventory?.(item))}
           className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain image-rendering-pixel ${isInInventory ? "brightness-100" : "opacity-50"}`} />
+          <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain  ${isInInventory ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           <FakeToggle checked={isInInventory} />
         </button>
@@ -221,7 +221,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       <button ref={btnRef} type="button" title="Ações" onClick={handleToggle}
         className={`w-[20px] h-[20px] shrink-0 flex items-center justify-center rounded-[3px] border transition-all cursor-pointer ${open ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)]" : "border-[#555] bg-[rgba(255,255,255,0.06)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.10)]"}`}
       >
-        <img src={toolIcon} alt="Ações" className="w-[11px] h-[11px] object-contain image-rendering-pixel" />
+        <img src={toolIcon} alt="Ações" className="w-[11px] h-[11px] object-contain " />
       </button>
       {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </>
@@ -293,13 +293,13 @@ export default function FairGridCard({
 
             <Tooltip text="Preço atual">
               <div className="flex items-center gap-[5px]">
-                <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain " />
                 <div className="flex items-center gap-[3px] min-w-0">
                   {priceNow != null ? (
                     <>
                       <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
                       {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
-                      <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-80 shrink-0" />
+                      <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain  opacity-80 shrink-0" />
                     </>
                   ) : (
                     <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
@@ -310,11 +310,11 @@ export default function FairGridCard({
 
             <Tooltip text="Média">
               <div className="flex items-center gap-[5px]">
-                <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain " />
                 {averagePrice != null ? (
                   <>
                     <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain image-rendering-pixel opacity-60 shrink-0" />
+                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain  opacity-60 shrink-0" />
                   </>
                 ) : (
                   <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
@@ -324,7 +324,7 @@ export default function FairGridCard({
 
             <Tooltip text="Ofertas">
               <div className="flex items-center gap-[5px]">
-                <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain image-rendering-pixel" />
+                <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain " />
                 {openOffers != null && openOffers > 0 ? (
                   <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
                 ) : (

@@ -16,7 +16,7 @@ function AvatarHead({ nick }) {
         <img
           src={url}
           alt={nick}
-          className="w-full h-full object-contain image-rendering-pixel"
+          className="w-full h-full object-contain "
           onError={() => setError(true)}
         />
       ) : (

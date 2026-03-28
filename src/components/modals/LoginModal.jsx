@@ -48,7 +48,7 @@ function AvatarPreview({ nick, status, habboUser }) {
         <img
           src={getHabboAvatarHeadUrl({ name: nick, hotel: "br", size: "s" })}
           alt={nick}
-          className="w-8 h-8 object-contain image-rendering-pixel shrink-0"
+          className="w-8 h-8 object-contain  shrink-0"
           onError={() => setImgError(true)}
         />
       ) : (

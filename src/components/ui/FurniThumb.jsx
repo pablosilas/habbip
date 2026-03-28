@@ -51,13 +51,13 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
 
       {status === "loading" && (
         <img src={loadingIcon} alt="carregando"
-          className="w-full h-full object-contain image-rendering-pixel opacity-60 animate-pulse"
+          className="w-full h-full object-contain  opacity-60 animate-pulse"
         />
       )}
 
       {status === "error" && (
         <img src={boxIcon} alt="sem imagem"
-          className="w-full h-full object-contain opacity-50 image-rendering-pixel"
+          className="w-full h-full object-contain opacity-50 "
         />
       )}
 
@@ -65,7 +65,7 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
         <img
           src={url}
           alt={classname}
-          className={`w-full h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
+          className={`w-full h-full object-contain  ${status === "ok" ? "block" : "hidden"}`}
           onLoad={() => setStatus("ok")}
           onError={() => setStatus("error")}
         />

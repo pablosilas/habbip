@@ -29,7 +29,7 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
         <img
           src={avatarUrl || noUser}
           alt={displayName || "Usuário"}
-          className="max-w-full max-h-full object-contain image-rendering-pixel"
+          className="max-w-full max-h-full object-contain"
           onError={(e) => { e.currentTarget.src = noUser }}
         />
       </div>

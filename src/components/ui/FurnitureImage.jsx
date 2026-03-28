@@ -83,19 +83,19 @@ export default function FurnitureImage({ classname, furniName, size = "small", a
       {status === "idle" && <div className="w-full h-full" />}
       {status === "loading" && (
         <img src={loadingIcon} alt="carregando"
-          className="max-w-full max-h-full object-contain image-rendering-pixel opacity-60 animate-pulse"
+          className="max-w-full max-h-full object-contain  opacity-60 animate-pulse"
         />
       )}
       {status === "error" && (
         <img src={boxIcon} alt="sem imagem"
-          className="max-w-full max-h-full object-contain image-rendering-pixel opacity-60"
+          className="max-w-full max-h-full object-contain  opacity-60"
         />
       )}
       {imageUrl && (
         <img
           src={imageUrl}
           alt={furniName || classname || "Mobi"}
-          className={`max-w-full max-h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
+          className={`max-w-full max-h-full object-contain  ${status === "ok" ? "block" : "hidden"}`}
           onLoad={() => setStatus("ok")}
           onError={handleImageError}
         />

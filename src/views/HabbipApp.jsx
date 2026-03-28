@@ -422,20 +422,20 @@ export default function HabboDeskApp() {
                 <div className="rounded-t-[4px] h-[80px] flex overflow-hidden">
                   <ConsoleTab
                     label="Feira Livre"
-                    icon={<img src={feiraIcon} className="w-6 h-6 image-rendering-pixel icon-dark" alt="Feira" />}
+                    icon={<img src={feiraIcon} className="w-6 h-6  icon-dark" alt="Feira" />}
                     active={activeTab === "feira"}
                     onClick={() => setActiveTab("feira")}
                   />
                   <ConsoleTab
                     label="Buscar Usuário"
-                    icon={<img src={usuarioIcon} className="w-6 h-6 image-rendering-pixel icon-dark" alt="Usuário" />}
+                    icon={<img src={usuarioIcon} className="w-6 h-6  icon-dark" alt="Usuário" />}
                     active={activeTab === "usuario"}
                     onClick={() => setActiveTab("usuario")}
                   />
                   {/* Inventário agora disponível para todos */}
                   <ConsoleTab
                     label="Meu Inventário"
-                    icon={<img src={inventarioIcon} className="w-7 h-6 image-rendering-pixel icon-dark" alt="Inventário" />}
+                    icon={<img src={inventarioIcon} className="w-7 h-6  icon-dark" alt="Inventário" />}
                     active={activeTab === "inventario"}
                     onClick={() => setActiveTab("inventario")}
                   />
@@ -595,7 +595,7 @@ export default function HabboDeskApp() {
                     title="Voltar ao topo"
                     className="cursor-pointer hover:brightness-110 transition-all"
                   >
-                    <img src={arrowUpIcon} alt="Voltar ao topo" className="w-4 h-5 image-rendering-pixel" />
+                    <img src={arrowUpIcon} alt="Voltar ao topo" className="w-4 h-5 " />
                   </button>
                 )}
               </div>

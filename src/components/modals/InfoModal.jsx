@@ -30,7 +30,7 @@ export default function InfoModal({ open, onClose }) {
               <img
                 src={avatarUrl}
                 alt="Groovin"
-                className="w-8 h-8 image-rendering-pixel"
+                className="w-8 h-8 "
                 onError={(e) => { e.currentTarget.style.display = "none" }}
               />
               <span className="text-[#fff2c1] font-bold text-[12px] underline underline-offset-2">

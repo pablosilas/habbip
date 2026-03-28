@@ -311,7 +311,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
                 <div className="text-[9px] text-[#888] uppercase tracking-wider mb-1">Preço atual</div>
                 {priceNow != null ? (
                   <div className="flex items-center gap-1 flex-wrap">
-                    <img src={coinIcon} alt="coin" className="object-contain image-rendering-pixel w-4 h-4" />
+                    <img src={coinIcon} alt="coin" className="object-contain  w-4 h-4" />
                     <span className="text-[13px] text-[#ffd64d] font-bold tabular-nums">{priceNow.toLocaleString("pt-BR")}</span>
                     {trendInfo && <span className={`text-[10px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
                   </div>
@@ -324,7 +324,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
                 <div className="text-[9px] text-[#888] uppercase tracking-wider mb-1">Média</div>
                 {averagePrice != null ? (
                   <div className="flex items-center gap-1">
-                    <img src={coinIcon} alt="coin" className="object-contain image-rendering-pixel w-4 h-4" />
+                    <img src={coinIcon} alt="coin" className="object-contain  w-4 h-4" />
                     <span className="text-[13px] text-[#f1f1f1] font-bold tabular-nums">{averagePrice.toLocaleString("pt-BR")}</span>
                   </div>
                 ) : (

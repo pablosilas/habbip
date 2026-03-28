@@ -44,7 +44,7 @@ export default function HotelSelect({ value, onChange, disabled }) {
         onClick={() => setOpen(v => !v)}
         className="h-9 w-[58px] flex items-center justify-center gap-[5px] border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[11px] font-bold text-white outline-none cursor-pointer hover:bg-[rgba(255,255,255,0.18)] transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
       >
-        <img src={selected.flag} alt={selected.label} className="w-4 h-4 image-rendering-pixel" />
+        <img src={selected.flag} alt={selected.label} className="w-4 h-4 " />
         <span>{selected.label}</span>
       </button>
 
@@ -63,7 +63,7 @@ export default function HotelSelect({ value, onChange, disabled }) {
                   : "text-[#ccc] hover:bg-[rgba(255,255,255,0.08)] hover:text-white",
               ].join(" ")}
             >
-              <img src={hotel.flag} alt={hotel.label} className="w-4 h-4 image-rendering-pixel" />
+              <img src={hotel.flag} alt={hotel.label} className="w-4 h-4 " />
               <span>{hotel.label}</span>
             </button>
           ))}

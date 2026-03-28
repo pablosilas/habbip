@@ -40,7 +40,7 @@ export default function SearchInput({
         <img
           src={searchIcon}
           alt="buscar"
-          className="w-full h-full object-contain image-rendering-pixel opacity-60"
+          className="w-full h-full object-contain  opacity-60"
         />
       </div>
 

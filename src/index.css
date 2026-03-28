@@ -142,12 +142,12 @@ p {
 
 .effect-console {
   position: relative;
-   overflow: visible;
+  overflow: visible;
 }
 .effect-console::after {
   content: "";
   position: absolute;
-  inset:-3px;
+  inset: -3px;
   border-radius: 14px;
   border-top: none;
   border-left: none;
@@ -190,7 +190,7 @@ code {
   background: var(--code-bg);
 }
 
-.image-rendering-pixel {
+. {
   image-rendering: pixelated;
   image-rendering: crisp-edges;
 }

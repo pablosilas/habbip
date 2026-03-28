@@ -71,7 +71,7 @@ export default function SearchHistoryDropdown({
       {hasFavorites && (
         <>
           <div className="px-2 pt-[5px] pb-[2px] flex items-center gap-1">
-            <img src={starOn} alt="favoritos" className="w-3 h-3 image-rendering-pixel" />
+            <img src={starOn} alt="favoritos" className="w-3 h-3 " />
             <span className="text-[9px] font-bold text-[#ffd64d] uppercase tracking-wider">
               Favoritos
             </span>
@@ -131,7 +131,7 @@ function AvatarThumb({ nick, hotel, isFav }) {
         <img
           src={url}
           alt={nick}
-          className="w-full h-full object-contain image-rendering-pixel"
+          className="w-full h-full object-contain "
           onError={() => setHasError(true)}
         />
       ) : (
@@ -162,7 +162,7 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
       ) : (
         <div className="shrink-0 w-[14px] h-[14px] flex items-center justify-center">
           {isFav
-            ? <img src={starOn} alt="favorito" className="w-[14px] h-[14px] image-rendering-pixel" />
+            ? <img src={starOn} alt="favorito" className="w-[14px] h-[14px] " />
             : <span className="text-[11px] text-[#888] group-hover:text-[#d2d2d2]">◷</span>
           }
         </div>
@@ -185,7 +185,7 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
           <img
             src={isFav ? starOn : starOff}
             alt={isFav ? "remover favorito" : "adicionar favorito"}
-            className={isFav ? "w-[14px] h-[14px] image-rendering-pixel" : "w-[11px] h-[11px] image-rendering-pixel opacity-50"}
+            className={isFav ? "w-[14px] h-[14px] " : "w-[11px] h-[11px]  opacity-50"}
           />
         </button>
 

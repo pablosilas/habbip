@@ -259,7 +259,7 @@ export default function FairTab({
                     : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
                 ].join(" ")}
               >
-                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain image-rendering-pixel" />}
+                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain " />}
                 {cat.label}
               </button>
             ))}

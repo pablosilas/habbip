@@ -8,7 +8,9 @@ export function getEntryTerm(entry) {
 }
 
 function makeInitialState(fieldKey, isLoggedIn) {
-  if (!isLoggedIn) return { history: [], favorites: [] }
+  // Anônimo: lê do localStorage imediatamente (histórico local persiste entre sessões)
+  // Logado: começa vazio — será hidratado pelo servidor via useEffect
+  if (isLoggedIn) return { history: [], favorites: [] }
   try {
     const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
     const f = localStorage.getItem(`habbip:anon:favorites:${fieldKey}`)
@@ -99,33 +101,36 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
     markDirty?.(fieldKey, { history, favorites })
   }, [history, favorites, isLoggedIn, fieldKey, markDirty])
 
-  // ✅ ADICIONAR após os useEffects existentes, dentro de useHistoryStore:
-
-  // Quando faz logout (isLoggedIn true → false), reseta para o estado anônimo
+  // Gerencia transições de autenticação — mantém históricos separados
   const prevIsLoggedInRef = useRef(isLoggedIn)
   useEffect(() => {
     const wasLoggedIn = prevIsLoggedInRef.current
     prevIsLoggedInRef.current = isLoggedIn
 
-    // Só age na transição logado → deslogado
-    if (!wasLoggedIn || isLoggedIn) return
-
-    // Rebusca o localStorage anônimo (pode estar vazio ou ter histórico anterior)
-    try {
-      const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
-      const f = localStorage.getItem(`habbip:anon:favorites:${fieldKey}`)
-      dispatch({
-        type: "HYDRATE",
-        payload: {
-          history: h ? JSON.parse(h) : [],
-          favorites: f ? JSON.parse(f) : [],
-        },
-      })
-    } catch {
+    // Transição anônimo → logado: limpa estado (servidor vai hidratar em seguida)
+    if (!wasLoggedIn && isLoggedIn) {
       dispatch({ type: "HYDRATE", payload: { history: [], favorites: [] } })
+      hydrated.current = false
+      return
     }
 
-    hydrated.current = false
+    // Transição logado → deslogado: restaura histórico anônimo do localStorage
+    if (wasLoggedIn && !isLoggedIn) {
+      try {
+        const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
+        const f = localStorage.getItem(`habbip:anon:favorites:${fieldKey}`)
+        dispatch({
+          type: "HYDRATE",
+          payload: {
+            history: h ? JSON.parse(h) : [],
+            favorites: f ? JSON.parse(f) : [],
+          },
+        })
+      } catch {
+        dispatch({ type: "HYDRATE", payload: { history: [], favorites: [] } })
+      }
+      hydrated.current = false
+    }
   }, [isLoggedIn, fieldKey])
 
   const addToHistory = useCallback((entry) => {
