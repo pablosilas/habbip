@@ -71,7 +71,7 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
             onClick={onOpenLogin}
             className="shrink-0 border border-[#c7a84b] bg-[rgba(255,255,255,0.08)] px-2 py-[2px] text-[10px] font-bold text-[#fff2c1] cursor-pointer hover:brightness-110"
           >
-            Entrar
+            Entrar no Habbip
           </button>
         )}
       </div>

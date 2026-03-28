@@ -35,6 +35,41 @@ function SearchResultOption({ item, onSelect }) {
   )
 }
 
+// Banner de sincronização para anônimos com itens no inventário
+function AnonSyncBanner({ onLoginToSync }) {
+  const [dismissed, setDismissed] = React.useState(false)
+  if (dismissed) return null
+
+  return (
+    <div className="flex items-start gap-2 px-3 py-2 mb-2 border border-[#ffd64d44] bg-[rgba(255,214,77,0.07)] rounded-[6px]">
+      <span className="text-[11px] shrink-0 mt-[1px]">☁️</span>
+      <div className="flex-1 min-w-0">
+        <div className="text-[10px] text-[#e0c060] font-bold leading-tight">
+          Dados só neste dispositivo
+        </div>
+        <div className="text-[10px] text-[#bbb] leading-[14px] mt-[1px]">
+          <button
+            type="button"
+            onClick={onLoginToSync}
+            className="text-[#ffd64d] font-bold hover:underline cursor-pointer"
+          >
+            Crie uma conta grátis
+          </button>{" "}
+          para sincronizar em qualquer lugar e nunca perder seus dados.
+        </div>
+      </div>
+      <button
+        type="button"
+        onClick={() => setDismissed(true)}
+        className="text-[#666] hover:text-[#aaa] text-[11px] cursor-pointer shrink-0"
+        title="Fechar"
+      >
+        ✕
+      </button>
+    </div>
+  )
+}
+
 export default function InventoryTab({
   items,
   query,
@@ -63,7 +98,9 @@ export default function InventoryTab({
   updateLocalData,
   expanded,
   setExpanded,
-  loadingData
+  loadingData,
+  isAnonymous = false,
+  onLoginToSync,
 }) {
   const inputRef = React.useRef(null)
   const [footerExpanded, setFooterExpanded] = React.useState(false)
@@ -300,6 +337,12 @@ export default function InventoryTab({
         <>
           <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
           <div className="shrink-0 space-y-2">
+
+            {/* Banner de sincronização para anônimos */}
+            {isAnonymous && onLoginToSync && (
+              <AnonSyncBanner onLoginToSync={onLoginToSync} />
+            )}
+
             <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
               <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
               <div className="flex items-center gap-3">

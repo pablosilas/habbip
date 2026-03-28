@@ -1,7 +1,6 @@
 import React from "react"
 import Button from "../ui/Button"
 import ConsoleCard from "../ui/ConsoleCard"
-import PasswordInput from "../ui/PasswordInput"
 import ProfileContent from "../profile/ProfileContent"
 import { updatePassword } from "../../services/authService"
 import { getHabboAvatarHeadUrl } from "../../services/habboApi"
@@ -27,26 +26,115 @@ function AvatarHead({ nick }) {
   )
 }
 
-function ChangePasswordSection({ user, onUserUpdated }) {
+// ── EyeIcon ───────────────────────────────────────────────────────────────────
+function EyeIcon({ open }) {
+  return open ? (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  ) : (
+    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94" />
+      <path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19" />
+      <line x1="1" y1="1" x2="23" y2="23" />
+    </svg>
+  )
+}
+
+// ── PinInput inline ────────────────────────────────────────────────────────
+function PinInput({ value, onChange, disabled, maxLength = 6, label }) {
+  const inputRef = React.useRef(null)
+  const [reveal, setReveal] = React.useState(false)
+
+  function handleChange(e) {
+    const raw = e.target.value.replace(/\D/g, "").slice(0, maxLength)
+    onChange(raw)
+  }
+
+  return (
+    <div>
+      {label && <div className="text-white text-[12px] font-bold mb-2">{label}</div>}
+      <div className="relative">
+        <input
+          ref={inputRef}
+          type="tel"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          value={value}
+          onChange={handleChange}
+          disabled={disabled}
+          autoComplete="one-time-code"
+          className="absolute opacity-0 w-0 h-0"
+        />
+        <div className="flex items-center gap-[4px]">
+          <div
+            className="flex gap-[3px] flex-1 cursor-pointer"
+            onClick={() => inputRef.current?.focus()}
+          >
+            {Array.from({ length: maxLength }).map((_, i) => {
+              const char = value[i]
+              const isCurrent = i === value.length && value.length < maxLength
+              return (
+                <div
+                  key={i}
+                  className={[
+                    "flex-1 h-7 flex items-center justify-center border text-[12px] font-bold text-white transition-all rounded-[2px]",
+                    char
+                      ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
+                      : isCurrent
+                        ? "border-[#ffd64d] bg-[rgba(255,255,255,0.06)] animate-pulse"
+                        : "border-[#555] bg-[rgba(255,255,255,0.04)]",
+                  ].join(" ")}
+                >
+                  {char ? (reveal ? char : "•") : ""}
+                </div>
+              )
+            })}
+          </div>
+          <button
+            type="button"
+            onClick={() => setReveal((v) => !v)}
+            className={[
+              "shrink-0 w-6 h-7 flex items-center justify-center border rounded-[2px] transition-colors cursor-pointer",
+              reveal
+                ? "border-[#ffd64d] text-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
+                : "border-[#555] text-[#666] bg-[rgba(255,255,255,0.04)] hover:text-[#aaa] hover:border-[#888]",
+            ].join(" ")}
+            title={reveal ? "Ocultar PIN" : "Mostrar PIN"}
+            tabIndex={-1}
+          >
+            <EyeIcon open={reveal} />
+          </button>
+        </div>
+        <div className="mt-1 text-center text-[9px] text-[#888]">
+          {value.length}/{maxLength} dígitos {value.length >= 4 ? "✓" : ""}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function ChangePinSection({ user, onUserUpdated }) {
   const [open, setOpen] = React.useState(false)
-  const [currentPassword, setCurrentPassword] = React.useState("")
-  const [newPassword, setNewPassword] = React.useState("")
-  const [confirmPassword, setConfirmPassword] = React.useState("")
+  const [currentPin, setCurrentPin] = React.useState("")
+  const [newPin, setNewPin] = React.useState("")
+  const [confirmPin, setConfirmPin] = React.useState("")
   const [loading, setLoading] = React.useState(false)
   const [error, setError] = React.useState("")
   const [success, setSuccess] = React.useState(false)
 
   function reset() {
-    setCurrentPassword(""); setNewPassword(""); setConfirmPassword("")
+    setCurrentPin(""); setNewPin(""); setConfirmPin("")
     setError(""); setSuccess(false)
   }
 
   async function handleSave() {
-    if (newPassword.length < 6) { setError("Nova senha deve ter pelo menos 6 caracteres."); return }
-    if (newPassword !== confirmPassword) { setError("As senhas não coincidem."); return }
+    if (newPin.length < 4) { setError("Novo PIN deve ter pelo menos 4 dígitos."); return }
+    if (newPin !== confirmPin) { setError("Os PINs não coincidem."); return }
     setLoading(true); setError("")
     try {
-      const updatedUser = await updatePassword({ currentPassword, newPassword })
+      const updatedUser = await updatePassword({ currentPassword: currentPin, newPassword: newPin })
       if (updatedUser && onUserUpdated) {
         onUserUpdated({ ...user, ...updatedUser })
       }
@@ -62,48 +150,56 @@ function ChangePasswordSection({ user, onUserUpdated }) {
   return (
     <div className="border border-[#ffffff22] rounded-[8px] p-3 bg-[rgba(255,255,255,0.04)]">
       <div className="flex items-center justify-between mb-2">
-        <div className="text-[#fff2c1] font-bold text-[12px]">Senha</div>
+        <div className="text-[#fff2c1] font-bold text-[12px]">PIN do Habbip</div>
         <button
           type="button"
           onClick={() => { setOpen((v) => !v); reset() }}
           className="text-[10px] text-[#aaa] hover:text-[#ffd64d] cursor-pointer transition-colors"
         >
-          {open ? "cancelar" : "alterar senha"}
+          {open ? "cancelar" : "alterar PIN"}
         </button>
       </div>
 
-      {!open && <div className="text-[12px] text-[#888]">••••••••</div>}
+      {!open && (
+        <div className="flex gap-[4px]">
+          {Array.from({ length: 5 }).map((_, i) => (
+            <div key={i} className="w-5 h-5 flex items-center justify-center border border-[#444] bg-[rgba(255,255,255,0.04)] text-[#555] text-[14px]">•</div>
+          ))}
+        </div>
+      )}
 
       {open && (
-        <div className="flex flex-col gap-2">
-          <PasswordInput
-            value={currentPassword}
-            onChange={(e) => setCurrentPassword(e.target.value)}
-            placeholder="Senha atual"
-            autoComplete="current-password"
+        <div className="flex flex-col gap-3">
+          <PinInput
+            value={currentPin}
+            onChange={setCurrentPin}
             disabled={loading}
+            label="PIN atual"
           />
-          <PasswordInput
-            value={newPassword}
-            onChange={(e) => setNewPassword(e.target.value)}
-            placeholder="Nova senha (mín. 6 chars)"
-            autoComplete="new-password"
+          <PinInput
+            value={newPin}
+            onChange={setNewPin}
             disabled={loading}
+            label="Novo PIN"
           />
-          <PasswordInput
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            placeholder="Confirmar nova senha"
-            autoComplete="new-password"
+          <PinInput
+            value={confirmPin}
+            onChange={setConfirmPin}
             disabled={loading}
+            label="Confirmar novo PIN"
           />
+          {confirmPin.length >= 4 && (
+            <div className={`text-center text-[10px] font-bold ${newPin === confirmPin ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
+              {newPin === confirmPin ? "PINs coincidem ✓" : "PINs não coincidem"}
+            </div>
+          )}
           {error && <div className="text-[#ffd6d6] text-[11px]">{error}</div>}
-          {success && <div className="text-[#7CFC8A] text-[11px]">Senha alterada com sucesso!</div>}
+          {success && <div className="text-[#7CFC8A] text-[11px]">PIN alterado com sucesso!</div>}
           <Button
             onClick={handleSave}
-            disabled={!currentPassword || !newPassword || !confirmPassword || loading}
+            disabled={currentPin.length < 4 || newPin.length < 4 || confirmPin.length < 4 || loading}
           >
-            {loading ? "Salvando..." : "Alterar senha"}
+            {loading ? "Salvando..." : "Alterar PIN"}
           </Button>
         </div>
       )}
@@ -173,7 +269,18 @@ export default function ProfileModal({ open, user, onClose, onUserUpdated, onLog
                 </div>
               </div>
 
-              <ChangePasswordSection user={user} onUserUpdated={onUserUpdated} />
+              <ChangePinSection user={user} onUserUpdated={onUserUpdated} />
+
+              {/* Aviso de segurança */}
+              <div className="border border-[#ffd64d33] rounded-[8px] p-3 bg-[rgba(255,214,77,0.04)]">
+                <div className="flex items-start gap-2">
+                  <span className="text-[12px] shrink-0">🔒</span>
+                  <div className="text-[10px] text-[#c8c8c8] leading-[15px]">
+                    O Habbip <span className="text-white font-bold">não tem relação</span> com o Habbo Hotel.
+                    Seu PIN é exclusivo deste site — nunca é o mesmo da sua conta no jogo.
+                  </div>
+                </div>
+              </div>
 
               <div className="border-t border-[#ffffff22] pt-2">
                 <div className="text-[#888] text-[10px] leading-4 text-center">

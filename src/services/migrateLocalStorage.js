@@ -1,25 +1,18 @@
 /**
  * migrateLocalStorage
  *
- * Roda uma única vez após o primeiro login de um usuário que vinha
- * usando o app com localStorage (versão antiga sem backend).
+ * Roda uma única vez após o primeiro login/cadastro de um usuário.
  *
- * Lê as chaves antigas, faz o merge com os dados do servidor e
- * remove as chaves antigas para não acumular lixo.
- *
- * Como usar — chame após o login bem-sucedido e serverData carregado:
- *
- *   import { migrateLocalStorage } from "../services/migrateLocalStorage"
- *   await migrateLocalStorage(username, serverData, syncAllData)
+ * 1. Migra dados do sistema antigo (habbodesk:*) para o servidor
+ * 2. Migra dados anônimos da sessão atual (habbip:anon:*) para o servidor,
+ *    permitindo que quem usou o app sem conta não perca seus dados ao criar conta.
  */
 
 import { syncAllData } from "./authService"
 
 const MIGRATED_FLAG = "habbip:migrated_v1"
+const ANON_INVENTORY_KEY = "habbip:anon:inventory"
 
-/**
- * Lê uma chave do localStorage legado e retorna o valor parseado ou fallback.
- */
 function readLegacy(key, fallback) {
   try {
     const raw = localStorage.getItem(key)
@@ -27,21 +20,64 @@ function readLegacy(key, fallback) {
   } catch { return fallback }
 }
 
-/**
- * Converte o nome de usuário para a chave legada usada pelo sistema antigo.
- */
 function legacyUserKey(username) {
   return username.trim().toLowerCase().replace(/\s+/g, "_")
 }
 
+/**
+ * Migra dados anônimos (habbip:anon:*) para o servidor logo após criar conta.
+ * Deve ser chamado imediatamente após o cadastro bem-sucedido.
+ */
+export async function migrateAnonDataOnRegister() {
+  try {
+    const anonInventory = readLegacy(ANON_INVENTORY_KEY, [])
+    const anonCreditRate = readLegacy("habbip:anon:creditrate", null)
+
+    const hasData = anonInventory.length > 0 || anonCreditRate != null
+
+    if (!hasData) return
+
+    const payload = {}
+
+    if (anonInventory.length > 0) {
+      payload.inventory = anonInventory
+    }
+
+    if (anonCreditRate?.credits > 0 && anonCreditRate?.reais > 0) {
+      payload.settings = { creditRate: anonCreditRate }
+    }
+
+    // Migra histórico anônimo também
+    const anonMobiHistory = readLegacy("habbip:anon:history:mobi_history", null)
+    const anonUserHistory = readLegacy("habbip:anon:history:user_history", null)
+    const anonInvHistory = readLegacy("habbip:anon:history:inv_history", null)
+
+    if (anonMobiHistory) payload.mobi_history = anonMobiHistory
+    if (anonUserHistory) payload.user_history = anonUserHistory
+    if (anonInvHistory) payload.inv_history = anonInvHistory
+
+    await syncAllData(payload)
+
+    // Limpa dados anônimos após migração bem-sucedida
+    localStorage.removeItem(ANON_INVENTORY_KEY)
+    localStorage.removeItem("habbip:anon:creditrate")
+
+    console.log("[Habbip] Dados anônimos migrados para a conta com sucesso.")
+  } catch (err) {
+    console.warn("[Habbip] Falha ao migrar dados anônimos:", err.message)
+    // Não limpa — vai tentar de novo depois
+  }
+}
+
+/**
+ * Migração do sistema legado (habbodesk:*) — mantida para compatibilidade.
+ */
 export async function migrateLocalStorage(username) {
-  // Só migra uma vez por sessão/usuário
   const flag = `${MIGRATED_FLAG}:${username.toLowerCase()}`
   if (localStorage.getItem(flag) === "true") return
 
   const uk = legacyUserKey(username)
 
-  // ── Lê dados legados ────────────────────────────────────────────────────
   const legacyInventory = readLegacy(`habbodesk:${uk}:inventory`, [])
   const legacyWatchlist = readLegacy(`habbodesk:${uk}:watchlist`, [])
 
@@ -65,7 +101,6 @@ export async function migrateLocalStorage(username) {
   }
   const legacyNotifications = readLegacy(`habbodesk:${uk}:notifications`, [])
 
-  // Se não tem nada legado, só marca como migrado
   const hasLegacyData =
     legacyInventory.length > 0 ||
     legacyWatchlist.length > 0 ||
@@ -81,8 +116,6 @@ export async function migrateLocalStorage(username) {
   }
 
   try {
-    // Envia dados legados para o servidor (não sobrescreve dados do servidor
-    // que já existam — o servidor vai receber e usar como base inicial)
     await syncAllData({
       inventory: legacyInventory,
       watchlist: legacyWatchlist,
@@ -93,7 +126,6 @@ export async function migrateLocalStorage(username) {
       notifications: legacyNotifications,
     })
 
-    // ── Remove chaves legadas ──────────────────────────────────────────────
     const keysToRemove = [
       `habbodesk:${uk}:inventory`,
       `habbodesk:${uk}:watchlist`,
@@ -105,7 +137,6 @@ export async function migrateLocalStorage(username) {
       `habbodesk:${uk}:history:inventory`,
       `habbodesk:${uk}:favorites:inventory`,
       `habbodesk:${uk}:notifications`,
-      // Chaves do sistema antigo de auth
       "habbodesk_logged_user",
       "habbodesk_anonymous_skip_login",
     ]
@@ -115,6 +146,5 @@ export async function migrateLocalStorage(username) {
     console.log("[Habbip] Migração do localStorage concluída.")
   } catch (err) {
     console.warn("[Habbip] Falha na migração do localStorage:", err.message)
-    // Não marca como migrado — vai tentar de novo no próximo login
   }
 }

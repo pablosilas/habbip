@@ -1,10 +1,11 @@
 import React from "react"
-import FairResultCard from "../fair/FairResultCard"
+import FairGridCard from "../fair/FairGridCard"
+import FairDetailModal from "../../modals/FairDetailModal"
 import Button from "../../ui/Button"
 import SearchInput from "../../ui/SearchInput"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
-import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import AlertConfigModal from "../../modals/AlertConfigModal"
+import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import { searchMarketItems } from "../../../services/marketSearch"
 import traxIcon from "../../../assets/trax.png"
 import plasticIcon from "../../../assets/plastic.png"
@@ -29,36 +30,22 @@ const FAIR_CATEGORIES = [
       { id: "plasticos_mesinha", label: "Mesinha", searchTerms: ["table_plasto_square"] },
       { id: "plasticos_redonda", label: "Mesa redonda", searchTerms: ["table_plasto_round"] },
       { id: "plasticos_4pernas", label: "Mesa 4 pernas", searchTerms: ["table_plasto_4leg"] },
-      { id: "plasticos_quadrada", label: "Mesa quadrada", searchTerms: ["table_plasto_bigsquare"] }
+      { id: "plasticos_quadrada", label: "Mesa quadrada", searchTerms: ["table_plasto_bigsquare"] },
     ],
   },
 ]
 
 export default function FairTab({
-  mobiQuery,
-  setMobiQuery,
-  fairHotel,
-  setFairHotel,
-  onSearch,
-  loading,
-  error,
-  results,
-  expanded,
-  setExpanded,
-  creditRate,
-  onSetCreditRate,
-  onAddToInventory,
-  isInInventory,
-  isWatching = false,
-  onToggleWatchlist,
-  serverData,
-  markDirty,
-  isLoggedIn,
-  onTriggerFly,
-  isStale,
-  onRefresh,
-  onCategoryResults,
-  onCategoryReset,
+  mobiQuery, setMobiQuery,
+  fairHotel, setFairHotel,
+  onSearch, loading, error, results,
+  expanded, setExpanded,
+  creditRate, onSetCreditRate,
+  onAddToInventory, isInInventory,
+  isWatching, onToggleWatchlist,
+  serverData, markDirty, isLoggedIn,
+  onTriggerFly, isStale, onRefresh,
+  onCategoryResults, onCategoryReset,
 }) {
   const [showDropdown, setShowDropdown] = React.useState(false)
   const [sortBy, setSortBy] = React.useState("priceValue")
@@ -66,46 +53,34 @@ export default function FairTab({
   const [alertConfigOpen, setAlertConfigOpen] = React.useState(false)
   const [selectedItemForConfig, setSelectedItemForConfig] = React.useState(null)
   const [isStuck, setIsStuck] = React.useState(false)
-
   const [activeCategory, setActiveCategory] = React.useState(null)
   const [activeSubcategory, setActiveSubcategory] = React.useState(null)
   const [categoryLoading, setCategoryLoading] = React.useState(false)
+  // Modal de detalhes
+  const [detailItem, setDetailItem] = React.useState(null)
 
   const wrapperRef = React.useRef(null)
   const inputRef = React.useRef(null)
   const sentinelRef = React.useRef(null)
 
-  const {
-    history,
-    favorites,
-    addToHistory,
-    removeFromHistory,
-    clearHistory,
-    toggleFavorite,
-    isFavorite,
-  } = useMobiHistory(serverData, markDirty, isLoggedIn)
+  const { history, favorites, addToHistory, removeFromHistory, clearHistory, toggleFavorite, isFavorite } =
+    useMobiHistory(serverData, markDirty, isLoggedIn)
 
   const lastSearchedTermRef = React.useRef(null)
 
   React.useEffect(() => {
     const sentinel = sentinelRef.current
     if (!sentinel) return
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsStuck(!entry.isIntersecting),
-      { threshold: 1 }
-    )
+    const observer = new IntersectionObserver(([entry]) => setIsStuck(!entry.isIntersecting), { threshold: 1 })
     observer.observe(sentinel)
     return () => observer.disconnect()
   }, [results])
 
-  React.useEffect(() => {
-    setFilterQuery("")
-  }, [results])
+  React.useEffect(() => { setFilterQuery("") }, [results])
 
   React.useEffect(() => {
     if (results.length > 0 && lastSearchedTermRef.current) {
-      const firstClassname = results[0]?.ClassName || null
-      addToHistory({ term: lastSearchedTermRef.current, classname: firstClassname })
+      addToHistory({ term: lastSearchedTermRef.current, classname: results[0]?.ClassName || null })
       lastSearchedTermRef.current = null
     }
   }, [addToHistory, results])
@@ -117,15 +92,10 @@ export default function FairTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fairHotel])
 
-  // ── Busca central por lista de searchTerms ────────────────────────────────
   async function fetchByTerms(searchTerms) {
     setCategoryLoading(true)
     try {
-      const searches = await Promise.all(
-        searchTerms.map((term) =>
-          searchMarketItems({ query: term, hotel: fairHotel })
-        )
-      )
+      const searches = await Promise.all(searchTerms.map((term) => searchMarketItems({ query: term, hotel: fairHotel })))
       const seen = new Set()
       const merged = []
       for (const list of searches) {
@@ -164,20 +134,10 @@ export default function FairTab({
   }
 
   async function handleCategoryClick(cat) {
-    // Toggle: desmarca se já ativo
     if (activeCategory === cat.id) {
-      setActiveCategory(null)
-      setActiveSubcategory(null)
-      setMobiQuery("")
-      onCategoryReset?.()
-      return
+      setActiveCategory(null); setActiveSubcategory(null); setMobiQuery(""); onCategoryReset?.(); return
     }
-
-    setActiveCategory(cat.id)
-    setMobiQuery("")
-    setFilterQuery("")
-
-    // Se tem subcategorias, ativa "Todos" automaticamente
+    setActiveCategory(cat.id); setMobiQuery(""); setFilterQuery("")
     if (cat.subcategories) {
       const todos = cat.subcategories.find(s => s.id.endsWith("_todos"))
       setActiveSubcategory(todos?.id ?? null)
@@ -189,18 +149,14 @@ export default function FairTab({
   }
 
   async function handleSubcategoryClick(sub) {
-    // Toggle: se já ativo, volta pra "Todos"
     if (activeSubcategory === sub.id) {
       const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
       const todos = cat?.subcategories?.find(s => s.id.endsWith("_todos"))
-      setActiveSubcategory(todos?.id ?? null)
-      setFilterQuery("")
+      setActiveSubcategory(todos?.id ?? null); setFilterQuery("")
       if (todos) await fetchByTerms(todos.searchTerms)
       return
     }
-
-    setActiveSubcategory(sub.id)
-    setFilterQuery("")
+    setActiveSubcategory(sub.id); setFilterQuery("")
     await fetchByTerms(sub.searchTerms)
   }
 
@@ -218,10 +174,10 @@ export default function FairTab({
 
   const activeCategoryObj = FAIR_CATEGORIES.find(c => c.id === activeCategory)
   const subcategories = activeCategoryObj?.subcategories ?? null
-
   const hasDropdownItems = history.length > 0 || favorites.length > 0
   const isLoadingAny = loading || categoryLoading
 
+  // ── Ordenação ─────────────────────────────────────────────────────────────
   const sortedResults = [...results].sort((a, b) => {
     const aH = a.marketData?.history
     const bH = b.marketData?.history
@@ -230,23 +186,16 @@ export default function FairTab({
     const aP = Array.isArray(aH) && aH.length > 1 ? aH[aH.length - 2] : null
     const bP = Array.isArray(bH) && bH.length > 1 ? bH[bH.length - 2] : null
 
-    if (sortBy === "price") return (bL?.[0] ?? 0) - (aL?.[0] ?? 0)
     if (sortBy === "priceValue") {
       const aPrice = a.marketData?.currentPrice ?? a.marketData?.averagePrice ?? 0
       const bPrice = b.marketData?.currentPrice ?? b.marketData?.averagePrice ?? 0
       return bPrice - aPrice
     }
     if (sortBy === "trend") {
-      return (
-        ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) -
-        ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
-      )
+      return ((bL?.[0] ?? 0) - (bP?.[0] ?? bL?.[0] ?? 0)) - ((aL?.[0] ?? 0) - (aP?.[0] ?? aL?.[0] ?? 0))
     }
     if (sortBy === "offers") {
-      return (
-        (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) -
-        (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
-      )
+      return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
     }
     return 0
   })
@@ -260,63 +209,61 @@ export default function FairTab({
 
   return (
     <div ref={wrapperRef}>
-      <div
-        className="flex items-center justify-between mb-2 cursor-pointer"
-        onClick={() => setExpanded((v) => !v)}
-      >
+      {/* ── Modal de detalhe ── */}
+      <FairDetailModal
+        open={!!detailItem}
+        item={detailItem}
+        onClose={() => setDetailItem(null)}
+        creditRate={creditRate}
+        onSetCreditRate={onSetCreditRate}
+      />
+
+      {/* ── Alert config ── */}
+      <AlertConfigModal
+        open={alertConfigOpen}
+        item={selectedItemForConfig}
+        config={selectedItemForConfig ? { alertMode: "any" } : null}
+        onSave={(config) => {
+          if (selectedItemForConfig) onToggleWatchlist?.({ ...selectedItemForConfig, alertConfig: config })
+          setAlertConfigOpen(false)
+        }}
+        onClose={() => setAlertConfigOpen(false)}
+      />
+
+      {/* ── Cabeçalho ── */}
+      <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
         <div className="min-w-0 flex-1 mr-2">
           <div className="text-[#f4f4f4] font-bold text-[13px]">Feira Livre</div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4">
-            Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.
-          </div>
+          <div className="text-[#d2d2d2] text-[11px] leading-4">Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.</div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
-          {expanded ? "▲ recolher" : "▼ expandir"}
-        </span>
+        <span className="text-[#d2d2d2] text-[11px]">{expanded ? "▲ recolher" : "▼ expandir"}</span>
       </div>
 
-      {/* ── Chips de categoria ──────────────────────────────────────────────── */}
+      {/* ── Chips de categoria ── */}
       <div className="flex flex-wrap gap-[6px] mb-2">
         {FAIR_CATEGORIES.map((cat) => (
-          <button
-            key={cat.id}
-            type="button"
-            onClick={() => handleCategoryClick(cat)}
-            disabled={isLoadingAny}
+          <button key={cat.id} type="button" onClick={() => handleCategoryClick(cat)} disabled={isLoadingAny}
             className={[
               "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
               "disabled:opacity-50 disabled:cursor-not-allowed",
               activeCategory === cat.id
                 ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                : "border-[#555] text-[#bbb] hover:border-[#888] hover:text-[#eee]",
+                : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
             ].join(" ")}
           >
-            <img
-              src={cat.icon}
-              alt={cat.label}
-              className="w-3 h-3 object-contain"
-              style={{ imageRendering: "pixelated" }}
-            />
-            <span>{cat.label}</span>
-            {activeCategory === cat.id && categoryLoading && (
-              <span className="text-[9px] animate-pulse ml-1">carregando...</span>
-            )}
+            {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain image-rendering-pixel" />}
+            {cat.label}
           </button>
         ))}
       </div>
 
-      {/* ── Subcategorias (só aparece quando categoria ativa tem subcats) ───── */}
+      {/* ── Subcategorias ── */}
       {subcategories && (
-        <div className="flex flex-wrap gap-[5px] mb-3 pl-2 border-l-2 border-[#ffd64d44]">
+        <div className="flex flex-wrap gap-[4px] mb-2">
           {subcategories.map((sub) => (
-            <button
-              key={sub.id}
-              type="button"
-              onClick={() => handleSubcategoryClick(sub)}
-              disabled={isLoadingAny}
+            <button key={sub.id} type="button" onClick={() => handleSubcategoryClick(sub)} disabled={isLoadingAny}
               className={[
-                "flex items-center px-2 py-[3px] text-[10px] font-bold border transition-colors cursor-pointer",
-                "disabled:opacity-50 disabled:cursor-not-allowed",
+                "px-2 py-[3px] text-[10px] border transition-colors cursor-pointer disabled:opacity-50",
                 activeSubcategory === sub.id
                   ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
                   : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
@@ -330,6 +277,7 @@ export default function FairTab({
 
       {!subcategories && <div className="mb-1" />}
 
+      {/* ── Formulário de busca ── */}
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
           <div className="flex gap-2 mb-2">
@@ -358,32 +306,23 @@ export default function FairTab({
                 />
               </SearchInput>
             </div>
-
             <select
               value={fairHotel}
               onChange={(e) => setFairHotel(e.target.value)}
               className="h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none w-16"
             >
               {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map((h) => (
-                <option key={h} value={h} className="text-black">
-                  {h.toUpperCase()}
-                </option>
+                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
               ))}
             </select>
           </div>
-
           <div className="grid grid-cols-2 gap-2 mb-3">
             <Button type="submit" disabled={isLoadingAny}>
               {loading ? "Consultando..." : "Consultar feira"}
             </Button>
-            <Button
-              variant="secondary"
-              type="button"
+            <Button variant="secondary" type="button"
               onClick={() => {
-                setMobiQuery("")
-                setActiveCategory(null)
-                setActiveSubcategory(null)
-                onCategoryReset?.()
+                setMobiQuery(""); setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.()
               }}
             >
               Limpar
@@ -392,108 +331,81 @@ export default function FairTab({
         </form>
       )}
 
-      {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
+      {error && <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>}
 
-      {typeof document !== "undefined" && (
-        <AlertConfigModal
-          open={alertConfigOpen}
-          item={selectedItemForConfig}
-          config={selectedItemForConfig?.alertConfig || { alertMode: "any", targetPrice: null }}
-          onSave={() => setAlertConfigOpen(false)}
-          onClose={() => setAlertConfigOpen(false)}
-        />
-      )}
-
-      {results.length > 1 && (
+      {/* ── Resultados ── */}
+      {results.length > 0 && (
         <>
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <span className="text-[10px] text-[#aaa] uppercase tracking-wider shrink-0">
-              Ordenar
-            </span>
-            <div className="flex gap-1 flex-wrap flex-1">
-              {[
-                { value: "priceValue", label: "Preço" },
-                { value: "price", label: "Média" },
-                { value: "trend", label: "Tendência" },
-                { value: "offers", label: "Ofertas" },
-              ].map(({ value, label }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setSortBy(value)}
-                  className={`px-2 py-[2px] text-[10px] font-bold border cursor-pointer transition-colors ${sortBy === value
-                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]"
-                    }`}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-
+          {/* Sticky: filtro + sort + stale */}
           <div ref={sentinelRef} className="h-px" />
-
-          <div
-            className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck
-              ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]"
-              : "py-0 bg-transparent"
-              }`}
-          >
-            <SearchInput
-              value={filterQuery}
-              onChange={(e) => setFilterQuery(e.target.value)}
-              placeholder={`Filtrar nos ${results.length} resultados...`}
-              className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
-            />
+          <div className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]" : "py-0 bg-transparent"}`}>
+            <div className="flex gap-2 mb-1">
+              <SearchInput
+                value={filterQuery}
+                onChange={(e) => setFilterQuery(e.target.value)}
+                placeholder={`Filtrar nos ${results.length} resultados...`}
+                className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
+              />
+              {/* Ordenação */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="h-8 shrink-0 border border-[#555] bg-[rgba(255,255,255,0.08)] px-2 text-[10px] text-[#ccc] outline-none"
+              >
+                <option value="priceValue" className="text-black">Preço ↓</option>
+                <option value="trend" className="text-black">Tendência</option>
+                <option value="offers" className="text-black">Ofertas</option>
+              </select>
+            </div>
             {isStale && (
-              <button
-                type="button"
-                onClick={handleRefresh}
-                className="w-full flex items-center justify-center gap-2 mt-1 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] text-[11px] font-bold cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
+              <button type="button" onClick={handleRefresh}
+                className="w-full flex items-center justify-center gap-2 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] text-[11px] font-bold cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
               >
                 <span>↻</span> Dados podem estar desatualizados — clique para atualizar
               </button>
             )}
           </div>
+
+          {/* ── Grid 4 col desktop / 2 col mobile ── */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
+            {filteredResults.map((item, index) => {
+              const favKey = item.ClassName || item.FurniName || String(index)
+              return (
+                <FairGridCard
+                  key={`${favKey}-${index}`}
+                  item={item}
+                  isFavorite={isFavorite(favKey)}
+                  onToggleFavorite={() => toggleFavorite(favKey)}
+                  onAddToInventory={onAddToInventory}
+                  isInInventory={isInInventory ? isInInventory(item.ClassName) : false}
+                  isWatching={isWatching ? isWatching(item.ClassName) : false}
+                  onToggleWatchlist={onToggleWatchlist}
+                  onTriggerFly={onTriggerFly}
+                  isLoggedIn={isLoggedIn}
+                  creditRate={creditRate}
+                  onConfigureAlert={(item) => {
+                    setSelectedItemForConfig(item)
+                    setAlertConfigOpen(true)
+                  }}
+                  onClick={() => setDetailItem(item)}
+                />
+              )
+            })}
+          </div>
+
+          {!isLoadingAny && !filteredResults.length && filterQuery.trim() && (
+            <div className="text-[#888] text-[12px] mt-2">Nenhum mobi encontrado para "{filterQuery}".</div>
+          )}
         </>
       )}
 
-      <div className="space-y-2 pr-1">
-        {filteredResults.map((item, index) => {
-          const favKey = item.ClassName || item.FurniName || String(index)
-          return (
-            <FairResultCard
-              key={`${favKey}-${index}`}
-              item={item}
-              onTriggerFly={onTriggerFly}
-              isFavorite={isFavorite(favKey)}
-              onToggleFavorite={() => toggleFavorite(favKey)}
-              creditRate={creditRate}
-              onSetCreditRate={onSetCreditRate}
-              onAddToInventory={onAddToInventory}
-              isInInventory={isInInventory(item.ClassName)}
-              isWatching={isWatching ? isWatching(item.ClassName) : false}
-              onToggleWatchlist={onToggleWatchlist}
-              isLoggedIn={isLoggedIn}
-              onConfigureAlert={(item) => {
-                setSelectedItemForConfig(item)
-                setAlertConfigOpen(true)
-              }}
-            />
-          )
-        })}
+      {isLoadingAny && (
+        <div className="text-[#d2d2d2] text-[12px] mt-2 animate-pulse">Carregando...</div>
+      )}
 
-        {!isLoadingAny && !filteredResults.length && filterQuery.trim() && (
-          <div className="text-[#888] text-[12px]">
-            Nenhum mobi encontrado para "{filterQuery}".
-          </div>
-        )}
-
-        {!isLoadingAny && !results.length && !error && (
-          <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
-        )}
-      </div>
+      {!isLoadingAny && !results.length && !error && (
+        <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
+      )}
     </div>
   )
 }

@@ -8,7 +8,6 @@ import bg2 from "../assets/bg_2.png"
 import bg3 from "../assets/bg_3.png"
 import arrowUpIcon from "../assets/arrow_up.gif"
 
-
 import HeaderCard from "../components/layout/HeaderCard"
 import FairTab from "../components/tabs/fair/FairTab"
 import UserTab from "../components/tabs/UserTab"
@@ -16,11 +15,11 @@ import InventoryTab from "../components/tabs/inventory/InventoryTab"
 import ConsoleTab from "../components/layout/ConsoleTab"
 import ConsoleCard from "../components/ui/ConsoleCard"
 import NotificationBell from "../components/ui/NotificationBell"
+import LocalDataBanner from "../components/ui/LocalDataBanner"
 
 import LoginModal from "../components/modals/LoginModal"
 import ProfileModal from "../components/modals/ProfileModal"
 import InfoModal from "../components/modals/InfoModal"
-import LockedFeatureOverlay from "../components/ui/LockedFeatureOverlay"
 import LogoutConfirmModal from "../components/modals/LogoutConfirmModal"
 
 import { useFairSearch } from "../hooks/useFairSearch"
@@ -105,14 +104,7 @@ function BgSelector({ bgIndex, onBgChange, bgs }) {
               boxShadow: "inset 0 0 0 1px #8c8c8c",
             }}
           >
-            <span
-              className="block w-0 h-0 translate-y-[1px]"
-              style={{
-                borderLeft: "4px solid transparent",
-                borderRight: "4px solid transparent",
-                borderTop: "6px solid #ffffff",
-              }}
-            />
+            <span className="block w-0 h-0 translate-y-[1px]" style={{ borderLeft: "4px solid transparent", borderRight: "4px solid transparent", borderTop: "6px solid #ffffff" }} />
           </button>
         </div>
       </div>
@@ -180,7 +172,7 @@ export default function HabboDeskApp() {
   const inventory = useInventory(serverData, markDirty, isLoggedIn)
   const converter = useCreditConverter(serverData, markDirty, isLoggedIn)
 
-  // ── Watchlist — desestruturado diretamente para evitar warning do Compiler
+  // ── Watchlist ─────────────────────────────────────────────────────────────
   const {
     watchlist: watchlistItems,
     isWatching,
@@ -213,12 +205,11 @@ export default function HabboDeskApp() {
   const addNotificationRef = useRef(addNotification)
   useEffect(() => { addNotificationRef.current = addNotification }, [addNotification])
 
-  // ── Handler SSE — estável, lê estado via refs ─────────────────────────────
+  // ── Handler SSE ───────────────────────────────────────────────────────────
   const handlePriceChanged = useCallback((event) => {
     if (!event?.className) return
 
     const normalizedClassName = event.className.toLowerCase()
-
     const currentSub = watchlistRef.current.find(
       (i) => i.ClassName?.toLowerCase() === normalizedClassName
     )
@@ -229,7 +220,6 @@ export default function HabboDeskApp() {
     if (event.oldPrice == null) return
 
     const cfg = currentSub.alertConfig ?? { alertMode: "any" }
-
     let shouldNotify = cfg.alertMode === "any"
 
     if (cfg.alertMode === "price" && cfg.targetPrice != null) {
@@ -238,9 +228,7 @@ export default function HabboDeskApp() {
       const newPrice = Number(event.newPrice)
 
       if (!Number.isNaN(targetPrice) && !Number.isNaN(newPrice)) {
-        shouldNotify =
-          newPrice >= targetPrice - margin &&
-          newPrice <= targetPrice + margin
+        shouldNotify = newPrice >= targetPrice - margin && newPrice <= targetPrice + margin
       } else {
         shouldNotify = false
       }
@@ -276,7 +264,7 @@ export default function HabboDeskApp() {
     [removeNotificationsByClassName, removeFromWatchlist]
   )
 
-  // ── Logout ────────────────────────────────────────────────────────────────
+  // ── Logout — sem reabrir modal ────────────────────────────────────────────
   function doLogout() {
     auth.handleLogout(() => {
       setProfileModalOpen(false)
@@ -290,7 +278,14 @@ export default function HabboDeskApp() {
       setFairExpanded(true)
       setUserExpanded(true)
       setActiveTab("feira")
+      // Não reabre o modal — usuário fica anônimo
     })
+  }
+
+  // ── Abre modal de login ────────────────────────────────────────────────────
+  function openLogin(mode = "login") {
+    auth.setAuthMode(mode)
+    auth.setLoginModalOpen(true)
   }
 
   // ── Background ────────────────────────────────────────────────────────────
@@ -324,11 +319,6 @@ export default function HabboDeskApp() {
     return () => window.removeEventListener("resize", setVh)
   }, [])
 
-  function handleLockedAction() {
-    auth.setLoginModalOpen(true)
-    auth.setAuthMode("login")
-  }
-
   function handleOpenInFair(className) {
     fair.setMobiQuery(className)
     setActiveTab("feira")
@@ -356,8 +346,7 @@ export default function HabboDeskApp() {
         error={auth.loginError}
         onLogin={auth.handleLogin}
         onRegister={auth.handleRegister}
-        onContinueAnonymous={auth.handleContinueAnonymous}
-        onClose={() => auth.handleContinueAnonymous({ doNotAskAgain: false })}
+        onClose={() => auth.setLoginModalOpen(false)}
       />
       <ProfileModal
         open={profileModalOpen}
@@ -441,15 +430,12 @@ export default function HabboDeskApp() {
                     active={activeTab === "usuario"}
                     onClick={() => setActiveTab("usuario")}
                   />
+                  {/* Inventário agora disponível para todos */}
                   <ConsoleTab
                     label="Meu Inventário"
                     icon={<img src={inventarioIcon} className="w-7 h-6 image-rendering-pixel icon-dark" alt="Inventário" />}
                     active={activeTab === "inventario"}
-                    onClick={() => {
-                      if (!isLoggedIn) { handleLockedAction(); return }
-                      setActiveTab("inventario")
-                    }}
-                    locked={!isLoggedIn}
+                    onClick={() => setActiveTab("inventario")}
                   />
                 </div>
                 <button
@@ -467,7 +453,7 @@ export default function HabboDeskApp() {
               activeTab={activeTab}
               userData={auth.loggedUser}
               onOpenProfile={() => setProfileModalOpen(true)}
-              onOpenLogin={() => { auth.setLoginModalOpen(true); auth.setAuthMode("login") }}
+              onOpenLogin={() => openLogin("login")}
             />
 
             <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-2 shrink-0" />
@@ -478,6 +464,14 @@ export default function HabboDeskApp() {
               className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1"
               onScroll={(e) => setShowScrollTop(e.currentTarget.scrollTop > 300)}
             >
+              {/* Banner de dados locais — aparece só para anônimos com inventário */}
+              {!isLoggedIn && inventory.hasAnonData && (
+                <LocalDataBanner
+                  hasLocalData={inventory.hasAnonData}
+                  onLogin={() => openLogin("register")}
+                />
+              )}
+
               {activeTab === "feira" && (
                 <FairTab
                   mobiQuery={fair.mobiQuery}
@@ -492,29 +486,29 @@ export default function HabboDeskApp() {
                   setExpanded={setFairExpanded}
                   creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
                   onSetCreditRate={converter.setRate}
-                  onAddToInventory={isLoggedIn
-                    ? (item) => {
-                      if (inventory.items.some(i => i.ClassName === item.ClassName)) {
-                        inventory.removeItem(item.ClassName)
-                      } else {
-                        inventory.addToInventory(item)
-                      }
+                  onAddToInventory={(item) => {
+                    if (inventory.items.some(i => i.ClassName === item.ClassName)) {
+                      inventory.removeItem(item.ClassName)
+                    } else {
+                      inventory.addToInventory(item)
                     }
-                    : () => handleLockedAction()
-                  }
+                  }}
                   isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
                   isWatching={isLoggedIn ? isWatching : () => false}
-                  onToggleWatchlist={isLoggedIn
-                    ? (item) => {
-                      if (isWatching(item.ClassName)) {
-                        handleStopMonitoring(item.ClassName)
-                      } else {
-                        const freshItem = fair.results.find((r) => r.ClassName === item.ClassName) ?? item
-                        toggleWatchlist(freshItem)
-                      }
+                  onToggleWatchlist={(item) => {
+                    // Sinal enviado pelo ActionsMenu quando anônimo clica em "Monitorar"
+                    if (item?.__requireLogin) {
+                      openLogin("login")
+                      return
                     }
-                    : () => handleLockedAction()
-                  }
+                    if (!isLoggedIn) { openLogin("login"); return }
+                    if (isWatching(item.ClassName)) {
+                      handleStopMonitoring(item.ClassName)
+                    } else {
+                      const freshItem = fair.results.find((r) => r.ClassName === item.ClassName) ?? item
+                      toggleWatchlist(freshItem)
+                    }
+                  }}
                   serverData={serverData}
                   markDirty={markDirty}
                   isLoggedIn={isLoggedIn}
@@ -552,40 +546,40 @@ export default function HabboDeskApp() {
               )}
 
               {activeTab === "inventario" && (
-                isLoggedIn ? (
-                  <InventoryTab
-                    items={inventory.items}
-                    query={inventory.query}
-                    setQuery={inventory.setQuery}
-                    hotel={inventory.hotel}
-                    setHotel={inventory.setHotel}
-                    loading={inventory.loading}
-                    error={inventory.error}
-                    searchResults={inventory.searchResults}
-                    onSearch={inventory.handleSearch}
-                    onAddItem={inventory.addToInventory}
-                    onCancelSearch={inventory.cancelSearch}
-                    onUpdateQty={inventory.updateQty}
-                    onSetQty={inventory.setQty}
-                    onRemove={inventory.removeItem}
-                    onClear={inventory.clearInventory}
-                    totalItems={inventory.totalItems}
-                    totalUnits={inventory.totalUnits}
-                    totalValue={inventory.totalValue}
-                    creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
-                    onSetCreditRate={converter.setRate}
-                    searchKey={inventory.searchKey}
-                    expanded={inventoryExpanded}
-                    setExpanded={setInventoryExpanded}
-                    serverData={serverData}
-                    markDirty={markDirty}
-                    isLoggedIn={isLoggedIn}
-                    updateLocalData={updateLocalData}
-                    loadingData={loadingData}
-                  />
-                ) : (
-                  <LockedFeatureOverlay onLogin={() => { auth.setLoginModalOpen(true); auth.setAuthMode("login") }} />
-                )
+                // Inventário disponível para todos — anônimos salvam no localStorage
+                <InventoryTab
+                  items={inventory.items}
+                  query={inventory.query}
+                  setQuery={inventory.setQuery}
+                  hotel={inventory.hotel}
+                  setHotel={inventory.setHotel}
+                  loading={inventory.loading}
+                  error={inventory.error}
+                  searchResults={inventory.searchResults}
+                  onSearch={inventory.handleSearch}
+                  onAddItem={inventory.addToInventory}
+                  onCancelSearch={inventory.cancelSearch}
+                  onUpdateQty={inventory.updateQty}
+                  onSetQty={inventory.setQty}
+                  onRemove={inventory.removeItem}
+                  onClear={inventory.clearInventory}
+                  totalItems={inventory.totalItems}
+                  totalUnits={inventory.totalUnits}
+                  totalValue={inventory.totalValue}
+                  creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
+                  onSetCreditRate={converter.setRate}
+                  searchKey={inventory.searchKey}
+                  expanded={inventoryExpanded}
+                  setExpanded={setInventoryExpanded}
+                  serverData={serverData}
+                  markDirty={markDirty}
+                  isLoggedIn={isLoggedIn}
+                  updateLocalData={updateLocalData}
+                  loadingData={loadingData}
+                  // Passa prop para o InventoryTab mostrar aviso de dados locais
+                  isAnonymous={!isLoggedIn}
+                  onLoginToSync={() => openLogin("register")}
+                />
               )}
             </div>
 
