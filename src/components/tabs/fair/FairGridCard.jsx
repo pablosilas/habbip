@@ -156,7 +156,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     return () => document.removeEventListener("mousedown", handleOutside)
   }, [open])
 
-  function action(fn) { return (e) => { e?.stopPropagation(); fn?.(); setOpen(false) } }
+  function action(fn) { return (e) => { e?.stopPropagation(); fn?.() } }
 
   const menu = open ? (
     <div ref={menuRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 220 }}

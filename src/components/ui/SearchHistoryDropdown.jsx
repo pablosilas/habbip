@@ -5,23 +5,6 @@ import starOn from "../../assets/star.png"
 import starOff from "../../assets/star_off.png"
 import FurniThumb from "./FurniThumb"
 
-/**
- * SearchHistoryDropdown
- *
- * Dropdown retrô que aparece abaixo do input de busca mostrando:
- * - Favoritos (⭐) no topo
- * - Histórico recente abaixo
- *
- * Props:
- *   show          {boolean}    Controla visibilidade
- *   history       {string[]}   Lista do histórico recente
- *   favorites     {string[]}   Lista de favoritos
- *   onSelect      {function}   Chamado ao clicar num item (term: string)
- *   onRemove      {function}   Remove item do histórico (term: string)
- *   onToggleFav   {function}   Toggle favorito (term: string)
- *   isFavorite    {function}   Retorna true se term é favorito
- *   onClear       {function}   Limpa todo o histórico
- */
 export default function SearchHistoryDropdown({
   show,
   history = [],
@@ -37,7 +20,6 @@ export default function SearchHistoryDropdown({
 }) {
   if (!show) return null
 
-  // Itens do histórico que NÃO são favoritos (favoritos aparecem na seção própria)
   const recentItems = history.filter((h) => !isFavorite(getEntryTerm(h)))
   const hasFavorites = favorites.length > 0
   const hasRecent = recentItems.length > 0
@@ -47,7 +29,6 @@ export default function SearchHistoryDropdown({
   return (
     <div
       className="absolute left-0 right-0 top-full z-50 mt-[2px] border border-[#c3c3c3] bg-[#2a2a2a] shadow-[0_6px_20px_rgba(0,0,0,0.5)] overflow-hidden"
-      // Impede que o onBlur do input feche antes do clique ser registrado
       onMouseDown={(e) => e.preventDefault()}
     >
       {/* Cabeçalho */}
@@ -76,17 +57,16 @@ export default function SearchHistoryDropdown({
               Favoritos
             </span>
           </div>
-          {favorites.map((term) => (
+          {favorites.map((entry) => (
             <DropdownItem
-              key={`fav-${getEntryTerm(term)}`}
-              entry={term}
+              key={`fav-${getEntryTerm(entry)}`}
+              entry={entry}
               isFav={true}
               onSelect={onSelect}
               onToggleFav={onToggleFav}
               showAvatar={showAvatar}
               hotel={hotel}
               showFurniImage={showFurniImage}
-              history={history}
             />
           ))}
         </>
@@ -102,10 +82,10 @@ export default function SearchHistoryDropdown({
               </span>
             </div>
           )}
-          {recentItems.map((term) => (
+          {recentItems.map((entry) => (
             <DropdownItem
-              key={`hist-${getEntryTerm(term)}`}
-              entry={term}
+              key={`hist-${getEntryTerm(entry)}`}
+              entry={entry}
               isFav={false}
               onSelect={onSelect}
               onRemove={onRemove}
@@ -113,6 +93,8 @@ export default function SearchHistoryDropdown({
               showAvatar={showAvatar}
               hotel={hotel}
               showFurniImage={showFurniImage}
+              // passa history para fallback de itens antigos sem classname no objeto
+              history={history}
             />
           ))}
         </>
@@ -141,20 +123,31 @@ function AvatarThumb({ nick, hotel, isFav }) {
   )
 }
 
-function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvatar = false, hotel = "br", showFurniImage = false, history = [] }) {
+function DropdownItem({
+  entry,
+  isFav,
+  onSelect,
+  onRemove,
+  onToggleFav,
+  showAvatar = false,
+  hotel = "br",
+  showFurniImage = false,
+  history = [],
+}) {
   const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
-  const classname = typeof entry === "object"
-    ? entry?.classname
-    : history?.find((h) => getEntryTerm(h) === term)?.classname ?? null
 
-  console.log(classname, 'classname dropdown item')
+  // Favoritos já carregam o objeto completo com classname.
+  // Para itens do histórico, lê do objeto ou faz fallback na lista (compatibilidade).
+  const classname = typeof entry === "object"
+    ? entry?.classname ?? null
+    : history?.find((h) => getEntryTerm(h) === term)?.classname ?? null
 
   return (
     <div
       className="group flex items-center gap-1 px-2 py-[6px] hover:bg-[rgba(255,214,77,0.12)] cursor-pointer"
       onClick={() => onSelect(term)}
     >
-      {/* Avatar, imagem do mobi, ou ícone de clock/star */}
+      {/* Thumbnail */}
       {showAvatar ? (
         <AvatarThumb nick={term} hotel={hotel} isFav={isFav} />
       ) : showFurniImage && classname ? (
@@ -175,11 +168,14 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
 
       {/* Ações */}
       <div className="flex items-center gap-[6px] opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity shrink-0">
-        {/* Toggle favorito */}
         <button
           type="button"
           title={isFav ? "Remover dos favoritos" : "Adicionar aos favoritos"}
-          onClick={(e) => { e.stopPropagation(); onToggleFav(term) }}
+          onClick={(e) => {
+            e.stopPropagation()
+            // Passa o entry completo para que o hook preserve o classname
+            onToggleFav(entry)
+          }}
           className="cursor-pointer hover:scale-110 transition-transform"
         >
           <img
@@ -189,7 +185,6 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
           />
         </button>
 
-        {/* Remover do histórico (só itens não-favoritos) */}
         {onRemove && !isFav && (
           <button
             type="button"

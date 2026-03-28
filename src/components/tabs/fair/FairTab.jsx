@@ -44,7 +44,7 @@ export default function FairTab({
   creditRate, onSetCreditRate,
   onAddToInventory, isInInventory,
   isWatching, onToggleWatchlist,
-  serverData, markDirty, isLoggedIn,
+  serverData, markDirty, isLoggedIn, updateLocalData,
   onTriggerFly, isStale, onRefresh,
   onCategoryResults, onCategoryReset,
 }) {
@@ -65,7 +65,7 @@ export default function FairTab({
   const sentinelRef = React.useRef(null)
 
   const { history, favorites, addToHistory, removeFromHistory, clearHistory, toggleFavorite, isFavorite } =
-    useMobiHistory(serverData, markDirty, isLoggedIn)
+    useMobiHistory(serverData, markDirty, isLoggedIn, updateLocalData)
 
   const lastSearchedTermRef = React.useRef(null)
 
@@ -370,13 +370,16 @@ export default function FairTab({
           {/* ── Grid 4 col desktop / 2 col mobile ── */}
           <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
             {filteredResults.map((item, index) => {
-              const favKey = item.ClassName || item.FurniName || String(index)
+              const favEntry = {
+                term: item.FurniName || item.ClassName || String(index),  // ← nome legível para exibir e buscar
+                classname: item.ClassName  // ← classname só para carregar a imagem
+              }
               return (
                 <FairGridCard
-                  key={`${favKey}-${index}`}
+                  key={`${item.ClassName || item.FurniName}-${index}`}
                   item={item}
-                  isFavorite={isFavorite(favKey)}
-                  onToggleFavorite={() => toggleFavorite(favKey)}
+                  isFavorite={isFavorite(favEntry.term)}
+                  onToggleFavorite={() => toggleFavorite(favEntry)}
                   onAddToInventory={onAddToInventory}
                   isInInventory={isInInventory ? isInInventory(item.ClassName) : false}
                   isWatching={isWatching ? isWatching(item.ClassName) : false}

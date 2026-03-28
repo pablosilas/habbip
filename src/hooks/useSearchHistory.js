@@ -8,8 +8,6 @@ export function getEntryTerm(entry) {
 }
 
 function makeInitialState(fieldKey, isLoggedIn) {
-  // Anônimo: lê do localStorage imediatamente (histórico local persiste entre sessões)
-  // Logado: começa vazio — será hidratado pelo servidor via useEffect
   if (isLoggedIn) return { history: [], favorites: [] }
   try {
     const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
@@ -45,13 +43,16 @@ function historyReducer(state, action) {
     case "CLEAR_HISTORY":
       return { ...state, history: [] }
     case "TOGGLE_FAVORITE": {
-      const term = action.payload
-      const exists = state.favorites.includes(term)
+      // payload pode ser string (legado) ou objeto { term, classname, ... }
+      const entry = action.payload
+      const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
+      const exists = state.favorites.some((f) => getEntryTerm(f) === term)
       return {
         ...state,
         favorites: exists
-          ? state.favorites.filter((f) => f !== term)
-          : [term, ...state.favorites],
+          ? state.favorites.filter((f) => getEntryTerm(f) !== term)
+          // Guarda o objeto completo — preserva classname para a imagem no dropdown
+          : [entry, ...state.favorites],
       }
     }
     default:
@@ -69,7 +70,6 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
   const hydrated = useRef(false)
   const skipNextSync = useRef(false)
 
-  // Sempre aponta para o favorites atual sem precisar de dependência no callback
   const favoritesRef = useRef(favorites)
   useEffect(() => {
     favoritesRef.current = favorites
@@ -84,13 +84,15 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
     dispatch({ type: "HYDRATE", payload: d })
   }, [serverData, fieldKey, isLoggedIn])
 
+  // IMPORTANTE: `isLoggedIn` removido das deps intencionalmente.
+  // Evita sobrescrever o localStorage anônimo com dados do usuário logado no logout.
   useEffect(() => {
     if (isLoggedIn) return
     try {
       localStorage.setItem(`habbip:anon:history:${fieldKey}`, JSON.stringify(history))
       localStorage.setItem(`habbip:anon:favorites:${fieldKey}`, JSON.stringify(favorites))
     } catch { /* empty */ }
-  }, [history, favorites, fieldKey, isLoggedIn])
+  }, [history, favorites, fieldKey]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!isLoggedIn || !hydrated.current) return
@@ -101,20 +103,17 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
     markDirty?.(fieldKey, { history, favorites })
   }, [history, favorites, isLoggedIn, fieldKey, markDirty])
 
-  // Gerencia transições de autenticação — mantém históricos separados
   const prevIsLoggedInRef = useRef(isLoggedIn)
   useEffect(() => {
     const wasLoggedIn = prevIsLoggedInRef.current
     prevIsLoggedInRef.current = isLoggedIn
 
-    // Transição anônimo → logado: limpa estado (servidor vai hidratar em seguida)
     if (!wasLoggedIn && isLoggedIn) {
       dispatch({ type: "HYDRATE", payload: { history: [], favorites: [] } })
       hydrated.current = false
       return
     }
 
-    // Transição logado → deslogado: restaura histórico anônimo do localStorage
     if (wasLoggedIn && !isLoggedIn) {
       try {
         const h = localStorage.getItem(`habbip:anon:history:${fieldKey}`)
@@ -145,17 +144,21 @@ function useHistoryStore(serverData, fieldKey, markDirty, isLoggedIn, updateLoca
 
   const clearHistory = useCallback(() => {
     dispatch({ type: "CLEAR_HISTORY" })
-    // Atualiza serverData em memória imediatamente para que ao trocar de aba
-    // (desmonta/remonta o hook) a hydratação não restaure o histórico antigo
     updateLocalData?.(fieldKey, { history: [], favorites: favoritesRef.current })
   }, [fieldKey, updateLocalData])
 
-  const toggleFavorite = useCallback((term) => {
+  // Aceita string (legado) ou objeto completo { term, classname, ... }
+  const toggleFavorite = useCallback((entry) => {
+    const term = getEntryTerm(entry) || (typeof entry === "string" ? entry : "")
     if (!term?.trim()) return
-    dispatch({ type: "TOGGLE_FAVORITE", payload: term })
+    dispatch({ type: "TOGGLE_FAVORITE", payload: entry })
   }, [])
 
-  const isFavorite = useCallback((term) => favorites.includes(term), [favorites])
+  // isFavorite recebe só o term (string) para comparação simples
+  const isFavorite = useCallback(
+    (term) => favorites.some((f) => getEntryTerm(f) === term),
+    [favorites]
+  )
 
   return { history, favorites, addToHistory, removeFromHistory, clearHistory, toggleFavorite, isFavorite }
 }
