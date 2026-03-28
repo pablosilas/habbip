@@ -48,6 +48,7 @@ async function doRefresh() {
 
   const data = await res.json()
   storeSession(data)
+  window.dispatchEvent(new CustomEvent("habbip:session-refreshed"))
   return data.accessToken
 }
 
@@ -166,4 +167,38 @@ export async function syncAllData(data) {
     method: "PUT",
     body: JSON.stringify(data),
   })
+}
+
+const TOKEN_REFRESH_MARGIN_MS = 2 * 60 * 1000 // 2 min antes de expirar
+let proactiveRefreshTimer = null
+
+function getTokenExpiry() {
+  try {
+    const token = getAccessToken()
+    if (!token) return null
+    const payload = JSON.parse(atob(token.split(".")[1]))
+    return payload.exp ? payload.exp * 1000 : null
+  } catch { return null }
+}
+
+export function scheduleProactiveRefresh() {
+  clearTimeout(proactiveRefreshTimer)
+
+  const expiry = getTokenExpiry()
+  if (!expiry) return
+
+  const delay = expiry - Date.now() - TOKEN_REFRESH_MARGIN_MS
+  if (delay <= 0) {
+    // Já expirou ou está na margem — tenta refresh imediato
+    refreshAccessToken().catch(() => { })
+    return
+  }
+
+  proactiveRefreshTimer = setTimeout(() => {
+    refreshAccessToken().catch(() => { })
+  }, delay)
+}
+
+export function cancelProactiveRefresh() {
+  clearTimeout(proactiveRefreshTimer)
 }

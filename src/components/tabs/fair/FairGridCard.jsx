@@ -31,24 +31,40 @@ function getTrendInfo(hasActiveOffers, currentPrice, averagePrice) {
 
 // ── FurniIcon — ícone pequeno via getFurnitureIconUrl ─────────────────────────
 
+// ✅ VERSÃO FINAL — wrapper com ref sempre presente
 function FurniIcon({ classname, hotel = "br" }) {
-  const [url, setUrl] = React.useState(null)
+  const [url, setUrl] = React.useState(undefined) // undefined = não iniciou
   const [error, setError] = React.useState(false)
+  const ref = React.useRef(null)
 
   React.useEffect(() => {
-    if (!classname) return
-    let cancelled = false
-    getFurnitureIconUrl(classname, hotel).then((u) => {
-      if (!cancelled) setUrl(u || null)
-    }).catch(() => { if (!cancelled) setError(true) })
-    return () => { cancelled = true }
+    const el = ref.current
+    if (!el || !classname) { setError(true); return }
+
+    const scrollRoot = el.closest('[data-scroll="main"]') ?? null
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (!entry.isIntersecting) return
+        observer.disconnect()
+        getFurnitureIconUrl(classname, hotel)
+          .then((u) => setUrl(u || null))
+          .catch(() => setError(true))
+      },
+      { root: scrollRoot, rootMargin: "50px", threshold: 0 }
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
   }, [classname, hotel])
 
-  if (error || (url === null && url !== undefined)) {
-    return <img src={boxIcon} alt="mobi" className="w-[18px] h-[18px] object-contain image-rendering-pixel opacity-40" />
-  }
-  if (!url) return <div className="w-[18px] h-[18px]" />
-  return <img src={url} alt={classname} className="w-[18px] h-[18px] object-contain image-rendering-pixel" onError={() => setError(true)} />
+  return (
+    <div ref={ref} className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
+      {error || url === null ? (
+        <img src={boxIcon} alt="mobi" className="w-full h-full object-contain image-rendering-pixel opacity-40" />
+      ) : url ? (
+        <img src={url} alt={classname} className="w-full h-full object-contain image-rendering-pixel" onError={() => setError(true)} />
+      ) : null}
+    </div>
+  )
 }
 
 // ── Tooltip ───────────────────────────────────────────────────────────────────

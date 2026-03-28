@@ -61,23 +61,10 @@ export async function searchMarketItems({ query, hotel = "br" }) {
   const merged = officialBatch
     ? mergeOfficialMarketData(legacyItems, officialBatch)
     : legacyItems
-
+    
   return merged.filter(item => {
-    const history = item?.marketData?.history
-    const averagePrice = item?.marketData?.averagePrice
-    const currentPrice = item?.marketData?.currentPrice
-
-    // Mostra item se tiver histórico com preços
-    if (Array.isArray(history) && history.length > 0) {
-      if (history.some(e => (e?.[0] ?? 0) > 0)) return true
-    }
-
-    // Mostra item se tiver média > 0
-    if (averagePrice && averagePrice > 0) return true
-
-    // Mostra item se tiver preço em circulação > 0
-    if (currentPrice && currentPrice > 0) return true
-
-    return false
+    // Mostra sempre que a API oficial reconheceu o item (mesmo com valores zerados)
+    // Itens sem marketData = classname não existe no mercado = ocultar
+    return item?.marketData !== undefined
   })
 }

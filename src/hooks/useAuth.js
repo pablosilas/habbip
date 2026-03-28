@@ -5,6 +5,8 @@ import {
   logout,
   getStoredUser,
   clearSession,
+  scheduleProactiveRefresh,
+  cancelProactiveRefresh,
 } from "../services/authService"
 import {
   fetchUserByName,
@@ -59,11 +61,18 @@ export function useAuth() {
   const [loginLoading, setLoginLoading] = React.useState(false)
   const [loginError, setLoginError] = React.useState("")
 
+  React.useEffect(() => {
+    const stored = getStoredUser()
+    if (stored) scheduleProactiveRefresh()
+    return () => cancelProactiveRefresh()
+  }, [])
+
   // Não abre modal automaticamente ao carregar — removido o useEffect anterior
 
   React.useEffect(() => {
     function handleExpired() {
       setLoggedUser(null)
+      cancelProactiveRefresh()
       setLoginError("Sua sessão expirou. Faça login novamente.")
       setLoginModalOpen(true)
     }
@@ -90,6 +99,7 @@ export function useAuth() {
       const enriched = await enrichWithHabboProfile(user)
       storeEnrichedUser(enriched)
       setLoggedUser(enriched)
+      scheduleProactiveRefresh()
       setLoginModalOpen(false)
       return enriched
     } catch (err) {
@@ -114,6 +124,7 @@ export function useAuth() {
       const enriched = await enrichWithHabboProfile(user)
       storeEnrichedUser(enriched)
       setLoggedUser(enriched)
+      scheduleProactiveRefresh()
       setLoginModalOpen(false)
       return enriched
     } catch (err) {
@@ -138,6 +149,7 @@ export function useAuth() {
   const handleLogout = async (onAfterLogout) => {
     await logout()
     setLoggedUser(null)
+    cancelProactiveRefresh()
     onAfterLogout?.()
     // Não reabre o modal — usuário fica anônimo naturalmente
   }

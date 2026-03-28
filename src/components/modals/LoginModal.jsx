@@ -259,11 +259,11 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
   const displayError = localError || error
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
       <SecurityNotice />
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-1">Nick do Habbo</div>
+        <div className="text-white text-[13px] font-bold mb-[2px]">Nick do Habbo</div>
         <input
           value={habboNick}
           onChange={(e) => setHabboNick(e.target.value)}
@@ -275,7 +275,7 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
       </div>
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-1">Criar PIN</div>
+        <div className="text-white text-[13px] font-bold mb-[2px]">Criar PIN</div>
         <PinInput
           value={pin}
           onChange={setPin}
@@ -285,7 +285,7 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
       </div>
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-1">Confirmar PIN</div>
+        <div className="text-white text-[13px] font-bold mb-[2px]">Confirmar PIN</div>
         <PinInput
           value={pinConfirm}
           onChange={setPinConfirm}
@@ -327,7 +327,7 @@ export default function LoginModal({
       <ConsoleCard
         title={mode === "register" ? "Criar conta" : "Entrar"}
         onClose={onClose}
-        className="w-full max-w-[420px]"
+        className={`w-full max-w-[450px]`}
       >
         {mode === "login" ? (
           <LoginForm
@@ -344,13 +344,14 @@ export default function LoginModal({
             error={error}
           />
         )}
-
-        <div className="mt-1 border border-[#ffffff22] rounded-[6px] p-2 bg-[rgba(255,255,255,0.03)]">
-          <div className="text-[10px] text-[#aaa] leading-4">
-            <span className="text-[#ffd64d] font-bold">Vantagens da conta:</span>{" "}
-            inventário e monitoramento de preços sincronizados em qualquer dispositivo.
+        {mode === "login" && (
+          <div className="mt-1 border border-[#ffffff22] rounded-[6px] p-2 bg-[rgba(255,255,255,0.03)]">
+            <div className="text-[10px] text-[#aaa] leading-4">
+              <span className="text-[#ffd64d] font-bold">Vantagens da conta:</span>{" "}
+              inventário e monitoramento de preços sincronizados em qualquer dispositivo.
+            </div>
           </div>
-        </div>
+        )}
       </ConsoleCard>
     </div>
   )

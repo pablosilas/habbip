@@ -38,6 +38,21 @@ export function useServerSync(isLoggedIn) {
       .finally(() => setLoadingData(false))
   }, [isLoggedIn])
 
+  React.useEffect(() => {
+    function handleRefreshed() {
+      if (!isLoggedInRef.current) return
+      setLoadingData(true)
+      setSyncError(null)
+      fetchUserData()
+        .then((data) => setServerData(data))
+        .catch((err) => setSyncError(err.message))
+        .finally(() => setLoadingData(false))
+    }
+
+    window.addEventListener("habbip:session-refreshed", handleRefreshed)
+    return () => window.removeEventListener("habbip:session-refreshed", handleRefreshed)
+  }, [])
+
   const flush = React.useCallback(async () => {
     if (!isLoggedInRef.current) return
     const toSync = { ...dirtyRef.current }

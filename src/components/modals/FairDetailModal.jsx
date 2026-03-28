@@ -266,7 +266,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
       className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4"
       onClick={onClose}
     >
-      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[440px]">
+      <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[600px]">
         <ConsoleCard
           title={item.FurniName || "Detalhes"}
           onClose={onClose}

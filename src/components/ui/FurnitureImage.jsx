@@ -58,7 +58,7 @@ export default function FurnitureImage({ classname, furniName, size = "small", a
       },
       {
         root: scrollRoot,
-        rootMargin: "300px",
+        rootMargin: "50px",
         threshold: 0,
       }
     )

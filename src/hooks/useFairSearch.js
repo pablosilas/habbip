@@ -51,6 +51,7 @@ export function useFairSearch() {
 
     lastSearchRef.current = Date.now()
     setLoading(true)
+    setResults([])
     setError("")
 
     try {

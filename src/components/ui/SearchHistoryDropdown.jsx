@@ -126,7 +126,7 @@ function AvatarThumb({ nick, hotel, isFav }) {
   const url = getHabboAvatarHeadUrl({ name: nick, hotel, size: "s" })
 
   return (
-    <div className="shrink-0 w-7 h-7 flex items-center justify-center overflow-hidden relative">
+    <div className="shrink-0 w-5 h-5 flex items-center justify-center overflow-hidden relative">
       {!hasError ? (
         <img
           src={url}
@@ -137,14 +137,6 @@ function AvatarThumb({ nick, hotel, isFav }) {
       ) : (
         <span className="text-[11px] text-[#666]">👤</span>
       )}
-      {/* Estrela sobreposta se for favorito */}
-      {isFav && (
-        <img
-          src={starOn}
-          alt="favorito"
-          className="absolute bottom-0 right-0 w-[8px] h-[8px] image-rendering-pixel"
-        />
-      )}
     </div>
   )
 }
@@ -154,6 +146,8 @@ function DropdownItem({ entry, isFav, onSelect, onRemove, onToggleFav, showAvata
   const classname = typeof entry === "object"
     ? entry?.classname
     : history?.find((h) => getEntryTerm(h) === term)?.classname ?? null
+
+  console.log(classname, 'classname dropdown item')
 
   return (
     <div

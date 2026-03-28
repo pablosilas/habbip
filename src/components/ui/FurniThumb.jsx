@@ -1,7 +1,6 @@
 import React from "react"
 import boxIcon from "../../assets/box.png"
 import loadingIcon from "../../assets/loading.gif"
-import starOn from "../../assets/star.png"
 import { getFurnitureIconUrl } from "../../services/habboApi"
 
 export default function FurniThumb({ classname, size = "sm", isFav = false, showStar = false }) {
@@ -9,7 +8,7 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
   const [status, setStatus] = React.useState("idle") // idle | loading | ok | error
   const containerRef = React.useRef(null)
 
-  const sizeClass = size === "md" ? "w-6 h-6" : "w-7 h-7"
+  const sizeClass = size === "md" ? "w-5 h-5" : "w-5 h-5"
 
   React.useEffect(() => {
     const el = containerRef.current
@@ -37,7 +36,7 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
       },
       {
         root: scrollRoot,
-        rootMargin: "300px",
+        rootMargin: "50px",
         threshold: 0,
       }
     )
@@ -69,12 +68,6 @@ export default function FurniThumb({ classname, size = "sm", isFav = false, show
           className={`w-full h-full object-contain image-rendering-pixel ${status === "ok" ? "block" : "hidden"}`}
           onLoad={() => setStatus("ok")}
           onError={() => setStatus("error")}
-        />
-      )}
-
-      {showStar && isFav && (
-        <img src={starOn} alt="favorito"
-          className="absolute bottom-0 right-0 w-[8px] h-[8px] image-rendering-pixel"
         />
       )}
     </div>

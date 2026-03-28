@@ -323,8 +323,10 @@ export default function HabboDeskApp() {
     fair.setMobiQuery(className)
     setActiveTab("feira")
     setFairExpanded(true)
-    fair.handleSearch(className)
+    // Passa o className diretamente — bypassa debounce e o ref desatualizado
+    fair.refreshResults(className)
   }
+
 
   const processedResultsCount =
     activeTab === "feira" ? fair.results.length

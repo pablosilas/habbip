@@ -9,6 +9,7 @@ import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import { searchMarketItems } from "../../../services/marketSearch"
 import traxIcon from "../../../assets/trax.png"
 import plasticIcon from "../../../assets/plastic.png"
+import HotelSelect from "../../ui/HotelSelect"
 
 // ── Categorias ────────────────────────────────────────────────────────────────
 const FAIR_CATEGORIES = [
@@ -197,6 +198,9 @@ export default function FairTab({
     if (sortBy === "offers") {
       return (b.marketData?.currentOpenOffers ?? bL?.[3] ?? 0) - (a.marketData?.currentOpenOffers ?? aL?.[3] ?? 0)
     }
+    if (sortBy === "averagePrice") {
+      return (b.marketData?.averagePrice ?? 0) - (a.marketData?.averagePrice ?? 0)
+    }
     return 0
   })
 
@@ -239,96 +243,90 @@ export default function FairTab({
         <span className="text-[#d2d2d2] text-[11px]">{expanded ? "▲ recolher" : "▼ expandir"}</span>
       </div>
 
-      {/* ── Chips de categoria ── */}
-      <div className="flex flex-wrap gap-[6px] mb-2">
-        {FAIR_CATEGORIES.map((cat) => (
-          <button key={cat.id} type="button" onClick={() => handleCategoryClick(cat)} disabled={isLoadingAny}
-            className={[
-              "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
-              "disabled:opacity-50 disabled:cursor-not-allowed",
-              activeCategory === cat.id
-                ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
-            ].join(" ")}
-          >
-            {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain image-rendering-pixel" />}
-            {cat.label}
-          </button>
-        ))}
-      </div>
 
-      {/* ── Subcategorias ── */}
-      {subcategories && (
-        <div className="flex flex-wrap gap-[4px] mb-2">
-          {subcategories.map((sub) => (
-            <button key={sub.id} type="button" onClick={() => handleSubcategoryClick(sub)} disabled={isLoadingAny}
-              className={[
-                "px-2 py-[3px] text-[10px] border transition-colors cursor-pointer disabled:opacity-50",
-                activeSubcategory === sub.id
-                  ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
-                  : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
-              ].join(" ")}
-            >
-              {sub.label}
-            </button>
-          ))}
-        </div>
-      )}
 
-      {!subcategories && <div className="mb-1" />}
-
-      {/* ── Formulário de busca ── */}
       {expanded && (
-        <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="flex gap-2 mb-2">
-            <div className="flex-1">
-              <SearchInput
-                inputRef={inputRef}
-                value={mobiQuery}
-                onChange={(e) => setMobiQuery(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
-                onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
-                onBlur={() => setShowDropdown(false)}
-                placeholder="Digite o nome do mobi"
-                inputMode="search"
-                enterKeyHint="search"
+        <>
+          {/* ── Chips de categoria ── */}
+          <div className="flex flex-wrap gap-[6px] mb-2">
+            {FAIR_CATEGORIES.map((cat) => (
+              <button key={cat.id} type="button" onClick={() => handleCategoryClick(cat)} disabled={isLoadingAny}
+                className={[
+                  "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
+                  "disabled:opacity-50 disabled:cursor-not-allowed",
+                  activeCategory === cat.id
+                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
+                ].join(" ")}
               >
-                <SearchHistoryDropdown
-                  show={showDropdown}
-                  history={history}
-                  favorites={favorites}
-                  onSelect={handleSelectFromDropdown}
-                  onRemove={removeFromHistory}
-                  onToggleFav={toggleFavorite}
-                  isFavorite={isFavorite}
-                  onClear={clearHistory}
-                  showFurniImage
-                />
-              </SearchInput>
-            </div>
-            <select
-              value={fairHotel}
-              onChange={(e) => setFairHotel(e.target.value)}
-              className="h-9 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none w-16"
-            >
-              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map((h) => (
-                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
+                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain image-rendering-pixel" />}
+                {cat.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ── Subcategorias ── */}
+          {subcategories && (
+            <div className="flex flex-wrap gap-[4px] mb-2">
+              {subcategories.map((sub) => (
+                <button key={sub.id} type="button" onClick={() => handleSubcategoryClick(sub)} disabled={isLoadingAny}
+                  className={[
+                    "px-2 py-[3px] text-[10px] border transition-colors cursor-pointer disabled:opacity-50",
+                    activeSubcategory === sub.id
+                      ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
+                      : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
+                  ].join(" ")}
+                >
+                  {sub.label}
+                </button>
               ))}
-            </select>
-          </div>
-          <div className="grid grid-cols-2 gap-2 mb-3">
-            <Button type="submit" disabled={isLoadingAny}>
-              {loading ? "Consultando..." : "Consultar feira"}
-            </Button>
-            <Button variant="secondary" type="button"
-              onClick={() => {
-                setMobiQuery(""); setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.()
-              }}
-            >
-              Limpar
-            </Button>
-          </div>
-        </form>
+            </div>
+          )}
+          {!subcategories && <div className="mb-1" />}
+          {/* ── Formulário de busca ── */}
+          <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
+            <div className="flex gap-2 mb-2">
+              <div className="flex-1">
+                <SearchInput
+                  inputRef={inputRef}
+                  value={mobiQuery}
+                  onChange={(e) => setMobiQuery(e.target.value)}
+                  onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
+                  onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
+                  onBlur={() => setShowDropdown(false)}
+                  placeholder="Digite o nome do mobi"
+                  inputMode="search"
+                  enterKeyHint="search"
+                >
+                  <SearchHistoryDropdown
+                    show={showDropdown}
+                    history={history}
+                    favorites={favorites}
+                    onSelect={handleSelectFromDropdown}
+                    onRemove={removeFromHistory}
+                    onToggleFav={toggleFavorite}
+                    isFavorite={isFavorite}
+                    onClear={clearHistory}
+                    showFurniImage
+                  />
+                </SearchInput>
+              </div>
+              <HotelSelect value={fairHotel} onChange={setFairHotel} disabled={isLoadingAny} />
+            </div>
+            <div className="grid grid-cols-2 gap-2 mb-3">
+              <Button type="submit" disabled={isLoadingAny}>
+                {loading ? "Consultando..." : "Consultar feira"}
+              </Button>
+              <Button variant="secondary" type="button"
+                onClick={() => {
+                  setMobiQuery(""); setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.()
+                }}
+              >
+                Limpar
+              </Button>
+            </div>
+          </form>
+        </>
       )}
 
       {error && <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>}
@@ -353,6 +351,7 @@ export default function FairTab({
                 className="h-8 shrink-0 border border-[#555] bg-[rgba(255,255,255,0.08)] px-2 text-[10px] text-[#ccc] outline-none"
               >
                 <option value="priceValue" className="text-black">Preço ↓</option>
+                <option value="averagePrice" className="text-black">Média ↓</option>
                 <option value="trend" className="text-black">Tendência</option>
                 <option value="offers" className="text-black">Ofertas</option>
               </select>

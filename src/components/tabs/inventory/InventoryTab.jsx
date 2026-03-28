@@ -8,6 +8,7 @@ import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useInventoryHistory } from "../../../hooks/useSearchHistory"
 import FurnitureImage from "../../ui/FurnitureImage"
 import loadingGif from "../../../assets/loading.gif"
+import HotelSelect from "../../ui/HotelSelect"
 
 function SearchResultOption({ item, onSelect }) {
   const history = item?.marketData?.history || []
@@ -220,15 +221,7 @@ export default function InventoryTab({
               </SearchInput>
             </div>
 
-            <select
-              value={hotel}
-              onChange={(e) => setHotel(e.target.value)}
-              className="h-9 w-16 border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-2 text-[12px] text-white outline-none"
-            >
-              {["br", "com", "de", "es", "fi", "fr", "it", "nl", "tr"].map(h => (
-                <option key={h} value={h} className="text-black">{h.toUpperCase()}</option>
-              ))}
-            </select>
+            <HotelSelect value={hotel} onChange={setHotel} />
           </div>
 
           <div className="grid grid-cols-2 gap-2 mb-3">
