@@ -215,41 +215,58 @@ export default function HabboDeskApp() {
 
   // ── Handler SSE — estável, lê estado via refs ─────────────────────────────
   const handlePriceChanged = useCallback((event) => {
+    if (!event?.className) return
+
+    const normalizedClassName = event.className.toLowerCase()
+
+    const currentSub = watchlistRef.current.find(
+      (i) => i.ClassName?.toLowerCase() === normalizedClassName
+    )
+
     watchlistHandlePriceChanged(event)
 
+    if (!currentSub) return
     if (event.oldPrice == null) return
 
-    const sub = watchlistRef.current.find(
-      (i) => i.ClassName.toLowerCase() === event.className.toLowerCase()
-    )
-    const cfg = sub?.alertConfig ?? { alertMode: 'any' }
+    const cfg = currentSub.alertConfig ?? { alertMode: "any" }
 
-    let shouldNotify = cfg.alertMode === 'any'
-    if (cfg.alertMode === 'price' && cfg.targetPrice != null) {
-      const margin = cfg.priceMargin ?? 0
-      shouldNotify =
-        event.newPrice >= cfg.targetPrice - margin &&
-        event.newPrice <= cfg.targetPrice + margin
+    let shouldNotify = cfg.alertMode === "any"
+
+    if (cfg.alertMode === "price" && cfg.targetPrice != null) {
+      const margin = Number(cfg.priceMargin ?? 0)
+      const targetPrice = Number(cfg.targetPrice)
+      const newPrice = Number(event.newPrice)
+
+      if (!Number.isNaN(targetPrice) && !Number.isNaN(newPrice)) {
+        shouldNotify =
+          newPrice >= targetPrice - margin &&
+          newPrice <= targetPrice + margin
+      } else {
+        shouldNotify = false
+      }
     }
 
-    if (shouldNotify) {
-      addNotificationRef.current({
-        id: `${event.className}-${Date.now()}`,
-        className: event.className,
-        furniName: event.furniName,
-        oldPrice: event.oldPrice,
-        newPrice: event.newPrice,
-        diff: event.diff,
-        pct: event.pct,
-        direction: event.direction,
-        hotel: event.hotel,
-        read: false,
-        createdAt: Date.now(),
-      })
-    }
+    if (!shouldNotify) return
+
+    addNotificationRef.current?.({
+      id: `${event.className}-${Date.now()}`,
+      className: event.className,
+      furniName: event.furniName,
+      oldPrice: event.oldPrice,
+      newPrice: event.newPrice,
+      diff: event.diff,
+      pct: event.pct,
+      direction: event.direction,
+      hotel: event.hotel,
+      read: false,
+      createdAt: Date.now(),
+    })
   }, [watchlistHandlePriceChanged])
 
-  useSSE({ isLoggedIn, onPriceChanged: handlePriceChanged })
+  useSSE({
+    isLoggedIn,
+    onPriceChanged: handlePriceChanged,
+  })
 
   const handleStopMonitoring = useCallback(
     async (className) => {

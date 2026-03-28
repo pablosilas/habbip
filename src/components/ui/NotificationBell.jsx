@@ -285,7 +285,7 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
   }
 
   const LIMIT = 4
-  const reversedWatchlist = [...watchlist].reverse()
+  const reversedWatchlist = [...watchlist]
   const watchlistToShow = expanded
     ? reversedWatchlist
     : reversedWatchlist.slice(0, LIMIT)
