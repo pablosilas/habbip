@@ -366,7 +366,7 @@ export default function FairGridCard({
           <div className="w-[64px] h-[64px] flex items-center justify-center pr-5">
             <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
           </div>
-          <InfoBadge />
+          <InfoBadge isMobile={isMobile} />
         </div>
       </div>
 
