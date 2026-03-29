@@ -382,7 +382,8 @@ export default function NotificationBell({
   function handleToggle() {
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      const PANEL_WIDTH = 360
+      const isMobile = window.innerWidth < 640
+      const PANEL_WIDTH = isMobile ? Math.min(280, window.innerWidth - 16) : 360
       const MARGIN = 8
 
       let right = window.innerWidth - rect.right
@@ -397,6 +398,7 @@ export default function NotificationBell({
       setDropdownPos({
         top: rect.bottom + 6,
         right,
+        width: PANEL_WIDTH
       })
     }
 
@@ -440,7 +442,7 @@ export default function NotificationBell({
         top: dropdownPos.top,
         right: dropdownPos.right,
         zIndex: 99999,
-        width: 360,
+        width: dropdownPos.width ?? 360,
       }}
       className={[
         "relative overflow-hidden rounded-[14px]",
