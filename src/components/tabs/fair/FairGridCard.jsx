@@ -12,6 +12,7 @@ import starIcon from "../../../assets/star.png"
 import toolIcon from "../../../assets/tool.png"
 import configIcon from "../../../assets/config.png"
 import boxIcon from "../../../assets/box.png"
+import infoIcon from "../../../assets/info.png"
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -29,11 +30,22 @@ function getTrendInfo(hasActiveOffers, currentPrice, averagePrice) {
   return { icon: "•", colorClass: "text-[#f1d97a]" }
 }
 
+// ── useIsMobile ───────────────────────────────────────────────────────────────
+
+function useIsMobile() {
+  const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 640)
+  React.useEffect(() => {
+    const fn = () => setIsMobile(window.innerWidth < 640)
+    window.addEventListener("resize", fn)
+    return () => window.removeEventListener("resize", fn)
+  }, [])
+  return isMobile
+}
+
 // ── FurniIcon — ícone pequeno via getFurnitureIconUrl ─────────────────────────
 
-// ✅ VERSÃO FINAL — wrapper com ref sempre presente
 function FurniIcon({ classname, hotel = "br" }) {
-  const [url, setUrl] = React.useState(undefined) // undefined = não iniciou
+  const [url, setUrl] = React.useState(undefined)
   const [error, setError] = React.useState(false)
   const ref = React.useRef(null)
 
@@ -59,27 +71,29 @@ function FurniIcon({ classname, hotel = "br" }) {
   return (
     <div ref={ref} className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
       {error || url === null ? (
-        <img src={boxIcon} alt="mobi" className="w-full h-full object-contain  opacity-40" />
+        <img src={boxIcon} alt="mobi" className="w-full h-full object-contain opacity-40" />
       ) : url ? (
-        <img src={url} alt={classname} className="w-full h-full object-contain " onError={() => setError(true)} />
+        <img src={url} alt={classname} className="w-full h-full object-contain" onError={() => setError(true)} />
       ) : null}
     </div>
   )
 }
 
-// ── Tooltip ───────────────────────────────────────────────────────────────────
+// ── Tooltip — desativado no mobile (sem hover) ────────────────────────────────
 
-function Tooltip({ text, children }) {
+function Tooltip({ text, children, disabled = false }) {
   const [visible, setVisible] = React.useState(false)
   const [pos, setPos] = React.useState({ x: 0, y: 0 })
   const ref = React.useRef(null)
 
-  const tooltip = visible ? createPortal(
+  const tooltip = (!disabled && visible) ? createPortal(
     <div style={{ position: "fixed", left: pos.x, top: pos.y, transform: "translate(-50%, -100%)", zIndex: 99999, pointerEvents: "none" }}
       className="px-2 py-[3px] rounded bg-[#111] border border-[#444] text-[9px] text-[#e0e0e0] whitespace-nowrap shadow-lg"
     >{text}</div>,
     document.body
   ) : null
+
+  if (disabled) return <>{children}</>
 
   return (
     <span ref={ref}
@@ -173,7 +187,6 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         </div>
       </div>
       <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
-        {/* Monitorar — não fecha o menu ao clicar */}
         <button type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -186,7 +199,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           }}
           className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] transition-colors cursor-pointer ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)]" : "hover:bg-[rgba(255,214,77,0.06)]"}`}
         >
-          <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain  ${isWatching ? "brightness-100" : "opacity-50"}`} />
+          <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain ${isWatching ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
           {!isLoggedIn ? <span className="text-[9px] text-[#ffd64d] opacity-80">login necessário</span> : (
             <div className="flex items-center gap-[6px]">
@@ -202,13 +215,13 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
         </button>
         <button type="button" onClick={action(onToggleFavorite)}
           className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={starIcon} alt="Favoritar" className={`w-[14px] h-[14px] object-contain  ${isFavorite ? "brightness-100" : "opacity-50"}`} />
+          <img src={starIcon} alt="Favoritar" className={`w-[14px] h-[14px] object-contain ${isFavorite ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isFavorite ? "Remover dos favoritos" : "Favoritar"}</span>
           <FakeToggle checked={isFavorite} />
         </button>
         <button type="button" onClick={action(() => onAddToInventory?.(item))}
           className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain  ${isInInventory ? "brightness-100" : "opacity-50"}`} />
+          <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain ${isInInventory ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           <FakeToggle checked={isInInventory} />
         </button>
@@ -221,10 +234,24 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       <button ref={btnRef} type="button" title="Ações" onClick={handleToggle}
         className={`w-[20px] h-[20px] shrink-0 flex items-center justify-center rounded-[3px] border transition-all cursor-pointer ${open ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)]" : "border-[#555] bg-[rgba(255,255,255,0.06)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.10)]"}`}
       >
-        <img src={toolIcon} alt="Ações" className="w-[11px] h-[11px] object-contain " />
+        <img src={toolIcon} alt="Ações" className="w-[11px] h-[11px] object-contain" />
       </button>
       {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </>
+  )
+}
+
+// ── InfoBadge — indicador "toque para detalhes" no mobile ────────────────────
+
+function InfoBadge({ isMobile }) {
+  return (
+    <Tooltip text="Clique para mais informações" disabled={isMobile}>
+      <div
+        className="flex items-center gap-[4px] px-[6px] py-[3px] rounded-[4px] border border-[#ffffff18] bg-[rgba(255,255,255,0.06)]"
+      >
+        <img src={infoIcon} alt="info" className="w-[12px] h-[12px] object-contain opacity-70" />
+      </div>
+    </Tooltip>
   )
 }
 
@@ -243,6 +270,8 @@ export default function FairGridCard({
   onConfigureAlert,
   onClick,
 }) {
+  const isMobile = useIsMobile()
+
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
 
@@ -255,144 +284,133 @@ export default function FairGridCard({
   const priceNow = hasActiveOffers ? rawPrice : null
   const trendInfo = getTrendInfo(hasActiveOffers, priceNow, averagePrice)
 
-  function useIsMobile() {
-    const [isMobile, setIsMobile] = React.useState(() => window.innerWidth < 640)
-    React.useEffect(() => {
-      const fn = () => setIsMobile(window.innerWidth < 640)
-      window.addEventListener("resize", fn)
-      return () => window.removeEventListener("resize", fn)
-    }, [])
-    return isMobile
-  }
-
   return (
-    <Tooltip text="Clique para mais informações">
+    <div
+      className="relative flex flex-col rounded-[6px] overflow-hidden cursor-pointer border border-[#4a4a4a] hover:border-[#ffd64d66] transition-all"
+      style={{ background: "#3a3a3a" }}
+      onClick={onClick}
+    >
+      {/* Badges de estado — topo direito */}
+      {(isWatching || isInInventory || isFavorite) && (
+        <div className="absolute top-[10px] right-[10px] flex flex-col gap-[3px] z-10">
+          {isWatching && (
+            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.2)] border border-[#ffd64d55]" title="Monitorando">
+              <img src={watchIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            </div>
+          )}
+          {isInInventory && (
+            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(124,252,138,0.15)] border border-[#7CFC8A44]" title="No inventário">
+              <img src={plusIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            </div>
+          )}
+          {isFavorite && (
+            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.15)] border border-[#ffd64d44]" title="Favorito">
+              <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            </div>
+          )}
+        </div>
+      )}
 
+      {/* ── Corpo: métricas esquerda + imagem direita ── */}
+      <div className="flex items-stretch px-[10px] pt-[10px] pb-[8px]">
 
-      <div
-        className="relative flex flex-col rounded-[6px] overflow-hidden cursor-pointer border border-[#4a4a4a] hover:border-[#ffd64d66] transition-all"
-        style={{ background: "#3a3a3a" }}
-        onClick={onClick}
-      >
-        {/* Badges de estado — topo direito */}
-        {(isWatching || isInInventory || isFavorite) && (
-          <div className="absolute top-[10px] right-[10px] flex flex-col gap-[3px] z-10">
-            {isWatching && (
-              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.2)] border border-[#ffd64d55]" title="Monitorando">
-                <img src={watchIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-              </div>
-            )}
-            {isInInventory && (
-              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(124,252,138,0.15)] border border-[#7CFC8A44]" title="No inventário">
-                <img src={plusIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-              </div>
-            )}
-            {isFavorite && (
-              <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.15)] border border-[#ffd64d44]" title="Favorito">
-                <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
-              </div>
-            )}
-          </div>
-        )}
+        {/* Métricas — coluna esquerda */}
+        <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
 
-        {/* ── Corpo: métricas esquerda + imagem direita ── */}
-        <div className="flex items-stretch px-[10px] pt-[10px] pb-[8px]">
-
-          {/* Métricas — coluna esquerda */}
-          <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
-
-            <Tooltip text="Preço atual">
-              <div className="flex items-center gap-[5px]">
-                <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain " />
-                <div className="flex items-center gap-[3px] min-w-0">
-                  {priceNow != null ? (
-                    <>
-                      <span className="text-[10px] sm:text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
-                      {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
-                      <img src={coinIcon} alt="coin" className="w-[11px] h-[11px] sm:w-[15px] sm:h-[15px] object-contain  opacity-80 shrink-0" />
-                    </>
-                  ) : (
-                    <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
-                  )}
-                </div>
-              </div>
-            </Tooltip>
-
-            <Tooltip text="Média">
-              <div className="flex items-center gap-[5px]">
-                <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain " />
-                {averagePrice != null ? (
+          <Tooltip text="Preço atual" disabled={isMobile}>
+            <div className="flex items-center gap-[5px]">
+              <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain" />
+              <div className="flex items-center gap-[3px] min-w-0">
+                {priceNow != null ? (
                   <>
-                    <span className="text-[10px] sm:text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                    <img src={coinIcon} alt="coin" className="w-[11px] h-[11px] sm:w-[15px] sm:h-[15px] object-contain  opacity-60 shrink-0" />
+                    <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
+                    {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
+                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-80 shrink-0" />
                   </>
                 ) : (
-                  <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
+                  <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
                 )}
               </div>
-            </Tooltip>
+            </div>
+          </Tooltip>
 
-            <Tooltip text="Ofertas">
-              <div className="flex items-center gap-[5px]">
-                <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain " />
-                {openOffers != null && openOffers > 0 ? (
-                  <span className="text-[10px] sm:text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
-                ) : (
-                  <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
-                )}
-              </div>
-            </Tooltip>
+          <Tooltip text="Média" disabled={isMobile}>
+            <div className="flex items-center gap-[5px]">
+              <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain" />
+              {averagePrice != null ? (
+                <>
+                  <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
+                  <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-60 shrink-0" />
+                </>
+              ) : (
+                <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
+              )}
+            </div>
+          </Tooltip>
 
-          </div>
+          <Tooltip text="Ofertas" disabled={isMobile}>
+            <div className="flex items-center gap-[5px]">
+              <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain" />
+              {openOffers != null && openOffers > 0 ? (
+                <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
+              ) : (
+                <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
+              )}
+            </div>
+          </Tooltip>
 
-          {/* Imagem — coluna direita */}
-          <div className="w-[64px] h-[64px] shrink-0 flex items-center justify-center pr-1 sm:pr-5">
-            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size={useIsMobile() ? "small" : "medium"} angle="4_0" />
-          </div>
         </div>
 
-        {/* ── Rodapé escuro: ícone + nome + classname + ⚙ ── */}
-        <div
-          className="flex items-center gap-[8px] px-[8px] py-[7px]"
-          style={{ background: "#2e2e2e", borderTop: "1px solid #444" }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          {/* Ícone do mobi */}
-          <div className="shrink-0" onClick={onClick}>
-            <FurniIcon classname={item.ClassName} />
+        {/* Imagem + InfoBadge — coluna direita */}
+        <div className="shrink-0 flex flex-col items-end justify-between">
+          <div className="w-[64px] h-[64px] flex items-center justify-center pr-5">
+            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
           </div>
-
-          {/* Nome + classname */}
-          <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-            <Tooltip text={item.FurniName || "—"}>
-              <div className="text-white text-[10px] font-bold leading-tight truncate">
-                {item.FurniName || "—"}
-              </div>
-            </Tooltip>
-            <Tooltip text={item.ClassName || "—"}>
-              <div className="text-[#777] text-[9px] leading-tight truncate font-mono mt-[1px]">
-                {item.ClassName || "—"}
-              </div>
-            </Tooltip>
-          </div>
-
-          {/* ⚙ Ações */}
-          <div className="shrink-0">
-            <ActionsMenu
-              item={item}
-              isFavorite={isFavorite}
-              isWatching={isWatching}
-              isInInventory={isInInventory}
-              onToggleFavorite={onToggleFavorite}
-              onToggleWatchlist={onToggleWatchlist}
-              onAddToInventory={onAddToInventory}
-              onTriggerFly={onTriggerFly}
-              isLoggedIn={isLoggedIn}
-              onConfigureAlert={onConfigureAlert}
-            />
-          </div>
+          <InfoBadge />
         </div>
       </div>
-    </Tooltip>
+
+      {/* ── Rodapé escuro: ícone + nome + classname + ⚙ ── */}
+      <div
+        className="flex items-center gap-[8px] px-[8px] py-[7px]"
+        style={{ background: "#2e2e2e", borderTop: "1px solid #444" }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Ícone do mobi */}
+        <div className="shrink-0" onClick={onClick}>
+          <FurniIcon classname={item.ClassName} />
+        </div>
+
+        {/* Nome + classname */}
+        <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
+          <Tooltip text={item.FurniName || "—"} disabled={isMobile}>
+            <div className="text-white text-[10px] font-bold leading-tight truncate">
+              {item.FurniName || "—"}
+            </div>
+          </Tooltip>
+          <Tooltip text={item.ClassName || "—"} disabled={isMobile}>
+            <div className="text-[#777] text-[9px] leading-tight truncate font-mono mt-[1px]">
+              {item.ClassName || "—"}
+            </div>
+          </Tooltip>
+        </div>
+
+        {/* ⚙ Ações */}
+        <div className="shrink-0">
+          <ActionsMenu
+            item={item}
+            isFavorite={isFavorite}
+            isWatching={isWatching}
+            isInInventory={isInInventory}
+            onToggleFavorite={onToggleFavorite}
+            onToggleWatchlist={onToggleWatchlist}
+            onAddToInventory={onAddToInventory}
+            onTriggerFly={onTriggerFly}
+            isLoggedIn={isLoggedIn}
+            onConfigureAlert={onConfigureAlert}
+          />
+        </div>
+      </div>
+    </div>
   )
 }

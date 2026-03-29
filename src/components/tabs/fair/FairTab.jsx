@@ -360,15 +360,17 @@ export default function FairTab({
             </div>
             {isStale && (
               <button type="button" onClick={handleRefresh}
-                className="w-full flex items-center justify-center gap-2 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] text-[11px] font-bold cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
               >
-                <span>↻</span> Dados podem estar desatualizados — clique para atualizar
+                <span className="text-[11px]">↻</span>
+                <span className="hidden sm:inline text-[11px] font-bold">Dados podem estar desatualizados — clique para atualizar</span>
+                <span className="sm:hidden text-[9px] font-bold">Desatualizado — toque para atualizar</span>
               </button>
             )}
           </div>
 
           {/* ── Grid 4 col desktop / 2 col mobile ── */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 pr-1">
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 pr-1">
             {filteredResults.map((item, index) => {
               const favEntry = {
                 term: item.FurniName || item.ClassName || String(index),  // ← nome legível para exibir e buscar

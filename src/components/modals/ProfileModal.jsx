@@ -108,7 +108,7 @@ function PinInput({ value, onChange, disabled, maxLength = 6, label }) {
           </button>
         </div>
         <div className="mt-1 text-center text-[9px] text-[#888]">
-          {value.length}/{maxLength} dígitos {value.length >= 4 ? "✓" : ""}
+          {value.length}/{maxLength} dígitos {value.length === 6 ? "✓" : ""}
         </div>
       </div>
     </div>
@@ -130,7 +130,7 @@ function ChangePinSection({ user, onUserUpdated }) {
   }
 
   async function handleSave() {
-    if (newPin.length < 4) { setError("Novo PIN deve ter pelo menos 4 dígitos."); return }
+    if (newPin.length < 6) { setError("Novo PIN deve ter 6 dígitos."); return }
     if (newPin !== confirmPin) { setError("Os PINs não coincidem."); return }
     setLoading(true); setError("")
     try {
@@ -188,7 +188,7 @@ function ChangePinSection({ user, onUserUpdated }) {
             disabled={loading}
             label="Confirmar novo PIN"
           />
-          {confirmPin.length >= 4 && (
+          {confirmPin.length === 6 && (
             <div className={`text-center text-[10px] font-bold ${newPin === confirmPin ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
               {newPin === confirmPin ? "PINs coincidem ✓" : "PINs não coincidem"}
             </div>
@@ -197,7 +197,7 @@ function ChangePinSection({ user, onUserUpdated }) {
           {success && <div className="text-[#7CFC8A] text-[11px]">PIN alterado com sucesso!</div>}
           <Button
             onClick={handleSave}
-            disabled={currentPin.length < 4 || newPin.length < 4 || confirmPin.length < 4 || loading}
+            disabled={currentPin.length < 6 || newPin.length < 6 || confirmPin.length < 6 || loading}
           >
             {loading ? "Salvando..." : "Alterar PIN"}
           </Button>

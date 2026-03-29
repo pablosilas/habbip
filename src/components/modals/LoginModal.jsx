@@ -88,7 +88,7 @@ function EyeIcon({ open }) {
 }
 
 // ── PinInput ─────────────────────────────────────────────────────────────────
-// Input visual de PIN estilo "caixinhas", aceita 4-6 dígitos
+// Input visual de PIN estilo "caixinhas", aceita 6 dígitos
 function PinInput({ value, onChange, disabled, maxLength = 6, placeholder = "PIN" }) {
   const inputRef = React.useRef(null)
   const [reveal, setReveal] = React.useState(false)
@@ -157,7 +157,7 @@ function PinInput({ value, onChange, disabled, maxLength = 6, placeholder = "PIN
       </div>
       {/* Indicador de progresso */}
       <div className="mt-1 text-center text-[10px] text-[#888]">
-        {value.length}/{maxLength} dígitos {value.length >= 4 ? "✓" : ""}
+        {value.length}/{maxLength} dígitos {value.length === 6 ? "✓" : ""}
       </div>
     </div>
   )
@@ -187,7 +187,7 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!habboNick.trim() || pin.length < 4 || loading) return
+    if (!habboNick.trim() || pin.length < 6 || loading) return
     playSound()
     onLogin({ habboNick: habboNick.trim(), password: pin })
   }
@@ -219,7 +219,7 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
 
       {error && <div className="text-[#ffd6d6] text-[12px]">{error}</div>}
 
-      <Button type="submit" disabled={!habboNick.trim() || pin.length < 4 || loading}>
+      <Button type="submit" disabled={!habboNick.trim() || pin.length < 6 || loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
 
@@ -243,8 +243,8 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
   const { status, habboUser } = useHabboNickValidation(habboNick)
 
   const nickValid = status === "found"
-  const pinValid = pin.length >= 4
-  const pinsMatch = pin === pinConfirm && pinConfirm.length >= 4
+  const pinValid = pin.length === 6
+  const pinsMatch = pin === pinConfirm && pinConfirm.length === 6
   const canSubmit = nickValid && pinValid && pinsMatch && !loading
 
   function handleSubmit(e) {
@@ -292,7 +292,7 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
           disabled={loading}
           placeholder="Confirmar PIN"
         />
-        {pinConfirm.length >= 4 && (
+        {pinConfirm.length === 6 && (
           <div className={`mt-1 text-center text-[10px] font-bold ${pinsMatch ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
             {pinsMatch ? "PINs coincidem ✓" : "PINs não coincidem"}
           </div>

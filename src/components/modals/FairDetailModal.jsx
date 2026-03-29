@@ -287,17 +287,18 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
               <div className="text-white font-bold text-[13px] leading-tight truncate">{item.FurniName || "—"}</div>
               <div className="text-[#888] text-[10px] truncate font-mono">{item.ClassName}</div>
               {/* Metadados: hotel + data + tempo */}
-              <div className="flex items-center gap-1 text-[#666] text-[9px] mt-[2px]">
-                {flag && <img src={flag} alt={item.hotel_domain} className="w-3 h-3" />}
-                <span>{item.hotel_domain?.toUpperCase()}</span>
-                <span>•</span>
-                <span>{formattedDate}</span>
-                {timeAgoLabel && (
-                  <>
-                    <span>•</span>
-                    <span className={`font-bold ${timeAgoColor}`}>{timeAgoLabel}</span>
-                  </>
-                )}
+              <div className="flex flex-col gap-[2px] mt-[2px]">
+                <div className="flex items-center gap-1 text-[#888] text-[9px]">
+                  {flag && <img src={flag} alt={item.hotel_domain} className="w-3 h-3 shrink-0" />}
+                  <span className="shrink-0">{item.hotel_domain?.toUpperCase()}</span>
+                  {timeAgoLabel && (
+                    <>
+                      <span>•</span>
+                      <span className={`font-bold shrink-0 ${timeAgoColor}`}>{timeAgoLabel}</span>
+                    </>
+                  )}
+                </div>
+                <div className="text-[#888] text-[9px]">{formattedDate}</div>
               </div>
             </div>
           </div>
@@ -306,14 +307,19 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
 
             {/* Métricas */}
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 xs:grid-cols-3 gap-2">
               <div className="border border-[#ffffff22] rounded-[6px] px-2 py-2 bg-[rgba(255,255,255,0.04)]">
                 <div className="text-[9px] text-[#888] uppercase tracking-wider mb-1">Preço atual</div>
                 {priceNow != null ? (
                   <div className="flex items-center gap-1 flex-wrap">
-                    <img src={coinIcon} alt="coin" className="object-contain  w-4 h-4" />
+                    <img src={coinIcon} alt="coin" className="object-contain w-4 h-4" />
                     <span className="text-[13px] text-[#ffd64d] font-bold tabular-nums">{priceNow.toLocaleString("pt-BR")}</span>
-                    {trendInfo && <span className={`text-[10px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
+                    {trendInfo && (
+                      <>
+                        <span className={`text-[10px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>
+                        <span className={`xs:hidden text-[10px] font-bold ${trendInfo.colorClass}`}>{trendInfo.label}</span>
+                      </>
+                    )}
                   </div>
                 ) : (
                   <span className="text-[10px] text-[#666] italic">Sem oferta</span>
@@ -324,7 +330,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
                 <div className="text-[9px] text-[#888] uppercase tracking-wider mb-1">Média</div>
                 {averagePrice != null ? (
                   <div className="flex items-center gap-1">
-                    <img src={coinIcon} alt="coin" className="object-contain  w-4 h-4" />
+                    <img src={coinIcon} alt="coin" className="object-contain w-4 h-4" />
                     <span className="text-[13px] text-[#f1f1f1] font-bold tabular-nums">{averagePrice.toLocaleString("pt-BR")}</span>
                   </div>
                 ) : (
@@ -340,7 +346,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate, onSet
 
             {/* Tendência */}
             {trendInfo && (
-              <div className="text-[10px]">
+              <div className="hidden xs:block text-[10px]">
                 <span className={`font-bold ${trendInfo.colorClass}`}>{trendInfo.icon} {trendInfo.label}</span>
               </div>
             )}
