@@ -42,6 +42,16 @@ function useIsMobile() {
   return isMobile
 }
 
+function useIsXs() {
+  const [isXs, setIsXs] = React.useState(() => window.innerWidth <= 480)
+  React.useEffect(() => {
+    const fn = () => setIsXs(window.innerWidth <= 480)
+    window.addEventListener("resize", fn)
+    return () => window.removeEventListener("resize", fn)
+  }, [])
+  return isXs
+}
+
 // ── FurniIcon — ícone pequeno via getFurnitureIconUrl ─────────────────────────
 
 function FurniIcon({ classname, hotel = "br" }) {
@@ -271,6 +281,7 @@ export default function FairGridCard({
   onClick,
 }) {
   const isMobile = useIsMobile()
+  const isXs = useIsXs()
 
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
@@ -330,6 +341,7 @@ export default function FairGridCard({
                 ) : (
                   <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
                 )}
+                {isXs && priceNow != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">preço atual</span>}
               </div>
             </div>
           </Tooltip>
@@ -345,6 +357,7 @@ export default function FairGridCard({
               ) : (
                 <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
               )}
+              {isXs && averagePrice != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">média</span>}
             </div>
           </Tooltip>
 
@@ -356,6 +369,7 @@ export default function FairGridCard({
               ) : (
                 <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
               )}
+              {isXs && openOffers != null && openOffers > 0 && <span className="text-[9px] text-[#666] leading-none ml-[2px]">ofertas</span>}
             </div>
           </Tooltip>
 
