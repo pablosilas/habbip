@@ -20,6 +20,8 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import MaintenancePage, { useMaintenanceGate } from "./components/MaintenancePage.jsx"
 import HabbipApp from "./views/HabbipApp"
+import { Analytics } from '@vercel/analytics/react';
+
 import "./index.css"
 
 const IS_MAINTENANCE = import.meta.env.VITE_MAINTENANCE === "true"
@@ -37,5 +39,6 @@ function Root() {
 ReactDOM.createRoot(document.getElementById("root")).render(
   <React.StrictMode>
     <Root />
+    <Analytics />
   </React.StrictMode>
 )
