@@ -9,6 +9,7 @@ import { useMobiHistory } from "../../../hooks/useSearchHistory"
 import { searchMarketItems } from "../../../services/marketSearch"
 import traxIcon from "../../../assets/trax.png"
 import plasticIcon from "../../../assets/plastic.png"
+import modeIcon from "../../../assets/mode.png"
 import HotelSelect from "../../ui/HotelSelect"
 
 // ── Categorias ────────────────────────────────────────────────────────────────
@@ -32,6 +33,67 @@ const FAIR_CATEGORIES = [
       { id: "plasticos_redonda", label: "Mesa redonda", searchTerms: ["table_plasto_round"] },
       { id: "plasticos_4pernas", label: "Mesa 4 pernas", searchTerms: ["table_plasto_4leg"] },
       { id: "plasticos_quadrada", label: "Mesa quadrada", searchTerms: ["table_plasto_bigsquare"] },
+    ],
+  },
+  {
+    id: "mode",
+    label: "Mode",
+    icon: modeIcon,
+    searchTerms: [
+      "divider_poly3", "bardeskcorner_polyfon", "bardesk_polyfon",
+    ],
+    subcategories: [
+      {
+        id: "mode_todos",
+        label: "Todos",
+        searchTerms: ["divider_poly3", "bardeskcorner_polyfon", "bardesk_polyfon"],
+      },
+      {
+        id: "mode_aquamarine",
+        label: "Aquamarine",
+        searchTerms: ["divider_poly3", "bardeskcorner_polyfon", "bardesk_polyfon"],
+        exactClassNames: ["divider_poly3", "bardeskcorner_polyfon", "bardesk_polyfon"]
+      },
+      {
+        id: "mode_preto",
+        label: "Preto",
+        searchTerms: ["divider_poly3*2", "bardeskcorner_polyfon*2", "bardesk_polyfon*2"],
+      },
+      {
+        id: "mode_branco",
+        label: "Branco",
+        searchTerms: ["divider_poly3*3", "bardeskcorner_polyfon*3", "bardesk_polyfon*3"],
+      },
+      {
+        id: "mode_bege",
+        label: "Bege",
+        searchTerms: ["divider_poly3*4", "bardeskcorner_polyfon*4", "bardesk_polyfon*4"],
+      },
+      {
+        id: "mode_rosa",
+        label: "Rosa",
+        searchTerms: ["divider_poly3*5", "bardeskcorner_polyfon*5", "bardesk_polyfon*5"],
+      },
+      {
+        id: "mode_azul",
+        label: "Azul",
+        searchTerms: ["divider_poly3*6", "bardeskcorner_polyfon*6", "bardesk_polyfon*6"],
+      },
+      {
+        id: "mode_verde",
+        label: "Verde",
+        searchTerms: ["divider_poly3*7", "bardeskcorner_polyfon*7", "bardesk_polyfon*7"],
+      },
+      {
+        id: "mode_amarelo",
+        label: "Amarelo",
+        searchTerms: ["divider_poly3*8", "bardeskcorner_polyfon*8", "bardesk_polyfon*8"],
+      },
+      {
+        id: "mode_vermelho",
+        label: "Vermelho",
+        searchTerms: ["divider_poly3*9", "bardeskcorner_polyfon*9", "bardesk_polyfon*9"],
+      },
     ],
   },
 ]
@@ -93,7 +155,7 @@ export default function FairTab({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fairHotel])
 
-  async function fetchByTerms(searchTerms) {
+  async function fetchByTerms(searchTerms, exactClassNames = null) {
     setCategoryLoading(true)
     try {
       const searches = await Promise.all(searchTerms.map((term) => searchMarketItems({ query: term, hotel: fairHotel })))
@@ -106,7 +168,11 @@ export default function FairTab({
           merged.push(item)
         }
       }
-      onCategoryResults?.(merged)
+      // Filtra por classnames exatos se especificado
+      const filtered = exactClassNames
+        ? merged.filter(item => exactClassNames.includes(item.ClassName))
+        : merged
+      onCategoryResults?.(filtered)
     } catch (err) {
       console.error("[Categoria]", err?.message || err)
       setActiveCategory(null)
@@ -142,10 +208,10 @@ export default function FairTab({
     if (cat.subcategories) {
       const todos = cat.subcategories.find(s => s.id.endsWith("_todos"))
       setActiveSubcategory(todos?.id ?? null)
-      await fetchByTerms(todos?.searchTerms ?? cat.searchTerms)
+      await fetchByTerms(todos?.searchTerms ?? cat.searchTerms, todos?.exactClassNames ?? cat.exactClassNames ?? null)
     } else {
       setActiveSubcategory(null)
-      await fetchByTerms(cat.searchTerms)
+      await fetchByTerms(cat.searchTerms, cat.exactClassNames ?? null)
     }
   }
 
@@ -154,19 +220,23 @@ export default function FairTab({
       const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
       const todos = cat?.subcategories?.find(s => s.id.endsWith("_todos"))
       setActiveSubcategory(todos?.id ?? null); setFilterQuery("")
-      if (todos) await fetchByTerms(todos.searchTerms)
+      if (todos) await fetchByTerms(todos.searchTerms, todos.exactClassNames ?? null)
       return
     }
     setActiveSubcategory(sub.id); setFilterQuery("")
-    await fetchByTerms(sub.searchTerms)
+    await fetchByTerms(sub.searchTerms, sub.exactClassNames ?? null)
   }
+
 
   async function handleRefresh() {
     if (activeCategory) {
       const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
       if (cat) {
         const sub = cat.subcategories?.find(s => s.id === activeSubcategory)
-        await fetchByTerms(sub ? sub.searchTerms : cat.searchTerms)
+        await fetchByTerms(
+          sub ? sub.searchTerms : cat.searchTerms,
+          sub ? (sub.exactClassNames ?? null) : (cat.exactClassNames ?? null)
+        )
         return
       }
     }
