@@ -117,7 +117,7 @@ export default function MaintenancePage() {
         </div>
 
         <div className="mt-4 text-[#444] text-[9px]">
-          habbip.vercel.app © {new Date().getFullYear()}
+          habbip.org © {new Date().getFullYear()}
         </div>
       </div>
     </div>

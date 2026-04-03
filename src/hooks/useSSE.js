@@ -125,7 +125,9 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
       consecutiveErrorsRef.current = 0
       emitStatus("connected")
       // Dispara re-fetch dos dados para pegar notificações perdidas durante desconexão
-      window.dispatchEvent(new CustomEvent("habbip:sse-reconnected"))
+      setTimeout(() => {
+        window.dispatchEvent(new CustomEvent("habbip:sse-reconnected"))
+      }, 1500)
     }
 
     es.onmessage = (e) => {

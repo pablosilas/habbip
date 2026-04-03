@@ -7,10 +7,20 @@ const initialState = { notifications: [], unreadCount: 0 }
 function notifReducer(state, action) {
   switch (action.type) {
     case 'HYDRATE': {
-      const notifications = action.payload
+      const serverNotifs = action.payload
+
+      // Preserva notificações entregues via SSE que ainda não foram
+      // persistidas no servidor (evita race condition entre addNotification e fetchUserData)
+      const serverIds = new Set(serverNotifs.map((n) => n.id))
+      const localOnly = state.notifications.filter((n) => !serverIds.has(n.id))
+
+      const merged = [...localOnly, ...serverNotifs]
+        .sort((a, b) => (b.createdAt ?? 0) - (a.createdAt ?? 0))
+        .slice(0, MAX_NOTIFICATIONS)
+
       return {
-        notifications,
-        unreadCount: notifications.filter((n) => !n.read).length,
+        notifications: merged,
+        unreadCount: merged.filter((n) => !n.read).length,
       }
     }
     case 'ADD': {
