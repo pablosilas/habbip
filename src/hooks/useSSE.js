@@ -1,15 +1,26 @@
 import { useEffect, useRef } from "react"
-import { getAccessToken } from "../services/authService"
+import { getAccessToken, refreshAccessToken } from "../services/authService"
 
 const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
 const RECONNECT_BASE_MS = 3000
 const RECONNECT_MAX_MS = 30000
 
+function isTokenExpired(token) {
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]))
+    // margem de 30s para compensar dessincronismo de relógio
+    return payload.exp ? payload.exp * 1000 <= Date.now() + 30_000 : false
+  } catch {
+    return true
+  }
+}
+
 export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
   const esRef = useRef(null)
   const reconnectTimerRef = useRef(null)
   const reconnectAttemptsRef = useRef(0)
+  const consecutiveErrorsRef = useRef(0)
   const mountedRef = useRef(false)
 
   const onPriceChangedRef = useRef(onPriceChanged)
@@ -44,9 +55,9 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
   function cleanup(resetAttempts = true) {
     clearReconnectTimer()
     closeConnection()
-
     if (resetAttempts) {
       reconnectAttemptsRef.current = 0
+      consecutiveErrorsRef.current = 0
     }
   }
 
@@ -72,28 +83,36 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
 
     reconnectTimerRef.current = setTimeout(() => {
       if (!mountedRef.current) return
-      if (!getAccessToken()) {
-        emitStatus("disconnected")
-        return
-      }
-
       connect()
     }, delay)
   }
 
-  function connect() {
-    const token = getAccessToken()
-
+  async function connect() {
     if (!mountedRef.current) return
     if (!isLoggedIn) return
+
+    let token = getAccessToken()
     if (!token) {
       emitStatus("disconnected")
       return
     }
 
+    // Se o token já expirou (com margem de 30s), renova antes de abrir o EventSource
+    if (isTokenExpired(token)) {
+      console.log("[SSE] Token expirado antes de conectar — renovando...")
+      try {
+        token = await refreshAccessToken()
+      } catch (err) {
+        console.warn("[SSE] Falha ao renovar token:", err.message)
+        emitStatus("disconnected")
+        return
+      }
+    }
+
+    if (!mountedRef.current) return
+
     clearReconnectTimer()
     closeConnection()
-
     emitStatus("connecting")
 
     const url = `${API_BASE}/stream?token=${encodeURIComponent(token)}`
@@ -103,7 +122,10 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
     es.onopen = () => {
       console.log("[SSE] Conexão aberta")
       reconnectAttemptsRef.current = 0
+      consecutiveErrorsRef.current = 0
       emitStatus("connected")
+      // Dispara re-fetch dos dados para pegar notificações perdidas durante desconexão
+      window.dispatchEvent(new CustomEvent("habbip:sse-reconnected"))
     }
 
     es.onmessage = (e) => {
@@ -116,6 +138,7 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
         switch (event.type) {
           case "connected":
             reconnectAttemptsRef.current = 0
+            consecutiveErrorsRef.current = 0
             emitStatus("connected")
             break
 
@@ -136,8 +159,23 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
 
     es.onerror = () => {
       console.warn("[SSE] Erro na conexão — tentando reconectar...")
+      consecutiveErrorsRef.current += 1
       closeConnection()
-      scheduleReconnect()
+
+      // Após 2 erros consecutivos, força refresh do token antes de reconectar
+      // (cobre casos de token rejeitado pelo servidor mesmo sem expirar localmente)
+      if (consecutiveErrorsRef.current >= 2) {
+        console.warn("[SSE] Erros consecutivos — forçando refresh do token...")
+        refreshAccessToken()
+          .catch(() => {
+            if (mountedRef.current) emitStatus("disconnected")
+          })
+          .finally(() => {
+            if (mountedRef.current) scheduleReconnect()
+          })
+      } else {
+        scheduleReconnect()
+      }
     }
   }
 
@@ -155,10 +193,37 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
 
     connect()
 
+    // Quando o token for renovado, reconecta o SSE com o token novo
+    function handleSessionRefreshed() {
+      if (!mountedRef.current) return
+      console.log("[SSE] Token renovado — reconectando...")
+      reconnectAttemptsRef.current = 0
+      consecutiveErrorsRef.current = 0
+      connect()
+    }
+
+    // Quando o usuário volta para a aba, verifica se o SSE ainda está ativo
+    function handleVisibilityChange() {
+      if (document.visibilityState !== "visible") return
+      if (!mountedRef.current || !isLoggedIn) return
+
+      if (!esRef.current || esRef.current.readyState === EventSource.CLOSED) {
+        console.log("[SSE] Aba voltou ao foco — reconectando...")
+        reconnectAttemptsRef.current = 0
+        consecutiveErrorsRef.current = 0
+        connect()
+      }
+    }
+
+    window.addEventListener("habbip:session-refreshed", handleSessionRefreshed)
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+
     return () => {
       mountedRef.current = false
       emitStatus("disconnected")
       cleanup(true)
+      window.removeEventListener("habbip:session-refreshed", handleSessionRefreshed)
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
     }
   }, [isLoggedIn])
 
@@ -166,6 +231,7 @@ export function useSSE({ isLoggedIn, onPriceChanged, onStatusChange }) {
     reconnectNow: () => {
       if (!mountedRef.current) return
       reconnectAttemptsRef.current = 0
+      consecutiveErrorsRef.current = 0
       connect()
     },
     disconnect: () => {

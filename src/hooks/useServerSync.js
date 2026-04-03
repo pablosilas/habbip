@@ -50,7 +50,11 @@ export function useServerSync(isLoggedIn) {
     }
 
     window.addEventListener("habbip:session-refreshed", handleRefreshed)
-    return () => window.removeEventListener("habbip:session-refreshed", handleRefreshed)
+    window.addEventListener("habbip:sse-reconnected", handleRefreshed)
+    return () => {
+      window.removeEventListener("habbip:session-refreshed", handleRefreshed)
+      window.removeEventListener("habbip:sse-reconnected", handleRefreshed)
+    }
   }, [])
 
   const flush = React.useCallback(async () => {

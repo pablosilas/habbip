@@ -52,7 +52,7 @@ async function doRefresh() {
   return data.accessToken
 }
 
-async function refreshAccessToken() {
+export async function refreshAccessToken() {
   if (!refreshPromise) {
     refreshPromise = doRefresh().finally(() => { refreshPromise = null })
   }
