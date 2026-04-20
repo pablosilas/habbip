@@ -1,24 +1,19 @@
 /**
- * ConsoleCard
+ * ConsoleCard (V2 - SectionCard)
  *
- * Componente reutilizável que encapsula o padrão visual do card amarelo
- * usado em Habbip, InfoModal, LoginModal, ProfileModal e ToastMessage.
+ * Componente reutilizável que encapsula o padrão visual do card V2 estilo fansite Habbo.
+ * Design moderno azul ciano com toques retro.
  *
  * Props:
  *   title          {string}    Texto do header central
  *   onClose        {function}  Se fornecido, renderiza o botão "X" no header
  *   headerRight    {node}      Slot para elementos extras à direita do header
- *                              (sobrescreve o botão X padrão se fornecido)
- *   expand         {boolean}   Ativa modo altura total (flex-col com altura fixa).
- *                              Necessário quando o card tem h-[X] definido no className,
- *                              ex: ProfileModal (h-[90vh]) e HabboDeskApp (h-full).
- *                              Faz o body crescer com flex-1 min-h-0 overflow-hidden,
- *                              o bezel com h-full min-h-0 overflow-hidden, e o inner com h-full.
- *   style          {object}    Estilos inline para o wrapper externo (ex: transform para rotate)
+ *   expand         {boolean}   Ativa modo altura total (flex-col com altura fixa)
+ *   style          {object}    Estilos inline para o wrapper externo
  *   className      {string}    Classes extras para o wrapper externo
- *   bodyClassName  {string}    Classes extras para o div do body (entre header e bezel)
+ *   bodyClassName  {string}    Classes extras para o div do body
  *   innerClassName {string}    Classes extras para a área interna (conteúdo)
- *   footer         {node}      Slot para conteúdo abaixo do bezel (ex: tabs de navegação)
+ *   footer         {node}      Slot para conteúdo abaixo do corpo
  *   children       {node}      Conteúdo principal do card
  */
 export default function ConsoleCard({
@@ -40,80 +35,74 @@ export default function ConsoleCard({
       <button
         type="button"
         onClick={onClose}
-        className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
+        className="w-7 h-7 rounded-lg bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer transition-all"
         aria-label="Fechar"
       >
-        X
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
+          <path d="M2 2l8 8M10 2l-8 8" />
+        </svg>
       </button>
     ) : null);
 
   return (
     <div
-      className={`console-card rounded-[23px] border-[1px] border-[#1D190D] bg-[#ffca00] shadow-[0_18px_40px_rgba(0,0,0,0.25)] overflow-hidden ${expand || footer ? "flex flex-col" : ""} ${className}`}
+      className={`
+        rounded-2xl bg-white border border-sky-100
+        shadow-[0_4px_24px_rgba(0,0,0,0.08)]
+        overflow-hidden
+        ${expand || footer ? "flex flex-col" : ""}
+        ${className}
+      `}
       style={style}
     >
       {/* ── Header ─────────────────────────────────────────────── */}
-      <div
-        className="h-8 shrink-0 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden"
-        style={{ boxShadow: "inset -3px 0 0 rgba(0,0,0,0.2)" }}
-      >
-        {/* Pontinhos esquerda */}
-        <div className="absolute left-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-        {/* Pontinhos direita */}
-        <div className="absolute right-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
+      <div className="h-12 shrink-0 bg-gradient-to-r from-sky-400 to-cyan-400 relative flex items-center justify-between px-4">
+        {/* Decorative pattern */}
+        <div className="absolute inset-0 opacity-10">
+          <div className="absolute left-0 top-0 w-full h-full bg-[radial-gradient(circle_at_20%_50%,white_1px,transparent_1px)] bg-[size:20px_20px]" />
+        </div>
 
-        {/* Título central */}
+        {/* Logo/Title */}
         {title && (
-          <div className="text-[12px] font-bold text-[#7c4e00] tracking-wide z-10 select-none">
-            {title}
+          <div className="flex items-center gap-2 z-10">
+            <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center">
+              <span className="text-white font-bold text-sm">H</span>
+            </div>
+            <span className="text-white font-bold text-[15px] tracking-wide">
+              {title}
+            </span>
           </div>
         )}
 
-        {/* Slot direito */}
+        {/* Right slot */}
         {rightSlot && (
-          <div className="absolute right-4 flex gap-1 z-10">{rightSlot}</div>
+          <div className="flex items-center gap-2 z-10">{rightSlot}</div>
         )}
       </div>
 
       {/* ── Body ───────────────────────────────────────────────── */}
-      {/*
-        expand=false (padrão): altura automática. Modais simples.
-        expand=true:           flex-1 min-h-0 overflow-hidden no body,
-                               h-full min-h-0 overflow-hidden no bezel,
-                               h-full min-h-0 no inner.
-      */}
       <div
-        className={`px-3 pb-3 bg-[#ffca00] ${expand ? "flex-1 min-h-0 overflow-hidden" : ""} ${bodyClassName}`}
-        style={{ boxShadow: "inset -3px 0 0 rgba(0,0,0,0.2)" }}
+        className={`
+          bg-gradient-to-b from-sky-50 to-white
+          ${expand ? "flex-1 min-h-0 overflow-hidden" : ""}
+          ${bodyClassName}
+        `}
       >
-        {/* Bezel escuro estilo CRT */}
+        {/* Inner content area */}
         <div
-          className={`effect-console mt-1 rounded-[14px] border-[2px] border-[#1D190D] bg-[repeating-linear-gradient(180deg,#535353_0px,#535353_2px,#4b4b4b_2px,#4b4b4b_4px)] p-3 ${expand ? "h-full min-h-0 overflow-hidden" : ""}`}
-          style={{
-            boxShadow: `-3px -3px 0 rgba(0,0,0,0.3), inset 0 8px 0 rgba(0,0,0,0.3), inset 0 -5px 0 rgba(0,0,0,0.3), inset 8px 0 0 rgba(0,0,0,0.3), inset -8px 0 0 rgba(0,0,0,0.3)`,
-          }}
+          className={`
+            p-4
+            ${expand ? "h-full min-h-0 overflow-y-auto" : ""}
+            ${innerClassName}
+          `}
         >
-          {/* Área interna semitransparente */}
-          <div
-            className={`rounded-[10px] border border-[#8a8a8a] bg-[rgba(0,0,0,0.08)] p-3 ${expand ? "h-full min-h-0" : ""} ${innerClassName}`}
-          >
-            {children}
-          </div>
+          {children}
         </div>
       </div>
 
       {/* ── Footer ─────────────────────────────────────────────── */}
-      {/*
-        shrink-0 garante que o footer nunca é comprimido pelo body quando
-        expand=true. Deve ser filho direto do flex-col do card (className do wrapper).
-      */}
       {footer && (
-        <div
-          className="shrink-0 bg-[#ffca00] rounded-b-[23px]"
-          style={{
-            boxShadow: `inset -3px 0 0 rgba(0,0,0,0.2), inset 0 -3px 0 rgba(0,0,0,0.2)`,
-          }}
-        >
+        <div className="shrink-0 bg-white border-t border-sky-100">
           {footer}
         </div>
       )}

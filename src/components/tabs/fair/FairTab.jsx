@@ -22,7 +22,7 @@ const FAIR_CATEGORIES = [
   },
   {
     id: "plasticos",
-    label: "Plásticos",
+    label: "Plasticos",
     icon: plasticIcon,
     searchTerms: ["chair_plasto", "table_plasto", "plasty"],
     subcategories: [
@@ -98,6 +98,21 @@ const FAIR_CATEGORIES = [
   },
 ]
 
+// Chevron icon
+function ChevronIcon({ expanded }) {
+  return (
+    <svg 
+      className={`w-4 h-4 text-sky-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
 export default function FairTab({
   mobiQuery, setMobiQuery,
   fairHotel, setFairHotel,
@@ -119,7 +134,6 @@ export default function FairTab({
   const [activeCategory, setActiveCategory] = React.useState(null)
   const [activeSubcategory, setActiveSubcategory] = React.useState(null)
   const [categoryLoading, setCategoryLoading] = React.useState(false)
-  // Modal de detalhes
   const [detailItem, setDetailItem] = React.useState(null)
 
   const wrapperRef = React.useRef(null)
@@ -152,7 +166,6 @@ export default function FairTab({
     setActiveCategory(null)
     setActiveSubcategory(null)
     onCategoryReset?.()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fairHotel])
 
   async function fetchByTerms(searchTerms, exactClassNames = null) {
@@ -168,7 +181,6 @@ export default function FairTab({
           merged.push(item)
         }
       }
-      // Filtra por classnames exatos se especificado
       const filtered = exactClassNames
         ? merged.filter(item => exactClassNames.includes(item.ClassName))
         : merged
@@ -248,7 +260,7 @@ export default function FairTab({
   const hasDropdownItems = history.length > 0 || favorites.length > 0
   const isLoadingAny = loading || categoryLoading
 
-  // ── Ordenação ─────────────────────────────────────────────────────────────
+  // ── Ordenacao ─────────────────────────────────────────────────────────────
   const sortedResults = [...results].sort((a, b) => {
     const aH = a.marketData?.history
     const bH = b.marketData?.history
@@ -304,32 +316,35 @@ export default function FairTab({
         onClose={() => setAlertConfigOpen(false)}
       />
 
-      {/* ── Cabeçalho ── */}
-      <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
+      {/* ── Cabecalho ── */}
+      <div 
+        className="flex items-center justify-between mb-3 p-3 bg-white rounded-xl border border-sky-100 cursor-pointer hover:border-sky-200 transition-all" 
+        onClick={() => setExpanded((v) => !v)}
+      >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">Feira Livre</div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4">Pesquise mobis, acompanhe preços, tendências e quantidade de ofertas.</div>
+          <div className="text-sky-800 font-bold text-[14px]">Feira Livre</div>
+          <div className="text-sky-500 text-[12px] leading-relaxed">Pesquise mobis, acompanhe precos, tendencias e ofertas.</div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">{expanded ? "▲ recolher" : "▼ expandir"}</span>
+        <ChevronIcon expanded={expanded} />
       </div>
-
-
 
       {expanded && (
         <>
           {/* ── Chips de categoria ── */}
-          <div className="flex flex-wrap gap-[6px] mb-2">
+          <div className="flex flex-wrap gap-2 mb-3">
             {FAIR_CATEGORIES.map((cat) => (
               <button key={cat.id} type="button" onClick={() => handleCategoryClick(cat)} disabled={isLoadingAny}
-                className={[
-                  "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  activeCategory === cat.id
-                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
-                ].join(" ")}
+                className={`
+                  flex items-center gap-2 px-3 py-2 text-[12px] font-semibold
+                  rounded-full border-2 transition-all cursor-pointer
+                  disabled:opacity-50 disabled:cursor-not-allowed
+                  ${activeCategory === cat.id
+                    ? "border-sky-400 bg-gradient-to-r from-sky-400 to-cyan-400 text-white shadow-sm"
+                    : "border-sky-200 bg-white text-sky-600 hover:border-sky-400 hover:bg-sky-50"
+                  }
+                `}
               >
-                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain " />}
+                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-4 h-4 object-contain pixel-render" />}
                 {cat.label}
               </button>
             ))}
@@ -337,25 +352,27 @@ export default function FairTab({
 
           {/* ── Subcategorias ── */}
           {subcategories && (
-            <div className="flex flex-wrap gap-[4px] mb-2">
+            <div className="flex flex-wrap gap-1.5 mb-3">
               {subcategories.map((sub) => (
                 <button key={sub.id} type="button" onClick={() => handleSubcategoryClick(sub)} disabled={isLoadingAny}
-                  className={[
-                    "px-2 py-[3px] text-[10px] border transition-colors cursor-pointer disabled:opacity-50",
-                    activeSubcategory === sub.id
-                      ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
-                      : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
-                  ].join(" ")}
+                  className={`
+                    px-3 py-1.5 text-[11px] font-medium rounded-lg transition-all cursor-pointer
+                    disabled:opacity-50
+                    ${activeSubcategory === sub.id
+                      ? "bg-sky-100 text-sky-700 border border-sky-300"
+                      : "bg-sky-50 text-sky-500 border border-transparent hover:border-sky-200 hover:bg-sky-100"
+                    }
+                  `}
                 >
                   {sub.label}
                 </button>
               ))}
             </div>
           )}
-          {!subcategories && <div className="mb-1" />}
-          {/* ── Formulário de busca ── */}
+
+          {/* ── Formulario de busca ── */}
           <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-            <div className="flex gap-2 mb-2">
+            <div className="flex gap-2 mb-3">
               <div className="flex-1">
                 <SearchInput
                   inputRef={inputRef}
@@ -383,7 +400,7 @@ export default function FairTab({
               </div>
               <HotelSelect value={fairHotel} onChange={setFairHotel} disabled={isLoadingAny} />
             </div>
-            <div className="grid grid-cols-2 gap-2 mb-3">
+            <div className="grid grid-cols-2 gap-2 mb-4">
               <Button type="submit" disabled={isLoadingAny}>
                 {loading ? "Consultando..." : "Consultar feira"}
               </Button>
@@ -399,52 +416,64 @@ export default function FairTab({
         </>
       )}
 
-      {error && <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-[12px] bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+          {error}
+        </div>
+      )}
 
       {/* ── Resultados ── */}
       {results.length > 0 && (
         <>
           {/* Sticky: filtro + sort + stale */}
           <div ref={sentinelRef} className="h-px" />
-          <div className={`sticky top-[-12px] z-20 -mx-1 px-1 mb-2 transition-all duration-200 ${isStuck ? "py-2 bg-[rgba(40,40,40,0.65)] backdrop-blur-sm shadow-[0_4px_12px_rgba(0,0,0,0.4)]" : "py-0 bg-transparent"}`}>
-            <div className="flex gap-2 mb-1">
+          <div className={`
+            sticky top-[-12px] z-20 -mx-1 px-1 mb-3 transition-all duration-200 rounded-xl
+            ${isStuck 
+              ? "py-3 bg-white/90 backdrop-blur-sm shadow-lg border border-sky-100" 
+              : "py-0 bg-transparent"
+            }
+          `}>
+            <div className="flex gap-2 mb-2">
               <div className="flex-1 min-w-0">
                 <SearchInput
                   value={filterQuery}
                   onChange={(e) => setFilterQuery(e.target.value)}
                   placeholder={`Filtrar nos ${results.length} resultados...`}
-                  className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)]"
+                  className="[&_input]:h-9 [&_input]:text-[12px]"
                 />
               </div>
-              {/* Ordenação */}
+              {/* Ordenacao */}
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="h-8 shrink-0 border border-[#555] bg-[rgba(255,255,255,0.08)] px-2 text-[10px] text-[#ccc] outline-none"
+                className="h-9 shrink-0 border-2 border-sky-200 bg-white px-3 text-[11px] text-sky-700 font-semibold rounded-lg outline-none cursor-pointer hover:border-sky-400 transition-all"
               >
-                <option value="priceValue" className="text-black">Preço ↓</option>
-                <option value="averagePrice" className="text-black">Média ↓</option>
-                <option value="trend" className="text-black">Tendência</option>
-                <option value="offers" className="text-black">Ofertas</option>
+                <option value="priceValue">Preco</option>
+                <option value="averagePrice">Media</option>
+                <option value="trend">Tendencia</option>
+                <option value="offers">Ofertas</option>
               </select>
             </div>
             {isStale && (
               <button type="button" onClick={handleRefresh}
-                className="w-full flex items-center justify-center gap-2 px-3 py-[5px] border border-dashed border-[#ffd64d] bg-[rgba(255,214,77,0.06)] text-[#ffd64d] cursor-pointer hover:bg-[rgba(255,214,77,0.12)] transition-colors"
+                className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg border-2 border-dashed border-amber-300 bg-amber-50 text-amber-700 cursor-pointer hover:bg-amber-100 transition-colors"
               >
-                <span className="text-[11px]">↻</span>
-                <span className="hidden sm:inline text-[11px] font-bold">Dados podem estar desatualizados — clique para atualizar</span>
-                <span className="sm:hidden text-[9px] font-bold">Desatualizado — toque para atualizar</span>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15" />
+                </svg>
+                <span className="hidden sm:inline text-[12px] font-semibold">Dados podem estar desatualizados — clique para atualizar</span>
+                <span className="sm:hidden text-[11px] font-semibold">Atualizar dados</span>
               </button>
             )}
           </div>
 
-          {/* ── Grid 4 col desktop / 2 col mobile ── */}
-          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-2 pr-1">
+          {/* ── Grid ── */}
+          <div className="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 gap-3">
             {filteredResults.map((item, index) => {
               const favEntry = {
-                term: item.FurniName || item.ClassName || String(index),  // ← nome legível para exibir e buscar
-                classname: item.ClassName  // ← classname só para carregar a imagem
+                term: item.FurniName || item.ClassName || String(index),
+                classname: item.ClassName
               }
               return (
                 <FairGridCard
@@ -470,17 +499,29 @@ export default function FairTab({
           </div>
 
           {!isLoadingAny && !filteredResults.length && filterQuery.trim() && (
-            <div className="text-[#888] text-[12px] mt-2">Nenhum mobi encontrado para "{filterQuery}".</div>
+            <div className="text-sky-500 text-[13px] mt-3 text-center">
+              Nenhum mobi encontrado para "{filterQuery}".
+            </div>
           )}
         </>
       )}
 
       {isLoadingAny && (
-        <div className="text-[#d2d2d2] text-[12px] mt-2 animate-pulse">Carregando...</div>
+        <div className="flex items-center justify-center py-8">
+          <div className="flex items-center gap-3">
+            <svg className="animate-spin w-5 h-5 text-sky-500" viewBox="0 0 24 24" fill="none">
+              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+            </svg>
+            <span className="text-sky-600 text-[13px]">Carregando...</span>
+          </div>
+        </div>
       )}
 
       {!isLoadingAny && !results.length && !error && (
-        <div className="text-[#e0e0e0] text-[12px]">Nenhum mobi encontrado.</div>
+        <div className="text-sky-500 text-[13px] text-center py-4">
+          Nenhum mobi encontrado.
+        </div>
       )}
     </div>
   )

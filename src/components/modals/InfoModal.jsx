@@ -9,69 +9,74 @@ export default function InfoModal({ open, onClose }) {
   const profileUrl = getHabboProfileUrl({ name: "Groovin", hotel: "br" })
 
   return (
-    <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
-      <ConsoleCard title="Sobre o Habbip" onClose={onClose} className="w-full max-w-[600px]">
-        <>
-          <div>
-            <div className="text-[#fff2c1] font-bold text-[12px] mb-1">O que é?</div>
-            <div className="text-[#ededed] text-[12px] leading-5">
-              O Habbip é uma ferramenta feita para jogadores do Habbo Hotel. Consulte preços e tendências da Feira Livre, pesquise perfis de usuários e gerencie seu inventário de mobis com cálculo de valor em tempo real.
+    <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <ConsoleCard title="Sobre o Habbip" onClose={onClose} className="w-full max-w-[560px]">
+        <div className="space-y-4">
+          {/* What is it */}
+          <div className="border-2 border-sky-100 rounded-xl p-4 bg-white">
+            <div className="text-sky-800 font-bold text-[13px] mb-2">O que e?</div>
+            <div className="text-sky-700 text-[13px] leading-relaxed">
+              O Habbip e uma ferramenta feita para jogadores do Habbo Hotel. Consulte precos e tendencias da Feira Livre, pesquise perfis de usuarios e gerencie seu inventario de mobis com calculo de valor em tempo real.
             </div>
           </div>
 
-          <div>
-            <div className="text-[#fff2c1] font-bold text-[12px] mb-1">Desenvolvido por</div>
+          {/* Developer */}
+          <div className="border-2 border-sky-100 rounded-xl p-4 bg-white">
+            <div className="text-sky-800 font-bold text-[13px] mb-3">Desenvolvido por</div>
             <a
               href={profileUrl}
               target="_blank"
               rel="noreferrer"
-              className="flex items-center gap-2 w-fit hover:opacity-80 transition-opacity"
+              className="flex items-center gap-3 w-fit hover:opacity-80 transition-opacity"
             >
-              <img
-                src={avatarUrl}
-                alt="Groovin"
-                className="w-8 h-8 "
-                onError={(e) => { e.currentTarget.style.display = "none" }}
-              />
-              <span className="text-[#fff2c1] font-bold text-[12px] underline underline-offset-2">
+              <div className="w-10 h-10 rounded-lg bg-sky-50 border-2 border-sky-200 flex items-center justify-center overflow-hidden">
+                <img
+                  src={avatarUrl}
+                  alt="Groovin"
+                  className="w-full h-full object-contain pixel-render"
+                  onError={(e) => { e.currentTarget.style.display = "none" }}
+                />
+              </div>
+              <span className="text-sky-600 font-bold text-[14px] hover:text-sky-700">
                 Groovin
               </span>
             </a>
           </div>
 
-          <div className="mb-2">
-            <div className="text-[#fff2c1] font-bold text-[12px] mb-1">Versão</div>
-            <div className="text-[#ededed] text-[12px]">1.0.0</div>
+          {/* Version */}
+          <div className="flex items-center justify-between px-4 py-3 bg-sky-50 rounded-xl">
+            <span className="text-sky-700 font-semibold text-[13px]">Versao</span>
+            <span className="text-sky-500 text-[13px]">2.0.0</span>
           </div>
 
-          {/* Sugestões */}
-          <div className="border border-[#ffffff22] rounded-[8px] p-3 bg-[rgba(255,255,255,0.04)]">
-            <div className="text-[#fff2c1] font-bold text-[12px] mb-1">Caixa de Sugestões</div>
-            <div className="text-[#ededed] text-[12px] leading-5 mb-3">
-              Tem uma ideia, encontrou um bug ou quer ver algo novo? Deixe seu feedback — todo retorno é lido e considerado.
+          {/* Suggestions */}
+          <div className="border-2 border-cyan-200 rounded-xl p-4 bg-gradient-to-br from-cyan-50 to-sky-50">
+            <div className="text-cyan-800 font-bold text-[13px] mb-2">Caixa de Sugestoes</div>
+            <div className="text-cyan-700 text-[13px] leading-relaxed mb-4">
+              Tem uma ideia, encontrou um bug ou quer ver algo novo? Deixe seu feedback — todo retorno e lido e considerado.
             </div>
             <Button
               variant="secondary"
               onClick={() => window.open("https://forms.gle/kUy1Fz85QY7kPWsLA", "_blank")}
+              className="w-full"
             >
-              Enviar sugestão
+              Enviar sugestao
             </Button>
           </div>
 
-          {/* Direitos */}
-          <div className="border-t border-[#ffffff22] pt-2 mt-2">
-            <div className="text-[#bfbfbf] text-[10px] leading-4 text-center">
-              © 2026 Habbip<br />
-              Todos os direitos reservados.<br />
-              Este site não é afiliado, patrocinado, apoiado ou aprovado pela Sulake Oy ou suas afiliadas.
+          {/* Rights */}
+          <div className="border-t border-sky-100 pt-4">
+            <div className="text-sky-400 text-[10px] leading-relaxed text-center">
+              2026 Habbip - Todos os direitos reservados.<br />
+              Este site nao e afiliado, patrocinado, apoiado ou aprovado pela Sulake Oy ou suas afiliadas.
             </div>
           </div>
 
-          <Button onClick={onClose}>
+          <Button onClick={onClose} className="w-full">
             Fechar
           </Button>
-        </>
+        </div>
       </ConsoleCard>
-    </div >
+    </div>
   )
 }

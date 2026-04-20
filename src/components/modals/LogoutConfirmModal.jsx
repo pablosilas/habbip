@@ -4,34 +4,38 @@ export default function LogoutConfirmModal({ open, onConfirm, onCancel }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
-      <div className="console-card w-full max-w-[340px] rounded-[23px] border-[1px] border-[#1D190D] bg-[#ffca00] shadow-[0_18px_40px_rgba(0,0,0,0.35)] overflow-hidden">
-
+    <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
+      <div className="w-full max-w-[360px] bg-white rounded-2xl shadow-xl border border-sky-100 overflow-hidden">
         {/* Header */}
-        <div className="h-8 bg-[#ffca00] relative flex items-center justify-center px-3 overflow-hidden">
-          <div className="absolute left-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-          <div className="absolute right-2 top-1/2 -translate-y-1/2 w-[35%] h-[18px] bg-[radial-gradient(#C7970F_1px,transparent_1px)] bg-[size:4px_4px] opacity-70" />
-          <div className="text-[12px] font-bold text-[#7c4e00] tracking-wide z-10">Sair</div>
+        <div className="h-12 bg-gradient-to-r from-red-400 to-red-500 flex items-center justify-center">
+          <span className="text-white font-bold text-[14px]">Sair da conta</span>
         </div>
 
         {/* Body */}
-        <div className="px-3 pb-3 bg-[#ffca00]">
-          <div
-            className="rounded-[14px] border-[2px] border-[#1D190D] bg-[repeating-linear-gradient(180deg,#535353_0px,#535353_2px,#4b4b4b_2px,#4b4b4b_4px)] p-3"
-            style={{ boxShadow: "inset 0 4px 6px rgba(0,0,0,0.4), inset 0 -4px 6px rgba(0,0,0,0.4), inset 4px 0 6px rgba(0,0,0,0.4), inset -4px 0 6px rgba(0,0,0,0.4)" }}
-          >
-            <div className="rounded-[10px] border border-[#8a8a8a] bg-[rgba(0,0,0,0.08)] p-4">
-              <div className="text-white text-[12px] leading-5 text-center mb-4">
-                Tem certeza que deseja sair?
-              </div>
-              <div className="flex flex-col gap-2">
-                <Button variant="danger" onClick={onConfirm}>Confirmar saída</Button>
-                <Button variant="secondary" onClick={onCancel}>Cancelar</Button>
-              </div>
+        <div className="p-6">
+          <div className="flex justify-center mb-4">
+            <div className="w-14 h-14 rounded-full bg-red-100 flex items-center justify-center">
+              <svg className="w-7 h-7 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
             </div>
           </div>
+          
+          <div className="text-sky-800 text-[14px] leading-relaxed text-center mb-6">
+            Tem certeza que deseja sair?
+          </div>
+          
+          <div className="flex flex-col gap-2">
+            <Button variant="danger" onClick={onConfirm} className="w-full">
+              Confirmar saida
+            </Button>
+            <Button variant="secondary" onClick={onCancel} className="w-full">
+              Cancelar
+            </Button>
+          </div>
         </div>
-
       </div>
     </div>
   )

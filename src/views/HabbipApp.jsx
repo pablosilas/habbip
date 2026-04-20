@@ -1,12 +1,7 @@
 import React, { useCallback, useEffect, useRef } from "react"
-import { createPortal } from "react-dom"
 import feiraIcon from "../assets/feira.png"
 import usuarioIcon from "../assets/usuario.png"
 import inventarioIcon from "../assets/inventario.png"
-import bgPattern from "../assets/bg.png"
-import bg2 from "../assets/bg_2.png"
-import bg3 from "../assets/bg_3.png"
-import arrowUpIcon from "../assets/arrow_up.gif"
 
 import HeaderCard from "../components/layout/HeaderCard"
 import FairTab from "../components/tabs/fair/FairTab"
@@ -32,118 +27,55 @@ import { useMonitor } from "../hooks/useMonitor"
 import { useServerSync } from "../hooks/useServerSync"
 import { useSSE } from "../hooks/useSSE"
 
-const BG_OPTIONS = [bg3, bg2, bgPattern]
-
-function loadBgIndex() {
-  try {
-    const n = Number(localStorage.getItem("habbip:bg"))
-    return Number.isFinite(n) && n >= 0 && n < BG_OPTIONS.length ? n : 0
-  } catch { return 0 }
-}
-
-function GearIcon() {
+// Cloud SVG component for decoration
+function CloudSVG({ className = "", style = {} }) {
   return (
-    <svg width="10" height="10" viewBox="0 0 16 16" fill="currentColor">
-      <path d="M9.405 1.05c-.413-1.4-2.397-1.4-2.81 0l-.1.34a1.464 1.464 0 0 1-2.105.872l-.31-.17c-1.283-.698-2.686.705-1.987 1.987l.169.311c.446.82.023 1.841-.872 2.105l-.34.1c-1.4.413-1.4 2.397 0 2.81l.34.1a1.464 1.464 0 0 1 .872 2.105l-.17.31c-.698 1.283.705 2.686 1.987 1.987l.311-.169a1.464 1.464 0 0 1 2.105.872l.1.34c.413 1.4 2.397 1.4 2.81 0l.1-.34a1.464 1.464 0 0 1 2.105-.872l.31.17c1.283.698 2.686-.705 1.987-1.987l-.169-.311a1.464 1.464 0 0 1 .872-2.105l.34-.1c1.4-.413 1.4-2.397 0-2.81l-.34-.1a1.464 1.464 0 0 1-.872-2.105l.17-.31c.698-1.283-.705-2.686-1.987-1.987l-.311.169a1.464 1.464 0 0 1-2.105-.872l-.1-.34zM8 5.754a2.246 2.246 0 1 1 0 4.492 2.246 2.246 0 0 1 0-4.492z" />
+    <svg viewBox="0 0 100 40" className={className} style={style} fill="white" opacity="0.6">
+      <ellipse cx="30" cy="25" rx="20" ry="12" />
+      <ellipse cx="50" cy="20" rx="25" ry="15" />
+      <ellipse cx="75" cy="25" rx="18" ry="10" />
+      <ellipse cx="60" cy="28" rx="15" ry="8" />
     </svg>
   )
 }
 
-function BgSelector({ bgIndex, onBgChange, bgs }) {
-  const [open, setOpen] = React.useState(false)
-  const [dropdownPos, setDropdownPos] = React.useState({ top: 0, left: 0 })
-  const btnRef = React.useRef(null)
-  const dropdownRef = React.useRef(null)
-
-  function handleToggle() {
-    if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      setDropdownPos({ top: rect.bottom + 6, left: rect.right - 110 })
-    }
-    setOpen((v) => !v)
-  }
-
-  React.useEffect(() => {
-    if (!open) return
-    function handleClickOutside(e) {
-      if (!btnRef.current?.contains(e.target) && !dropdownRef.current?.contains(e.target)) {
-        setOpen(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [open])
-
-  const dropdown = open ? (
-    <div
-      ref={dropdownRef}
-      style={{ position: "fixed", top: dropdownPos.top, left: dropdownPos.left, zIndex: 99999 }}
-      className={[
-        "relative overflow-hidden rounded-[14px]",
-        "border-[2px] border-[#7A7A7A]",
-        "outline outline-[1px] outline-[#000000]",
-        "bg-[#4D4D4D]",
-        "shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]",
-      ].join(" ")}
-    >
-      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
-        <span className="text-[10px] font-bold text-white">Fundo</span>
-        <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
-          <button
-            type="button"
-            onClick={() => setOpen(false)}
-            title="Fechar"
-            className="flex items-center justify-center cursor-pointer hover:brightness-110 active:translate-y-[1px]"
-            style={{
-              width: 18, height: 18, borderRadius: 4,
-              background: "#7A7A7A",
-              borderTop: "1.5px solid #000",
-              borderLeft: "1.5px solid #000",
-              borderRight: "1.5px solid #000",
-              borderBottom: "2.5px solid #000",
-              boxShadow: "inset 0 0 0 1px #8c8c8c",
-            }}
-          >
-            <span className="block w-0 h-0 translate-y-[1px]" style={{ borderLeft: "4px solid transparent", borderRight: "4px solid transparent", borderTop: "6px solid #ffffff" }} />
-          </button>
-        </div>
-      </div>
-      <div className="px-3 py-3 bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
-        <div className="flex gap-[6px] justify-center">
-          {bgs.map((bg, i) => (
-            <button
-              key={i}
-              type="button"
-              onClick={() => { onBgChange(i); setOpen(false) }}
-              className="w-6 h-6 rounded-sm overflow-hidden cursor-pointer transition-transform hover:scale-110 shrink-0"
-              style={{
-                backgroundImage: `url(${bg})`,
-                backgroundSize: "cover",
-                backgroundPosition: "center",
-                borderTop: "1.5px solid #000",
-                borderLeft: "1.5px solid #000",
-                borderRight: "1.5px solid #000",
-                borderBottom: "2.5px solid #000",
-                boxShadow: bgIndex === i
-                  ? "inset 0 0 0 2px #ffca00"
-                  : "inset 0 0 0 1px #8c8c8c",
-              }}
-            />
-          ))}
-        </div>
-      </div>
-    </div>
-  ) : null
-
+// Info icon SVG
+function InfoIcon() {
   return (
-    <>
-      <button ref={btnRef} type="button" onClick={handleToggle}
-        className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
-      >
-        <GearIcon />
-      </button>
-      {typeof document !== "undefined" ? createPortal(dropdown, document.body) : null}
-    </>
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="10" />
+      <path d="M12 16v-4M12 8h.01" />
+    </svg>
+  )
+}
+
+// Settings icon SVG
+function SettingsIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="12" cy="12" r="3" />
+      <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z" />
+    </svg>
+  )
+}
+
+// Logout icon SVG
+function LogoutIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+      <polyline points="16 17 21 12 16 7" />
+      <line x1="21" y1="12" x2="9" y2="12" />
+    </svg>
+  )
+}
+
+// Arrow up icon
+function ArrowUpIcon() {
+  return (
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M18 15l-6-6-6 6" />
+    </svg>
   )
 }
 
@@ -154,7 +86,6 @@ export default function HabboDeskApp() {
   const [fairExpanded, setFairExpanded] = React.useState(true)
   const [userExpanded, setUserExpanded] = React.useState(true)
   const [inventoryExpanded, setInventoryExpanded] = React.useState(true)
-  const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
   const [showScrollTop, setShowScrollTop] = React.useState(false)
 
@@ -278,7 +209,6 @@ export default function HabboDeskApp() {
       setFairExpanded(true)
       setUserExpanded(true)
       setActiveTab("feira")
-      // Não reabre o modal — usuário fica anônimo
     })
   }
 
@@ -286,12 +216,6 @@ export default function HabboDeskApp() {
   function openLogin(mode = "login") {
     auth.setAuthMode(mode)
     auth.setLoginModalOpen(true)
-  }
-
-  // ── Background ────────────────────────────────────────────────────────────
-  function handleBgChange(index) {
-    setBgIndex(index)
-    try { localStorage.setItem("habbip:bg", String(index)) } catch { }
   }
 
   React.useEffect(() => {
@@ -323,7 +247,6 @@ export default function HabboDeskApp() {
     fair.setMobiQuery(className)
     setActiveTab("feira")
     setFairExpanded(true)
-    // Passa o className diretamente — bypassa debounce e o ref desatualizado
     fair.refreshResults(className)
   }
 
@@ -364,31 +287,41 @@ export default function HabboDeskApp() {
         onCancel={() => setConfirmingLogout(false)}
       />
 
+      {/* Main container with sky gradient background */}
       <div
-        className="h-screen overflow-hidden flex items-center justify-center py-0 px-2 sm:p-2"
+        className="min-h-screen overflow-hidden flex items-center justify-center p-2 sm:p-4"
         style={{
           height: "calc(var(--vh, 1vh) * 100)",
-          backgroundColor: "#dfe5e8",
-          backgroundImage: `url(${BG_OPTIONS[bgIndex]})`,
-          backgroundRepeat: "repeat",
+          background: "linear-gradient(180deg, #87CEEB 0%, #B2EBF2 40%, #E0F7FA 100%)",
         }}
       >
-        <style>{`body { font-family: Verdana, Arial, sans-serif; }`}</style>
+        {/* Decorative clouds */}
+        <CloudSVG className="absolute top-[5%] left-[5%] w-32 opacity-50 cloud-float" />
+        <CloudSVG className="absolute top-[15%] right-[10%] w-40 opacity-40" style={{ animationDelay: '-5s' }} />
+        <CloudSVG className="absolute top-[8%] left-[40%] w-24 opacity-30" style={{ animationDelay: '-10s' }} />
+        <CloudSVG className="absolute bottom-[20%] left-[15%] w-28 opacity-25 hidden md:block" style={{ animationDelay: '-15s' }} />
+        <CloudSVG className="absolute bottom-[30%] right-[5%] w-36 opacity-35 hidden md:block" style={{ animationDelay: '-8s' }} />
+
+        <style>{`body { font-family: system-ui, -apple-system, sans-serif; }`}</style>
 
         <div className="relative w-full h-full flex items-center justify-center">
           <ConsoleCard
             title="Habbip"
             expand
             style={cardStyle}
-            className="w-full max-w-[720px] h-full max-h-[96dvh] flex flex-col"
-            innerClassName="flex flex-col overflow-hidden"
+            className="w-full max-w-[760px] h-full max-h-[96dvh] flex flex-col"
+            innerClassName="flex flex-col overflow-hidden p-0"
             headerRight={
-              <div className="flex items-center gap-[6px]">
+              <div className="flex items-center gap-2">
                 {syncError && (
-                  <span title={syncError} className="text-[9px] text-[#FF8A8A] cursor-help">⚠ sync</span>
+                  <span title={syncError} className="text-[10px] text-red-200 bg-red-500/20 px-2 py-1 rounded cursor-help">
+                    Sync error
+                  </span>
                 )}
                 {loadingData && (
-                  <span className="text-[9px] text-[#ffd64d] animate-pulse">carregando...</span>
+                  <span className="text-[10px] text-sky-100 animate-pulse">
+                    Carregando...
+                  </span>
                 )}
                 {isLoggedIn && (
                   <NotificationBell
@@ -406,196 +339,200 @@ export default function HabboDeskApp() {
                     onClearWatchlist={clearWatchlist}
                   />
                 )}
-                <BgSelector bgIndex={bgIndex} onBgChange={handleBgChange} bgs={BG_OPTIONS} />
+                <button
+                  type="button"
+                  onClick={() => setInfoModalOpen(true)}
+                  className="w-8 h-8 rounded-lg bg-white/20 hover:bg-white/30 text-white flex items-center justify-center cursor-pointer transition-all"
+                  title="Informacoes"
+                >
+                  <InfoIcon />
+                </button>
                 {isLoggedIn && (
-                  <span
+                  <button
+                    type="button"
                     onClick={() => setConfirmingLogout(true)}
-                    className="w-4 h-4 rounded-[2px] border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[10px] flex items-center justify-center cursor-pointer hover:brightness-110 transition-all"
+                    className="w-8 h-8 rounded-lg bg-red-400/30 hover:bg-red-400/50 text-white flex items-center justify-center cursor-pointer transition-all"
+                    title="Sair"
                   >
-                    X
-                  </span>
+                    <LogoutIcon />
+                  </button>
                 )}
               </div>
             }
             footer={
-              <div className="px-15 sm:px-20 pt-5 pb-0">
-                <div className="rounded-t-[4px] h-[80px] flex overflow-hidden">
+              <div className="pt-0">
+                <div className="flex overflow-hidden">
                   <ConsoleTab
                     label="Feira Livre"
-                    icon={<img src={feiraIcon} className="w-6 h-6  icon-dark" alt="Feira" />}
+                    icon={<img src={feiraIcon} className="w-5 h-5 pixel-render" alt="Feira" />}
                     active={activeTab === "feira"}
                     onClick={() => setActiveTab("feira")}
                   />
                   <ConsoleTab
-                    label="Buscar Usuário"
-                    icon={<img src={usuarioIcon} className="w-6 h-6  icon-dark" alt="Usuário" />}
+                    label="Buscar Usuario"
+                    icon={<img src={usuarioIcon} className="w-5 h-5 pixel-render" alt="Usuario" />}
                     active={activeTab === "usuario"}
                     onClick={() => setActiveTab("usuario")}
                   />
-                  {/* Inventário agora disponível para todos */}
                   <ConsoleTab
-                    label="Meu Inventário"
-                    icon={<img src={inventarioIcon} className="w-7 h-6  icon-dark" alt="Inventário" />}
+                    label="Meu Inventario"
+                    icon={<img src={inventarioIcon} className="w-6 h-5 pixel-render" alt="Inventario" />}
                     active={activeTab === "inventario"}
                     onClick={() => setActiveTab("inventario")}
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={() => setInfoModalOpen(true)}
-                  className="absolute bottom-4 right-6 w-6 h-6 rounded-full border border-[#9a6500] bg-[#ffca00] text-[#7c4e00] text-[11px] font-bold flex items-center justify-center cursor-pointer hover:brightness-105 transform transition duration-150 hover:scale-105 z-10"
-                  style={{ boxShadow: "1px 1px 0 rgba(0,0,0,0.3)" }}
-                >
-                  ?
-                </button>
               </div>
             }
           >
-            <HeaderCard
-              activeTab={activeTab}
-              userData={auth.loggedUser}
-              onOpenProfile={() => setProfileModalOpen(true)}
-              onOpenLogin={() => openLogin("login")}
-            />
+            <div className="flex flex-col h-full">
+              <HeaderCard
+                activeTab={activeTab}
+                userData={auth.loggedUser}
+                onOpenProfile={() => setProfileModalOpen(true)}
+                onOpenLogin={() => openLogin("login")}
+              />
 
-            <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-2 shrink-0" />
+              <div className="border-t border-sky-200/50 my-3 shrink-0" />
 
-            <div
-              ref={mainScrollRef}
-              data-scroll="main"
-              className="flex-1 min-h-0 pt-3 overflow-y-auto pr-1"
-              onScroll={(e) => setShowScrollTop(e.currentTarget.scrollTop > 300)}
-            >
-              {/* Banner de dados locais — aparece só para anônimos com inventário */}
-              {!isLoggedIn && inventory.hasAnonData && (
-                <LocalDataBanner
-                  hasLocalData={inventory.hasAnonData}
-                  onLogin={() => openLogin("register")}
-                />
-              )}
+              <div
+                ref={mainScrollRef}
+                data-scroll="main"
+                className="flex-1 min-h-0 overflow-y-auto pr-1"
+                onScroll={(e) => setShowScrollTop(e.currentTarget.scrollTop > 300)}
+              >
+                {/* Banner de dados locais — aparece só para anônimos com inventário */}
+                {!isLoggedIn && inventory.hasAnonData && (
+                  <LocalDataBanner
+                    hasLocalData={inventory.hasAnonData}
+                    onLogin={() => openLogin("register")}
+                  />
+                )}
 
-              <div className={activeTab === "feira" ? "" : "hidden"}>
-                <FairTab
-                  mobiQuery={fair.mobiQuery}
-                  setMobiQuery={fair.setMobiQuery}
-                  fairHotel={fair.hotel}
-                  setFairHotel={fair.setHotel}
-                  onSearch={fair.handleSearch}
-                  loading={fair.loading}
-                  error={fair.error}
-                  results={fair.results}
-                  expanded={fairExpanded}
-                  setExpanded={setFairExpanded}
-                  creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
-                  onSetCreditRate={converter.setRate}
-                  onAddToInventory={(item) => {
-                    if (inventory.items.some(i => i.ClassName === item.ClassName)) {
-                      inventory.removeItem(item.ClassName)
-                    } else {
-                      inventory.addToInventory(item)
-                    }
-                  }}
-                  isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
-                  isWatching={isLoggedIn ? isWatching : () => false}
-                  onToggleWatchlist={(item) => {
-                    // Sinal enviado pelo ActionsMenu quando anônimo clica em "Monitorar"
-                    if (item?.__requireLogin) {
-                      openLogin("login")
-                      return
-                    }
-                    if (!isLoggedIn) { openLogin("login"); return }
-                    if (isWatching(item.ClassName)) {
-                      handleStopMonitoring(item.ClassName)
-                    } else {
-                      const freshItem = fair.results.find((r) => r.ClassName === item.ClassName) ?? item
-                      toggleWatchlist(freshItem)
-                    }
-                  }}
-                  serverData={serverData}
-                  markDirty={markDirty}
-                  isLoggedIn={isLoggedIn}
-                  updateLocalData={updateLocalData}
-                  isStale={fair.isStale}
-                  onRefresh={() => fair.refreshResults()}
-                  onCategoryResults={(items) => {
-                    fair.setResults(items)
-                    fair.setIsStale(false)
-                    setFairExpanded(false)
-                  }}
-                  onCategoryReset={() => {
-                    fair.setResults([])
-                    fair.setError("")
-                  }}
-                />
+                <div className={activeTab === "feira" ? "" : "hidden"}>
+                  <FairTab
+                    mobiQuery={fair.mobiQuery}
+                    setMobiQuery={fair.setMobiQuery}
+                    fairHotel={fair.hotel}
+                    setFairHotel={fair.setHotel}
+                    onSearch={fair.handleSearch}
+                    loading={fair.loading}
+                    error={fair.error}
+                    results={fair.results}
+                    expanded={fairExpanded}
+                    setExpanded={setFairExpanded}
+                    creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
+                    onSetCreditRate={converter.setRate}
+                    onAddToInventory={(item) => {
+                      if (inventory.items.some(i => i.ClassName === item.ClassName)) {
+                        inventory.removeItem(item.ClassName)
+                      } else {
+                        inventory.addToInventory(item)
+                      }
+                    }}
+                    isInInventory={(className) => inventory.items.some(i => i.ClassName === className)}
+                    isWatching={isLoggedIn ? isWatching : () => false}
+                    onToggleWatchlist={(item) => {
+                      if (item?.__requireLogin) {
+                        openLogin("login")
+                        return
+                      }
+                      if (!isLoggedIn) { openLogin("login"); return }
+                      if (isWatching(item.ClassName)) {
+                        handleStopMonitoring(item.ClassName)
+                      } else {
+                        const freshItem = fair.results.find((r) => r.ClassName === item.ClassName) ?? item
+                        toggleWatchlist(freshItem)
+                      }
+                    }}
+                    serverData={serverData}
+                    markDirty={markDirty}
+                    isLoggedIn={isLoggedIn}
+                    updateLocalData={updateLocalData}
+                    isStale={fair.isStale}
+                    onRefresh={() => fair.refreshResults()}
+                    onCategoryResults={(items) => {
+                      fair.setResults(items)
+                      fair.setIsStale(false)
+                      setFairExpanded(false)
+                    }}
+                    onCategoryReset={() => {
+                      fair.setResults([])
+                      fair.setError("")
+                    }}
+                  />
+                </div>
+
+                <div className={activeTab === "usuario" ? "" : "hidden"}>
+                  <UserTab
+                    nickQuery={user.nickQuery}
+                    setNickQuery={user.setNickQuery}
+                    onSearch={user.handleSearch}
+                    loading={user.loading}
+                    error={user.error}
+                    userData={user.searchedUser}
+                    expanded={userExpanded}
+                    setExpanded={setUserExpanded}
+                    serverData={serverData}
+                    markDirty={markDirty}
+                    isLoggedIn={isLoggedIn}
+                    updateLocalData={updateLocalData}
+                    loadingData={loadingData}
+                  />
+                </div>
+
+                <div className={activeTab === "inventario" ? "" : "hidden"}>
+                  <InventoryTab
+                    items={inventory.items}
+                    query={inventory.query}
+                    setQuery={inventory.setQuery}
+                    hotel={inventory.hotel}
+                    setHotel={inventory.setHotel}
+                    loading={inventory.loading}
+                    error={inventory.error}
+                    searchResults={inventory.searchResults}
+                    onSearch={inventory.handleSearch}
+                    onAddItem={inventory.addToInventory}
+                    onCancelSearch={inventory.cancelSearch}
+                    onUpdateQty={inventory.updateQty}
+                    onSetQty={inventory.setQty}
+                    onRemove={inventory.removeItem}
+                    onClear={inventory.clearInventory}
+                    totalItems={inventory.totalItems}
+                    totalUnits={inventory.totalUnits}
+                    totalValue={inventory.totalValue}
+                    creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
+                    onSetCreditRate={converter.setRate}
+                    searchKey={inventory.searchKey}
+                    expanded={inventoryExpanded}
+                    setExpanded={setInventoryExpanded}
+                    serverData={serverData}
+                    markDirty={markDirty}
+                    isLoggedIn={isLoggedIn}
+                    updateLocalData={updateLocalData}
+                    loadingData={loadingData}
+                    isAnonymous={!isLoggedIn}
+                    onLoginToSync={() => openLogin("register")}
+                  />
+                </div>
               </div>
 
-              <div className={activeTab === "usuario" ? "" : "hidden"}>
-                <UserTab
-                  nickQuery={user.nickQuery}
-                  setNickQuery={user.setNickQuery}
-                  onSearch={user.handleSearch}
-                  loading={user.loading}
-                  error={user.error}
-                  userData={user.searchedUser}
-                  expanded={userExpanded}
-                  setExpanded={setUserExpanded}
-                  serverData={serverData}
-                  markDirty={markDirty}
-                  isLoggedIn={isLoggedIn}
-                  updateLocalData={updateLocalData}
-                  loadingData={loadingData}
-                />
-              </div>
-
-              <div className={activeTab === "inventario" ? "" : "hidden"}>
-                <InventoryTab
-                  items={inventory.items}
-                  query={inventory.query}
-                  setQuery={inventory.setQuery}
-                  hotel={inventory.hotel}
-                  setHotel={inventory.setHotel}
-                  loading={inventory.loading}
-                  error={inventory.error}
-                  searchResults={inventory.searchResults}
-                  onSearch={inventory.handleSearch}
-                  onAddItem={inventory.addToInventory}
-                  onCancelSearch={inventory.cancelSearch}
-                  onUpdateQty={inventory.updateQty}
-                  onSetQty={inventory.setQty}
-                  onRemove={inventory.removeItem}
-                  onClear={inventory.clearInventory}
-                  totalItems={inventory.totalItems}
-                  totalUnits={inventory.totalUnits}
-                  totalValue={inventory.totalValue}
-                  creditRate={{ credits: converter.rateCredits, reais: converter.rateReais }}
-                  onSetCreditRate={converter.setRate}
-                  searchKey={inventory.searchKey}
-                  expanded={inventoryExpanded}
-                  setExpanded={setInventoryExpanded}
-                  serverData={serverData}
-                  markDirty={markDirty}
-                  isLoggedIn={isLoggedIn}
-                  updateLocalData={updateLocalData}
-                  loadingData={loadingData}
-                  // Passa prop para o InventoryTab mostrar aviso de dados locais
-                  isAnonymous={!isLoggedIn}
-                  onLoginToSync={() => openLogin("register")}
-                />
-              </div>
-            </div>
-
-            <div className="border-t border-dashed border-[#d7d7d7] opacity-80 my-3 shrink-0" />
-            <div className="shrink-0 space-y-1 text-[12px] text-white leading-5">
-              <div className="flex items-center justify-between">
-                <div>{processedResultsCount} resultados processados</div>
+              <div className="border-t border-sky-200/50 my-3 shrink-0" />
+              
+              {/* Status bar */}
+              <div className="shrink-0 flex items-center justify-between text-[12px] text-sky-700 bg-sky-50/50 -mx-4 -mb-4 px-4 py-2 rounded-b-lg">
+                <div className="flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-green-400"></span>
+                  <span>{processedResultsCount} resultados</span>
+                </div>
                 {showScrollTop && (
                   <button
                     type="button"
                     onClick={() => mainScrollRef.current?.scrollTo({ top: 0, behavior: "smooth" })}
                     title="Voltar ao topo"
-                    className="cursor-pointer hover:brightness-110 transition-all"
+                    className="flex items-center gap-1 px-2 py-1 rounded-md bg-sky-100 hover:bg-sky-200 text-sky-600 cursor-pointer transition-all"
                   >
-                    <img src={arrowUpIcon} alt="Voltar ao topo" className="w-4 h-5 " />
+                    <ArrowUpIcon />
+                    <span className="text-[11px] hidden sm:inline">Topo</span>
                   </button>
                 )}
               </div>

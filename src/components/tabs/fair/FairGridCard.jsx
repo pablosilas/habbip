@@ -2,17 +2,12 @@ import React from "react"
 import { createPortal } from "react-dom"
 import { getFurnitureIconUrl, getFurnitureImageUrl } from "../../../services/habboApi"
 import FurnitureImage from "../../ui/FurnitureImage"
-import coinSmIcon from "../../../assets/coin_sm.png"
 import coinIcon from "../../../assets/coin.png"
-import mediaIcon from "../../../assets/media.png"
-import ofertasIcon from "../../../assets/ofertas.png"
 import watchIcon from "../../../assets/watch.png"
 import plusIcon from "../../../assets/plus.png"
 import starIcon from "../../../assets/star.png"
-import toolIcon from "../../../assets/tool.png"
 import configIcon from "../../../assets/config.png"
 import boxIcon from "../../../assets/box.png"
-import infoIcon from "../../../assets/info.png"
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
@@ -24,10 +19,10 @@ function getLatestHistoryEntry(history = []) {
 function getTrendInfo(hasActiveOffers, currentPrice, averagePrice) {
   if (!hasActiveOffers) return null
   if (currentPrice == null || averagePrice == null || averagePrice <= 0)
-    return { icon: "•", colorClass: "text-[#888]" }
-  if (currentPrice > averagePrice) return { icon: "▲", colorClass: "text-[#FF8A8A]" }
-  if (currentPrice < averagePrice) return { icon: "▼", colorClass: "text-[#7CFC8A]" }
-  return { icon: "•", colorClass: "text-[#f1d97a]" }
+    return { icon: "-", colorClass: "text-sky-400" }
+  if (currentPrice > averagePrice) return { icon: "up", colorClass: "text-red-500" }
+  if (currentPrice < averagePrice) return { icon: "down", colorClass: "text-green-500" }
+  return { icon: "-", colorClass: "text-amber-500" }
 }
 
 // ── useIsMobile ───────────────────────────────────────────────────────────────
@@ -42,17 +37,7 @@ function useIsMobile() {
   return isMobile
 }
 
-function useIsXs() {
-  const [isXs, setIsXs] = React.useState(() => window.innerWidth <= 480)
-  React.useEffect(() => {
-    const fn = () => setIsXs(window.innerWidth <= 480)
-    window.addEventListener("resize", fn)
-    return () => window.removeEventListener("resize", fn)
-  }, [])
-  return isXs
-}
-
-// ── FurniIcon — ícone pequeno via getFurnitureIconUrl ─────────────────────────
+// ── FurniIcon — icone pequeno via getFurnitureIconUrl ─────────────────────────
 
 function FurniIcon({ classname, hotel = "br" }) {
   const [url, setUrl] = React.useState(undefined)
@@ -79,17 +64,17 @@ function FurniIcon({ classname, hotel = "br" }) {
   }, [classname, hotel])
 
   return (
-    <div ref={ref} className="w-[18px] h-[18px] flex items-center justify-center shrink-0">
+    <div ref={ref} className="w-5 h-5 flex items-center justify-center shrink-0">
       {error || url === null ? (
         <img src={boxIcon} alt="mobi" className="w-full h-full object-contain opacity-40" />
       ) : url ? (
-        <img src={url} alt={classname} className="w-full h-full object-contain" onError={() => setError(true)} />
+        <img src={url} alt={classname} className="w-full h-full object-contain pixel-render" onError={() => setError(true)} />
       ) : null}
     </div>
   )
 }
 
-// ── Tooltip — desativado no mobile (sem hover) ────────────────────────────────
+// ── Tooltip ────────────────────────────────────────────────────────────────
 
 function Tooltip({ text, children, disabled = false }) {
   const [visible, setVisible] = React.useState(false)
@@ -98,7 +83,7 @@ function Tooltip({ text, children, disabled = false }) {
 
   const tooltip = (!disabled && visible) ? createPortal(
     <div style={{ position: "fixed", left: pos.x, top: pos.y, transform: "translate(-50%, -100%)", zIndex: 99999, pointerEvents: "none" }}
-      className="px-2 py-[3px] rounded bg-[#111] border border-[#444] text-[9px] text-[#e0e0e0] whitespace-nowrap shadow-lg"
+      className="px-2 py-1 rounded-lg bg-sky-800 border border-sky-600 text-[10px] text-white whitespace-nowrap shadow-lg"
     >{text}</div>,
     document.body
   ) : null
@@ -119,34 +104,23 @@ function Tooltip({ text, children, disabled = false }) {
   )
 }
 
-// ── FakeToggle ────────────────────────────────────────────────────────────────
+// ── Toggle visual ─────────────────────────────────────────────────────────────
 
 function FakeToggle({ checked }) {
   return (
     <div
-      className="relative shrink-0 flex items-center"
-      style={{
-        width: 28, height: 14, borderRadius: 3,
-        background: checked ? "#3a9e3a" : "#6b6b6b",
-        borderTop: "1.5px solid #4a4a4a",
-        borderLeft: "1.5px solid #4a4a4a",
-        borderRight: "1.5px solid #8a8a8a",
-        borderBottom: "1.5px solid #8a8a8a",
-        boxShadow: "inset 0 2px 4px rgba(0,0,0,0.35)",
-        pointerEvents: "none",
-      }}
+      className={`
+        relative shrink-0 w-8 h-5 rounded-full transition-all
+        ${checked 
+          ? "bg-gradient-to-r from-green-400 to-green-500" 
+          : "bg-sky-200"
+        }
+      `}
     >
-      <span style={{
-        position: "absolute",
-        left: checked ? 16 : 2,
-        width: 10, height: 10, borderRadius: 2,
-        background: "#e0e0e0",
-        borderTop: "1.5px solid #fff",
-        borderLeft: "1.5px solid #fff",
-        borderRight: "1.5px solid #888",
-        borderBottom: "1.5px solid #888",
-        transition: "left 0.12s ease",
-      }} />
+      <span className={`
+        absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-sm transition-all
+        ${checked ? "left-3.5" : "left-0.5"}
+      `} />
     </div>
   )
 }
@@ -163,7 +137,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
     e.stopPropagation()
     if (!open && btnRef.current) {
       const rect = btnRef.current.getBoundingClientRect()
-      const menuWidth = 220
+      const menuWidth = 240
       const spaceRight = window.innerWidth - rect.right
       const left = spaceRight >= menuWidth ? rect.right + 4 : rect.left - menuWidth - 4
       setPos({ top: rect.bottom + 4, left })
@@ -183,20 +157,22 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   function action(fn) { return (e) => { e?.stopPropagation(); fn?.() } }
 
   const menu = open ? (
-    <div ref={menuRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 220 }}
-      className="relative overflow-hidden rounded-[14px] border-[2px] border-[#7A7A7A] outline outline-[1px] outline-[#000] bg-[#4D4D4D] shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]"
+    <div ref={menuRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 240 }}
+      className="bg-white rounded-xl border-2 border-sky-100 shadow-xl overflow-hidden"
     >
-      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
-        <span className="text-[10px] font-bold text-white truncate">{item.FurniName || "Ações"}</span>
-        <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
-          <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(false) }} className="flex items-center justify-center cursor-pointer"
-            style={{ width: 18, height: 18, borderRadius: 4, background: "#7A7A7A", borderTop: "1.5px solid #000", borderLeft: "1.5px solid #000", borderRight: "1.5px solid #000", borderBottom: "2.5px solid #000", boxShadow: "inset 0 0 0 1px #8c8c8c" }}
-          >
-            <span className="block w-0 h-0 translate-y-[1px]" style={{ borderLeft: "4px solid transparent", borderRight: "4px solid transparent", borderTop: "6px solid #fff" }} />
-          </button>
-        </div>
+      {/* Header */}
+      <div className="h-10 px-4 flex items-center justify-between bg-gradient-to-r from-sky-400 to-cyan-400">
+        <span className="text-[12px] font-bold text-white truncate">{item.FurniName || "Acoes"}</span>
+        <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(false) }} 
+          className="w-6 h-6 rounded-lg bg-white/20 hover:bg-white/30 flex items-center justify-center cursor-pointer transition-all">
+          <svg className="w-3 h-3 text-white" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M18 6L6 18M6 6l12 12" />
+          </svg>
+        </button>
       </div>
-      <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+
+      {/* Options */}
+      <div className="p-2 space-y-1">
         <button type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -207,32 +183,36 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
             }
             onToggleWatchlist?.({ ...item, basePrice: item?.marketData?.currentPrice ?? item?.basePrice })
           }}
-          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] transition-colors cursor-pointer ${isLoggedIn ? "hover:bg-[rgba(255,255,255,0.06)]" : "hover:bg-[rgba(255,214,77,0.06)]"}`}
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sky-50 transition-colors cursor-pointer"
         >
-          <img src={watchIcon} alt="Monitorar" className={`w-[14px] h-[14px] object-contain ${isWatching ? "brightness-100" : "opacity-50"}`} />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isWatching ? "Parar de monitorar" : "Monitorar preço"}</span>
-          {!isLoggedIn ? <span className="text-[9px] text-[#ffd64d] opacity-80">login necessário</span> : (
-            <div className="flex items-center gap-[6px]">
+          <img src={watchIcon} alt="Monitorar" className={`w-4 h-4 object-contain ${isWatching ? "" : "opacity-40"}`} />
+          <span className="flex-1 text-[12px] text-sky-800 text-left">{isWatching ? "Parar de monitorar" : "Monitorar preco"}</span>
+          {!isLoggedIn ? (
+            <span className="text-[10px] text-amber-600 font-medium">login</span>
+          ) : (
+            <div className="flex items-center gap-2">
               {isWatching && (
-                <div role="button" tabIndex={0} onClick={(e) => { e.stopPropagation(); onConfigureAlert?.(item) }}
-                  className="flex items-center justify-center cursor-pointer hover:brightness-125" style={{ width: 14, height: 14 }}>
-                  <img src={configIcon} alt="Configurar" className="w-[12px] h-[12px] object-contain" />
-                </div>
+                <button onClick={(e) => { e.stopPropagation(); onConfigureAlert?.(item) }}
+                  className="w-5 h-5 flex items-center justify-center rounded hover:bg-sky-100 cursor-pointer">
+                  <img src={configIcon} alt="Configurar" className="w-3 h-3 object-contain" />
+                </button>
               )}
               <FakeToggle checked={isWatching} />
             </div>
           )}
         </button>
+
         <button type="button" onClick={action(onToggleFavorite)}
-          className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-b border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={starIcon} alt="Favoritar" className={`w-[14px] h-[14px] object-contain ${isFavorite ? "brightness-100" : "opacity-50"}`} />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isFavorite ? "Remover dos favoritos" : "Favoritar"}</span>
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sky-50 transition-colors cursor-pointer">
+          <img src={starIcon} alt="Favoritar" className={`w-4 h-4 object-contain ${isFavorite ? "" : "opacity-40"}`} />
+          <span className="flex-1 text-[12px] text-sky-800 text-left">{isFavorite ? "Remover favorito" : "Favoritar"}</span>
           <FakeToggle checked={isFavorite} />
         </button>
+
         <button type="button" onClick={action(() => onAddToInventory?.(item))}
-          className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
-          <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain ${isInInventory ? "brightness-100" : "opacity-50"}`} />
-          <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
+          className="w-full flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-sky-50 transition-colors cursor-pointer">
+          <img src={plusIcon} alt="Inventario" className={`w-4 h-4 object-contain ${isInInventory ? "" : "opacity-40"}`} />
+          <span className="flex-1 text-[12px] text-sky-800 text-left">{isInInventory ? "Remover inventario" : "Add inventario"}</span>
           <FakeToggle checked={isInInventory} />
         </button>
       </div>
@@ -241,28 +221,44 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
 
   return (
     <>
-      <button ref={btnRef} type="button" title="Ações" onClick={handleToggle}
-        className={`w-[20px] h-[20px] shrink-0 flex items-center justify-center rounded-[3px] border transition-all cursor-pointer ${open ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)]" : "border-[#555] bg-[rgba(255,255,255,0.06)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.10)]"}`}
+      <button ref={btnRef} type="button" title="Acoes" onClick={handleToggle}
+        className={`
+          w-7 h-7 shrink-0 flex items-center justify-center rounded-lg border-2 transition-all cursor-pointer
+          ${open 
+            ? "border-sky-400 bg-sky-100" 
+            : "border-sky-200 bg-white hover:border-sky-400 hover:bg-sky-50"
+          }
+        `}
       >
-        <img src={toolIcon} alt="Ações" className="w-[11px] h-[11px] object-contain" />
+        <svg className="w-3.5 h-3.5 text-sky-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <circle cx="12" cy="12" r="1" />
+          <circle cx="12" cy="5" r="1" />
+          <circle cx="12" cy="19" r="1" />
+        </svg>
       </button>
       {typeof document !== "undefined" ? createPortal(menu, document.body) : null}
     </>
   )
 }
 
-// ── InfoBadge — indicador "toque para detalhes" no mobile ────────────────────
+// ── Trend Icon ────────────────────────────────────────────────────────────────
 
-function InfoBadge({ isMobile }) {
-  return (
-    <Tooltip text="Clique para mais informações" disabled={isMobile}>
-      <div
-        className="flex items-center gap-[4px] px-[6px] py-[3px] rounded-[4px] border border-[#ffffff18] bg-[rgba(255,255,255,0.06)]"
-      >
-        <img src={infoIcon} alt="info" className="w-[12px] h-[12px] object-contain opacity-70" />
-      </div>
-    </Tooltip>
-  )
+function TrendIcon({ direction, colorClass }) {
+  if (direction === "up") {
+    return (
+      <svg className={`w-3 h-3 ${colorClass}`} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 14l5-5 5 5H7z" />
+      </svg>
+    )
+  }
+  if (direction === "down") {
+    return (
+      <svg className={`w-3 h-3 ${colorClass}`} viewBox="0 0 24 24" fill="currentColor">
+        <path d="M7 10l5 5 5-5H7z" />
+      </svg>
+    )
+  }
+  return <span className={`text-[10px] ${colorClass}`}>-</span>
 }
 
 // ── FairGridCard ──────────────────────────────────────────────────────────────
@@ -281,7 +277,6 @@ export default function FairGridCard({
   onClick,
 }) {
   const isMobile = useIsMobile()
-  const isXs = useIsXs()
 
   const history = item?.marketData?.history || []
   const latestEntry = getLatestHistoryEntry(history)
@@ -297,119 +292,119 @@ export default function FairGridCard({
 
   return (
     <div
-      className="relative flex flex-col rounded-[6px] overflow-hidden cursor-pointer border border-[#4a4a4a] hover:border-[#ffd64d66] transition-all"
-      style={{ background: "#3a3a3a" }}
+      className="relative flex flex-col rounded-xl overflow-hidden cursor-pointer bg-white border-2 border-sky-100 hover:border-sky-300 hover:shadow-lg transition-all"
       onClick={onClick}
     >
       {/* Badges de estado — topo direito */}
       {(isWatching || isInInventory || isFavorite) && (
-        <div className="absolute top-[10px] right-[10px] flex flex-col gap-[3px] z-10">
+        <div className="absolute top-2 right-2 flex flex-col gap-1 z-10">
           {isWatching && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.2)] border border-[#ffd64d55]" title="Monitorando">
-              <img src={watchIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            <div className="w-5 h-5 flex items-center justify-center rounded-lg bg-amber-100 border border-amber-300" title="Monitorando">
+              <img src={watchIcon} alt="" className="w-3 h-3 object-contain" />
             </div>
           )}
           {isInInventory && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(124,252,138,0.15)] border border-[#7CFC8A44]" title="No inventário">
-              <img src={plusIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            <div className="w-5 h-5 flex items-center justify-center rounded-lg bg-green-100 border border-green-300" title="No inventario">
+              <img src={plusIcon} alt="" className="w-3 h-3 object-contain" />
             </div>
           )}
           {isFavorite && (
-            <div className="w-[13px] h-[13px] flex items-center justify-center rounded-[2px] bg-[rgba(255,214,77,0.15)] border border-[#ffd64d44]" title="Favorito">
-              <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
+            <div className="w-5 h-5 flex items-center justify-center rounded-lg bg-yellow-100 border border-yellow-300" title="Favorito">
+              <img src={starIcon} alt="" className="w-3 h-3 object-contain" />
             </div>
           )}
         </div>
       )}
 
-      {/* ── Corpo: métricas esquerda + imagem direita ── */}
-      <div className="flex items-stretch px-[10px] pt-[10px] pb-[8px]">
+      {/* ── Corpo: metricas esquerda + imagem direita ── */}
+      <div className="flex items-stretch p-3">
 
-        {/* Métricas — coluna esquerda */}
-        <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
+        {/* Metricas — coluna esquerda */}
+        <div className="flex flex-col justify-center gap-2 flex-1 min-w-0">
 
-          <Tooltip text="Preço atual" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
-              <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain" />
-              <div className="flex items-center gap-[3px] min-w-0">
+          {/* Preco atual */}
+          <Tooltip text="Preco atual" disabled={isMobile}>
+            <div className="flex items-center gap-2">
+              <img src={coinIcon} alt="Preco" className="w-4 h-4 shrink-0 object-contain" />
+              <div className="flex items-center gap-1 min-w-0">
                 {priceNow != null ? (
                   <>
-                    <span className="text-[12px] text-[#ffd64d] font-bold tabular-nums leading-none">{priceNow.toLocaleString("pt-BR")}</span>
-                    {trendInfo && <span className={`text-[9px] font-bold ${trendInfo.colorClass}`}>{trendInfo.icon}</span>}
-                    <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-80 shrink-0" />
+                    <span className="text-[14px] text-amber-600 font-bold tabular-nums leading-none">
+                      {priceNow.toLocaleString("pt-BR")}
+                    </span>
+                    {trendInfo && <TrendIcon direction={trendInfo.icon} colorClass={trendInfo.colorClass} />}
                   </>
                 ) : (
-                  <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
+                  <span className="text-[11px] text-sky-400 italic leading-none">sem preco</span>
                 )}
-                {isXs && priceNow != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">preço atual</span>}
               </div>
             </div>
           </Tooltip>
 
-          <Tooltip text="Média" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
-              <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain" />
+          {/* Media */}
+          <Tooltip text="Media" disabled={isMobile}>
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M3 3v18h18M7 16l4-4 4 4 6-6" />
+              </svg>
               {averagePrice != null ? (
-                <>
-                  <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                  <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-60 shrink-0" />
-                </>
+                <span className="text-[12px] text-sky-600 tabular-nums leading-none">
+                  {averagePrice.toLocaleString("pt-BR")}
+                </span>
               ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
+                <span className="text-[11px] text-sky-400 italic leading-none">sem media</span>
               )}
-              {isXs && averagePrice != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">média</span>}
             </div>
           </Tooltip>
 
+          {/* Ofertas */}
           <Tooltip text="Ofertas" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
-              <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain" />
+            <div className="flex items-center gap-2">
+              <svg className="w-4 h-4 text-sky-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 01-2.83 0L2 12V2h10l8.59 8.59a2 2 0 010 2.82z" />
+                <line x1="7" y1="7" x2="7.01" y2="7" />
+              </svg>
               {openOffers != null && openOffers > 0 ? (
-                <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
+                <span className="text-[12px] text-sky-600 tabular-nums leading-none">{openOffers}</span>
               ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
+                <span className="text-[11px] text-sky-400 italic leading-none">sem ofertas</span>
               )}
-              {isXs && openOffers != null && openOffers > 0 && <span className="text-[9px] text-[#666] leading-none ml-[2px]">ofertas</span>}
             </div>
           </Tooltip>
 
         </div>
 
-        {/* Imagem + InfoBadge — coluna direita */}
-        <div className="shrink-0 flex flex-col items-end justify-between">
-          <div className="w-[64px] h-[64px] flex items-center justify-center pr-5">
-            <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
-          </div>
-          <InfoBadge isMobile={isMobile} />
+        {/* Imagem — coluna direita */}
+        <div className="shrink-0 w-16 h-16 flex items-center justify-center">
+          <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="medium" angle="4_0" />
         </div>
       </div>
 
-      {/* ── Rodapé escuro: ícone + nome + classname + ⚙ ── */}
+      {/* ── Rodape: icone + nome + classname + acoes ── */}
       <div
-        className="flex items-center gap-[8px] px-[8px] py-[7px]"
-        style={{ background: "#2e2e2e", borderTop: "1px solid #444" }}
+        className="flex items-center gap-2 px-3 py-2 bg-sky-50 border-t border-sky-100"
         onClick={(e) => e.stopPropagation()}
       >
-        {/* Ícone do mobi */}
+        {/* Icone do mobi */}
         <div className="shrink-0" onClick={onClick}>
           <FurniIcon classname={item.ClassName} />
         </div>
 
         {/* Nome + classname */}
         <div className="flex-1 min-w-0 cursor-pointer" onClick={onClick}>
-          <Tooltip text={item.FurniName || "—"} disabled={isMobile}>
-            <div className="text-white text-[10px] font-bold leading-tight truncate">
-              {item.FurniName || "—"}
+          <Tooltip text={item.FurniName || "-"} disabled={isMobile}>
+            <div className="text-sky-800 text-[11px] font-bold leading-tight truncate">
+              {item.FurniName || "-"}
             </div>
           </Tooltip>
-          <Tooltip text={item.ClassName || "—"} disabled={isMobile}>
-            <div className="text-[#777] text-[9px] leading-tight truncate font-mono mt-[1px]">
-              {item.ClassName || "—"}
+          <Tooltip text={item.ClassName || "-"} disabled={isMobile}>
+            <div className="text-sky-400 text-[10px] leading-tight truncate font-mono">
+              {item.ClassName || "-"}
             </div>
           </Tooltip>
         </div>
 
-        {/* ⚙ Ações */}
+        {/* Acoes */}
         <div className="shrink-0">
           <ActionsMenu
             item={item}

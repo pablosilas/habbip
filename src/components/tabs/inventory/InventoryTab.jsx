@@ -7,10 +7,24 @@ import CreditConverterBlock from "../../ui/CreditConverterBlock"
 import SearchHistoryDropdown from "../../ui/SearchHistoryDropdown"
 import { useInventoryHistory } from "../../../hooks/useSearchHistory"
 import FurnitureImage from "../../ui/FurnitureImage"
-import loadingGif from "../../../assets/loading.gif"
 import HotelSelect from "../../ui/HotelSelect"
 
-// DEPOIS
+// Chevron icon
+function ChevronIcon({ expanded }) {
+  return (
+    <svg 
+      className={`w-4 h-4 text-sky-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
+
+// Search result option card
 function SearchResultOption({ item, onSelect }) {
   const history = item?.marketData?.history || []
   const price =
@@ -22,23 +36,23 @@ function SearchResultOption({ item, onSelect }) {
     <button
       type="button"
       onClick={() => onSelect(item)}
-      className="flex flex-col items-center gap-[6px] border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] hover:bg-[rgba(255,214,77,0.10)] hover:border-[#ffd64d] rounded-md p-2 text-center transition-colors cursor-pointer w-full"
+      className="flex flex-col items-center gap-2 border-2 border-sky-100 bg-white hover:bg-sky-50 hover:border-sky-300 rounded-xl p-3 text-center transition-all cursor-pointer w-full"
     >
-      <div className="flex items-center justify-center w-[48px] h-[48px] shrink-0">
+      <div className="flex items-center justify-center w-12 h-12 shrink-0">
         <FurnitureImage classname={item.ClassName} furniName={item.FurniName} size="thumb" angle="2_0" />
       </div>
       <div className="w-full min-w-0">
-        <div className="text-white text-[10px] font-bold truncate leading-tight">{item.FurniName || "-"}</div>
-        <div className="flex items-center justify-center gap-[3px] mt-[2px]">
-          <img src={coinIcon} alt="coin" className="w-[10px] h-[10px]" />
-          <span className="text-[11px] text-[#ffd64d] font-bold">{price}</span>
+        <div className="text-sky-800 text-[11px] font-bold truncate leading-tight">{item.FurniName || "-"}</div>
+        <div className="flex items-center justify-center gap-1 mt-1">
+          <img src={coinIcon} alt="coin" className="w-3 h-3" />
+          <span className="text-[12px] text-amber-600 font-bold">{price}</span>
         </div>
       </div>
     </button>
   )
 }
 
-// Banner de sincronização para anônimos com itens no inventário
+// Banner de sincronizacao para anonimos
 function AnonSyncBanner({ onLoginToSync }) {
   const [dismissed, setDismissed] = React.useState(false)
 
@@ -50,30 +64,36 @@ function AnonSyncBanner({ onLoginToSync }) {
   if (dismissed) return null
 
   return (
-    <div className="flex items-start gap-2 px-3 py-2 mb-2 border border-[#ffd64d44] bg-[rgba(255,214,77,0.07)] rounded-[6px]">
-      <span className="text-[11px] shrink-0 mt-[1px]">☁️</span>
+    <div className="flex items-start gap-3 px-4 py-3 mb-3 border-2 border-amber-200 bg-amber-50 rounded-xl">
+      <div className="w-8 h-8 rounded-lg bg-amber-200 flex items-center justify-center shrink-0">
+        <svg className="w-4 h-4 text-amber-700" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+        </svg>
+      </div>
       <div className="flex-1 min-w-0">
-        <div className="text-[10px] text-[#e0c060] font-bold leading-tight">
-          Dados só neste dispositivo
+        <div className="text-[12px] text-amber-800 font-bold leading-tight">
+          Dados so neste dispositivo
         </div>
-        <div className="text-[10px] text-[#bbb] leading-[14px] mt-[1px]">
+        <div className="text-[11px] text-amber-700 leading-relaxed mt-1">
           <button
             type="button"
             onClick={onLoginToSync}
-            className="text-[#ffd64d] font-bold hover:underline cursor-pointer"
+            className="text-amber-600 font-bold hover:underline cursor-pointer"
           >
-            Crie uma conta grátis
+            Crie uma conta gratis
           </button>{" "}
-          para sincronizar em qualquer lugar e nunca perder seus dados.
+          para sincronizar em qualquer lugar.
         </div>
       </div>
       <button
         type="button"
         onClick={() => setDismissed(true)}
-        className="text-[#666] hover:text-[#aaa] text-[11px] cursor-pointer shrink-0"
+        className="text-amber-400 hover:text-amber-600 cursor-pointer shrink-0"
         title="Fechar"
       >
-        ✕
+        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <path d="M18 6L6 18M6 6l12 12" />
+        </svg>
       </button>
     </div>
   )
@@ -179,25 +199,23 @@ export default function InventoryTab({
   return (
     <div className="h-full flex flex-col">
 
-      {/* Cabeçalho expansível */}
+      {/* Cabecalho expansivel */}
       <div
-        className="flex items-center justify-between mb-2 cursor-pointer"
+        className="flex items-center justify-between mb-3 p-3 bg-white rounded-xl border border-sky-100 cursor-pointer hover:border-sky-200 transition-all"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">Meu Inventário</div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4">
-            Monte seu inventário e calcule o valor total baseado na feira livre.
+          <div className="text-sky-800 font-bold text-[14px]">Meu Inventario</div>
+          <div className="text-sky-500 text-[12px] leading-relaxed">
+            Monte seu inventario e calcule o valor total baseado na feira livre.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
-          {expanded ? "▲ recolher" : "▼ expandir"}
-        </span>
+        <ChevronIcon expanded={expanded} />
       </div>
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="flex gap-2 mb-2">
+          <div className="flex gap-2 mb-3">
             <div className="flex-1">
               <SearchInput
                 inputRef={inputRef}
@@ -232,7 +250,7 @@ export default function InventoryTab({
             <HotelSelect value={hotel} onChange={setHotel} />
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             <Button type="submit" disabled={!query.trim() || loading}>
               {loading ? "Buscando..." : "Buscar"}
             </Button>
@@ -243,36 +261,40 @@ export default function InventoryTab({
         </form>
       )}
 
-      {error && <div className="text-[#ffd0d0] text-[12px] mb-2">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-[12px] bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+          {error}
+        </div>
+      )}
 
-      {/* Seleção de resultado */}
+      {/* Selecao de resultado */}
       {hasResults && (
-        <div className="mb-3">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-[11px] font-bold text-[#fff2c1]">
+        <div className="mb-4">
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-[12px] font-bold text-sky-700">
               {filteredSearchResults.length} mobis encontrados — clique para adicionar
             </span>
             <button
               type="button"
               onClick={onCancelSearch}
-              className="text-[10px] text-[#888] hover:text-[#ff8a8a] cursor-pointer transition-colors"
+              className="text-[11px] text-sky-400 hover:text-red-500 font-medium cursor-pointer transition-colors"
             >
               cancelar
             </button>
           </div>
 
           {searchResults.length > 1 && (
-            <div className="mb-2">
+            <div className="mb-3">
               <SearchInput
                 value={searchResultsFilter}
                 onChange={(e) => setSearchResultsFilter(e.target.value)}
                 placeholder={`Filtrar nos ${searchResults.length} resultados...`}
-                className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)] [&_input]:rounded-sm"
+                className="[&_input]:h-9 [&_input]:text-[12px]"
               />
             </div>
           )}
 
-          <div className="grid grid-cols-4 gap-[6px] max-h-[220px] overflow-y-auto pr-1">
+          <div className="grid grid-cols-4 gap-2 max-h-[220px] overflow-y-auto pr-1">
             {[...filteredSearchResults]
               .sort((a, b) => {
                 const getPrice = (item) => {
@@ -285,43 +307,46 @@ export default function InventoryTab({
                 <SearchResultOption key={item.ClassName} item={item} onSelect={onAddItem} />
               ))}
           </div>
-          <div className="border-t border-dashed border-[#d7d7d7] opacity-40 mt-3" />
+          <div className="border-t border-sky-100 mt-4" />
         </div>
       )}
 
-      {/* Filtro do inventário */}
+      {/* Filtro do inventario */}
       {items.length > 2 && (
-        <div className="mb-2">
+        <div className="mb-3">
           <SearchInput
             value={inventoryFilter}
             onChange={(e) => setInventoryFilter(e.target.value)}
-            placeholder="Filtrar no inventário..."
-            className="[&_input]:h-8 [&_input]:text-[11px] [&_input]:placeholder:text-[#666] [&_input]:border-[#555] [&_input]:bg-[rgba(255,255,255,0.06)] [&_input]:rounded-sm"
+            placeholder="Filtrar no inventario..."
+            className="[&_input]:h-9 [&_input]:text-[12px]"
           />
         </div>
       )}
 
-      {/* Lista do inventário */}
+      {/* Lista do inventario */}
       <div className="flex-1 min-h-0 overflow-y-auto pr-1">
         {loadingData ? (
           <div className="h-full flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-              <img src={loadingGif} alt="Carregando" className="w-12 h-12" />
-              <div className="text-[#d2d2d2] text-[12px]">Sincronizando dados...</div>
+              <svg className="animate-spin w-10 h-10 text-sky-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <div className="text-sky-500 text-[13px]">Sincronizando dados...</div>
             </div>
           </div>
         ) : items.length === 0 ? (
           !loading && !hasResults && (
-            <div className="text-[#e0e0e0] text-[12px]">
-              Nenhum mobi no inventário. Adicione acima.
+            <div className="text-sky-500 text-[13px] text-center py-4">
+              Nenhum mobi no inventario. Adicione acima.
             </div>
           )
         ) : filteredItems.length === 0 ? (
-          <div className="text-[#888] text-[12px]">
+          <div className="text-sky-500 text-[13px] text-center py-4">
             Nenhum mobi encontrado para "{inventoryFilter}".
           </div>
         ) : (
-          <div className="grid grid-cols-3 gap-[6px]">
+          <div className="grid grid-cols-3 gap-2">
             {filteredItems.map((item) => (
               <InventoryItemCard
                 key={item.ClassName}
@@ -336,41 +361,41 @@ export default function InventoryTab({
                 type="button"
                 onClick={() => setExpanded(true)}
                 title="Adicionar mobi"
-                className="flex flex-col items-center justify-center border border-dashed border-[#555] bg-[rgba(255,255,255,0.02)] hover:border-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] rounded-md p-2 gap-[4px] cursor-pointer transition-colors min-h-[90px]"
+                className="flex flex-col items-center justify-center border-2 border-dashed border-sky-200 bg-sky-50/50 hover:border-sky-400 hover:bg-sky-100/50 rounded-xl p-3 gap-2 cursor-pointer transition-all min-h-[100px]"
               >
-                <span className="text-[#555] hover:text-[#ffd64d] text-[22px] leading-none transition-colors">+</span>
-                <span className="text-[#666] text-[9px] leading-tight text-center">adicionar</span>
+                <span className="text-sky-300 text-2xl leading-none">+</span>
+                <span className="text-sky-400 text-[10px] font-medium">adicionar</span>
               </button>
             )}
           </div>
         )}
       </div>
 
-      {/* Rodapé com totais */}
+      {/* Rodape com totais */}
       {items.length > 0 && (
         <>
-          <div className="border-t border-dashed border-[#d7d7d7] opacity-40 my-2 shrink-0" />
-          <div className="shrink-0 space-y-2">
+          <div className="border-t border-sky-100 my-3 shrink-0" />
+          <div className="shrink-0 space-y-3">
 
-            {/* Banner de sincronização para anônimos */}
+            {/* Banner de sincronizacao para anonimos */}
             {isAnonymous && onLoginToSync && (
               <AnonSyncBanner onLoginToSync={onLoginToSync} />
             )}
 
-            <div className="flex items-center justify-between text-[11px] text-[#d2d2d2]">
-              <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} · {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
+            <div className="flex items-center justify-between text-[12px] text-sky-600">
+              <span>{totalItems} {totalItems === 1 ? "tipo" : "tipos"} - {totalUnits} {totalUnits === 1 ? "unidade" : "unidades"}</span>
               <div className="flex items-center gap-3">
                 <button
                   type="button"
                   onClick={() => setFooterExpanded((v) => !v)}
-                  className="text-[10px] text-[#888] hover:text-[#ffd64d] cursor-pointer transition-colors"
+                  className="text-[11px] text-sky-400 hover:text-sky-600 font-medium cursor-pointer transition-colors"
                 >
-                  {footerExpanded ? "▲ minimizar" : "▼ expandir"}
+                  {footerExpanded ? "minimizar" : "expandir"}
                 </button>
                 <button
                   type="button"
                   onClick={onClear}
-                  className="text-[10px] text-[#666] hover:text-[#ff8a8a] cursor-pointer transition-colors"
+                  className="text-[11px] text-sky-400 hover:text-red-500 font-medium cursor-pointer transition-colors"
                 >
                   limpar tudo
                 </button>
@@ -379,11 +404,11 @@ export default function InventoryTab({
 
             {footerExpanded ? (
               <>
-                <div className="border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-2 flex items-center justify-between">
-                  <span className="text-[12px] text-[#d2d2d2] font-bold">Total do inventário</span>
-                  <div className="flex items-center gap-[5px]">
-                    <img src={coinIcon} alt="coin" className="w-4 h-4" />
-                    <span className="text-[16px] font-bold text-[#ffd64d]">
+                <div className="border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl px-4 py-3 flex items-center justify-between">
+                  <span className="text-[13px] text-amber-800 font-bold">Total do inventario</span>
+                  <div className="flex items-center gap-2">
+                    <img src={coinIcon} alt="coin" className="w-5 h-5" />
+                    <span className="text-[18px] font-bold text-amber-600">
                       {totalValue.toLocaleString("pt-BR")}
                     </span>
                   </div>
@@ -396,10 +421,10 @@ export default function InventoryTab({
                 />
               </>
             ) : (
-              <div className="flex items-center justify-between border border-[#8a8a8a] bg-[rgba(255,255,255,0.04)] rounded-md px-3 py-[6px]">
-                <div className="flex items-center gap-[5px]">
-                  <img src={coinIcon} alt="coin" className="w-3 h-3" />
-                  <span className="text-[13px] font-bold text-[#ffd64d]">
+              <div className="flex items-center justify-between border-2 border-amber-200 bg-gradient-to-r from-amber-50 to-yellow-50 rounded-xl px-4 py-2">
+                <div className="flex items-center gap-2">
+                  <img src={coinIcon} alt="coin" className="w-4 h-4" />
+                  <span className="text-[14px] font-bold text-amber-600">
                     {totalValue.toLocaleString("pt-BR")}
                   </span>
                 </div>

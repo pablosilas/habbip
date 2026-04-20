@@ -4,7 +4,6 @@ import noUser from "../../assets/no_user.png"
 export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenLogin }) {
   const isLogged = !!userData
 
-  // habboProfile vem do fetchUserByName — tem name, motto, online, selectedBadges, etc.
   const habboProfile = userData?.habboProfile
   const habboNick = userData?.habboNick
 
@@ -16,20 +15,20 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
     : null
 
   const tabDescriptions = {
-    feira:      { title: "Feira Livre",     sub: "Pesquise mobis e veja os dados da feira." },
-    usuario:    { title: "Buscar Usuário",  sub: "Pesquise um usuário do Habbo." },
-    inventario: { title: "Inventário",      sub: "Gerencie seu inventário de mobis." },
+    feira:      { title: "Feira Livre",     sub: "Pesquise mobis e veja os dados da feira.", icon: "shopping" },
+    usuario:    { title: "Buscar Usuario",  sub: "Pesquise um usuario do Habbo.", icon: "user" },
+    inventario: { title: "Inventario",      sub: "Gerencie seu inventario de mobis.", icon: "box" },
   }
   const tabInfo = tabDescriptions[activeTab] ?? tabDescriptions.feira
 
   return (
-    <div className="flex items-center gap-2 mb-2">
+    <div className="flex items-center gap-3 p-3 bg-gradient-to-r from-sky-50 to-white rounded-xl border border-sky-100">
       {/* Avatar */}
-      <div className="w-14 h-14 rounded-sm flex items-center justify-center shrink-0 overflow-hidden">
+      <div className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0 overflow-hidden bg-white border-2 border-sky-200 shadow-sm">
         <img
           src={avatarUrl || noUser}
-          alt={displayName || "Usuário"}
-          className="max-w-full max-h-full object-contain"
+          alt={displayName || "Usuario"}
+          className="max-w-full max-h-full object-contain pixel-render"
           onError={(e) => { e.currentTarget.src = noUser }}
         />
       </div>
@@ -38,19 +37,19 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
         <div className="min-w-0">
           {isLogged ? (
             <>
-              <div className="text-white font-bold text-[12px] leading-none truncate">
+              <div className="text-sky-900 font-bold text-[14px] leading-tight truncate">
                 {displayName}
               </div>
-              <div className="text-[10px] text-[#bbb] leading-none mt-[3px] truncate">
+              <div className="text-[11px] text-sky-600/70 leading-tight mt-1 truncate">
                 {motto || "Sem motto."}
               </div>
             </>
           ) : (
             <>
-              <div className="text-white font-bold text-[12px] leading-none truncate">
+              <div className="text-sky-900 font-bold text-[14px] leading-tight truncate">
                 {tabInfo.title}
               </div>
-              <div className="text-[10px] text-[#bbb] leading-none mt-[3px] truncate">
+              <div className="text-[11px] text-sky-600/70 leading-tight mt-1 truncate">
                 {tabInfo.sub}
               </div>
             </>
@@ -61,7 +60,7 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
           <button
             type="button"
             onClick={onOpenProfile}
-            className="shrink-0 border border-[#c7a84b] bg-[rgba(255,255,255,0.08)] px-2 py-[2px] text-[10px] font-bold text-[#fff2c1] cursor-pointer hover:brightness-110"
+            className="shrink-0 px-4 py-2 rounded-lg bg-gradient-to-r from-sky-400 to-cyan-400 text-white text-[11px] font-bold cursor-pointer hover:from-sky-500 hover:to-cyan-500 transition-all shadow-sm"
           >
             Minha conta
           </button>
@@ -69,9 +68,9 @@ export default function HeaderCard({ activeTab, userData, onOpenProfile, onOpenL
           <button
             type="button"
             onClick={onOpenLogin}
-            className="shrink-0 border border-[#c7a84b] bg-[rgba(255,255,255,0.08)] px-2 py-[2px] text-[10px] font-bold text-[#fff2c1] cursor-pointer hover:brightness-110"
+            className="shrink-0 px-4 py-2 rounded-lg bg-gradient-to-r from-sky-400 to-cyan-400 text-white text-[11px] font-bold cursor-pointer hover:from-sky-500 hover:to-cyan-500 transition-all shadow-sm"
           >
-            Entrar no Habbip
+            Entrar
           </button>
         )}
       </div>

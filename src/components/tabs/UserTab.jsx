@@ -4,7 +4,21 @@ import Button from "../ui/Button"
 import SearchInput from "../ui/SearchInput"
 import SearchHistoryDropdown from "../ui/SearchHistoryDropdown"
 import { useUserHistory } from "../../hooks/useSearchHistory"
-import loadingGif from "../../assets/loading.gif"
+
+// Chevron icon
+function ChevronIcon({ expanded }) {
+  return (
+    <svg 
+      className={`w-4 h-4 text-sky-400 transition-transform duration-200 ${expanded ? 'rotate-180' : ''}`}
+      viewBox="0 0 24 24" 
+      fill="none" 
+      stroke="currentColor" 
+      strokeWidth="2"
+    >
+      <path d="M6 9l6 6 6-6" />
+    </svg>
+  )
+}
 
 export default function UserTab({
   nickQuery,
@@ -53,23 +67,21 @@ export default function UserTab({
   return (
     <div className="h-full flex flex-col">
       <div
-        className="flex items-center justify-between mb-2 cursor-pointer"
+        className="flex items-center justify-between mb-3 p-3 bg-white rounded-xl border border-sky-100 cursor-pointer hover:border-sky-200 transition-all"
         onClick={() => setExpanded((v) => !v)}
       >
         <div className="min-w-0 flex-1 mr-2">
-          <div className="text-[#f4f4f4] font-bold text-[13px]">Buscar Usuário</div>
-          <div className="text-[#d2d2d2] text-[11px] leading-4">
-            Encontre usuários, veja perfis e salve seus favoritos.
+          <div className="text-sky-800 font-bold text-[14px]">Buscar Usuario</div>
+          <div className="text-sky-500 text-[12px] leading-relaxed">
+            Encontre usuarios, veja perfis e salve seus favoritos.
           </div>
         </div>
-        <span className="text-[#d2d2d2] text-[11px]">
-          {expanded ? "▲ recolher" : "▼ expandir"}
-        </span>
+        <ChevronIcon expanded={expanded} />
       </div>
 
       {expanded && (
         <form onSubmit={(e) => { e.preventDefault(); handleSearch() }}>
-          <div className="mb-2">
+          <div className="mb-3">
             <SearchInput
               inputRef={inputRef}
               value={nickQuery}
@@ -77,7 +89,7 @@ export default function UserTab({
               onKeyDown={(e) => { if (e.key === "Escape") setShowDropdown(false) }}
               onFocus={() => { if (hasDropdownItems) setShowDropdown(true) }}
               onBlur={() => setShowDropdown(false)}
-              placeholder="Digite o nick do usuário"
+              placeholder="Digite o nick do usuario"
               inputMode="search"
               enterKeyHint="search"
             >
@@ -96,9 +108,9 @@ export default function UserTab({
             </SearchInput>
           </div>
 
-          <div className="grid grid-cols-2 gap-2 mb-3">
+          <div className="grid grid-cols-2 gap-2 mb-4">
             <Button type="submit" disabled={loading}>
-              {loading ? "Buscando..." : "Buscar usuário"}
+              {loading ? "Buscando..." : "Buscar usuario"}
             </Button>
             <Button variant="secondary" type="button" onClick={() => setNickQuery("")}>
               Limpar
@@ -107,14 +119,21 @@ export default function UserTab({
         </form>
       )}
 
-      {error && <div className="text-[#ffd0d0] text-[12px] mb-3">{error}</div>}
+      {error && (
+        <div className="text-red-500 text-[12px] bg-red-50 border border-red-200 rounded-lg px-3 py-2 mb-3">
+          {error}
+        </div>
+      )}
 
       <div className="flex-1 min-h-0">
         {loadingData ? (
           <div className="h-full flex items-center justify-center">
             <div className="flex flex-col items-center gap-4">
-              <img src={loadingGif} alt="Carregando" className="w-12 h-12" />
-              <div className="text-[#d2d2d2] text-[12px]">Sincronizando dados...</div>
+              <svg className="animate-spin w-10 h-10 text-sky-400" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>
+              <div className="text-sky-500 text-[13px]">Sincronizando dados...</div>
             </div>
           </div>
         ) : userData ? (
@@ -126,7 +145,9 @@ export default function UserTab({
           />
         ) : (
           !loading && !error && (
-            <div className="text-[#e0e0e0] text-[12px]">Nenhum usuário carregado.</div>
+            <div className="text-sky-500 text-[13px] text-center py-4">
+              Nenhum usuario carregado.
+            </div>
           )
         )}
       </div>
