@@ -25,6 +25,7 @@ import LoginModal from "../components/modals/LoginModal"
 import ProfileModal from "../components/modals/ProfileModal"
 import InfoModal from "../components/modals/InfoModal"
 import LogoutConfirmModal from "../components/modals/LogoutConfirmModal"
+import WelcomeModal from "../components/modals/WelcomeModal"
 
 import { useFairSearch } from "../hooks/useFairSearch"
 import { useUserSearch } from "../hooks/useUserSearch"
@@ -161,6 +162,9 @@ export default function HabboDeskApp() {
   const [bgIndex, setBgIndex] = React.useState(loadBgIndex)
   const [confirmingLogout, setConfirmingLogout] = React.useState(false)
   const [showScrollTop, setShowScrollTop] = React.useState(false)
+  const [welcomeOpen, setWelcomeOpen] = React.useState(() => {
+    try { return localStorage.getItem("habbip:welcome-seen") !== "1" } catch { return true }
+  })
 
   const mainScrollRef = React.useRef(null)
 
@@ -344,6 +348,11 @@ export default function HabboDeskApp() {
 
   return (
     <>
+      <WelcomeModal
+        open={welcomeOpen}
+        onClose={() => setWelcomeOpen(false)}
+        onDismiss={() => setWelcomeOpen(false)}
+      />
       <LoginModal
         open={auth.loginModalOpen}
         mode={auth.authMode}

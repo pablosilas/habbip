@@ -1,4 +1,5 @@
-import { useState, useReducer, useEffect, useCallback, useRef } from 'react'
+import { useReducer, useEffect, useCallback, useRef } from 'react'
+import messageSound from '../assets/message.mp3'
 
 const MAX_NOTIFICATIONS = 50
 
@@ -71,6 +72,8 @@ export function useMonitor({ serverData, markDirty, isLoggedIn }) {
   )
   const hydrated = useRef(false)
   const skipNextSync = useRef(false)
+  const notificationsRef = useRef(notifications)
+  useEffect(() => { notificationsRef.current = notifications }, [notifications])
 
   // Hidrata notificações do servidor (banco)
   useEffect(() => {
@@ -106,6 +109,18 @@ export function useMonitor({ serverData, markDirty, isLoggedIn }) {
       console.log(
         `[UI] ${notif.className}/${notif.hotel} browser -> addNotification: ${stateAddedAt - notif.clientReceivedAt}ms`
       )
+    }
+
+    const isDuplicate = notificationsRef.current.some(
+      (n) =>
+        n.id === notif.id ||
+        (n.className === notif.className &&
+          n.oldPrice === notif.oldPrice &&
+          n.newPrice === notif.newPrice)
+    )
+
+    if (!isDuplicate) {
+      try { new Audio(messageSound).play() } catch (e) { void e }
     }
 
     dispatch({
