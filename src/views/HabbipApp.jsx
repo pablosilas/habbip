@@ -3,9 +3,13 @@ import { createPortal } from "react-dom"
 import feiraIcon from "../assets/feira.png"
 import usuarioIcon from "../assets/usuario.png"
 import inventarioIcon from "../assets/inventario.png"
-import bgPattern from "../assets/bg.png"
+import bg from "../assets/bg.png"
 import bg2 from "../assets/bg_2.png"
 import bg3 from "../assets/bg_3.png"
+import bg4 from "../assets/bg_4.png"
+import bg5 from "../assets/bg_5.png"
+import bg6 from "../assets/bg_6.png"
+
 import arrowUpIcon from "../assets/arrow_up.gif"
 
 import HeaderCard from "../components/layout/HeaderCard"
@@ -32,7 +36,7 @@ import { useMonitor } from "../hooks/useMonitor"
 import { useServerSync } from "../hooks/useServerSync"
 import { useSSE } from "../hooks/useSSE"
 
-const BG_OPTIONS = [bg3, bg2, bgPattern]
+const BG_OPTIONS = [bg2, bg4, bg3, bg6, bg, bg5]
 
 function loadBgIndex() {
   try {
@@ -370,7 +374,9 @@ export default function HabboDeskApp() {
           height: "calc(var(--vh, 1vh) * 100)",
           backgroundColor: "#dfe5e8",
           backgroundImage: `url(${BG_OPTIONS[bgIndex]})`,
-          backgroundRepeat: "repeat",
+          backgroundRepeat: "no-repeat",
+          backgroundSize: "cover",
+          backgroundPosition: "center",
         }}
       >
         <style>{`body { font-family: Verdana, Arial, sans-serif; }`}</style>
