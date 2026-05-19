@@ -2,18 +2,12 @@ import {
   fetchOfficialMarketBatchSafe,
   mergeOfficialMarketData,
 } from "./habboApi"
-import { fetchWithRetry } from "../utils/fetchWithRetry"
 import { fetchWithQueue } from "../utils/requestQueue"
 
 const HABBIP_API_BASE = import.meta.env.VITE_API_URL || "http://localhost:3001/api"
 
-/**
- * Busca mobis no Furnidata com retry automático
- * Usa fila de requisições para limitar concorrência
- */
 async function searchByFurnidata(query, hotel) {
   const url = `${HABBIP_API_BASE}/furnidata/search?q=${encodeURIComponent(query)}&hotel=${hotel}`
-
   try {
     const res = await fetchWithQueue(url)
     if (!res.ok) {
@@ -28,10 +22,8 @@ async function searchByFurnidata(query, hotel) {
 }
 
 export async function searchMarketItems({ query, hotel = "br" }) {
-  // Remove o parâmetro days — API oficial não suporta
   const furniItems = await searchByFurnidata(query, hotel)
 
-  // Backend sinalizou resultados demais
   if (furniItems?.tooMany) {
     const err = new Error("Sua busca retornou mais de 400 resultados. Tente um nome mais específico.")
     err.tooMany = true
@@ -40,7 +32,24 @@ export async function searchMarketItems({ query, hotel = "br" }) {
 
   if (furniItems.length === 0) return []
 
-  const batchItems = furniItems.map(i => ({
+  // Separa itens que já sabemos que não têm dados de mercado (posters)
+  const noMarketItems = furniItems.filter(i => i.noMarketData)
+  const marketItems = furniItems.filter(i => !i.noMarketData)
+
+  const legacyNoMarket = noMarketItems.map(i => ({
+    ClassName: i.classname,
+    FurniName: i.furniName,
+    FurniDesc: i.furniDesc ?? null,
+    FurniType: i.furniType,
+    Revision: i.revision,
+    Tradeable: i.tradeable ?? true,
+    NoMarketData: true,
+    hotel_domain: hotel,
+  }))
+
+  if (marketItems.length === 0) return legacyNoMarket
+
+  const batchItems = marketItems.map(i => ({
     classname: i.classname,
     furniType: i.furniType,
   }))
@@ -50,21 +59,23 @@ export async function searchMarketItems({ query, hotel = "br" }) {
     officialBatch = await fetchOfficialMarketBatchSafe(batchItems, hotel)
   } catch { /* empty */ }
 
-  const legacyItems = furniItems.map(i => ({
+  const legacyItems = marketItems.map(i => ({
     ClassName: i.classname,
     FurniName: i.furniName,
+    FurniDesc: i.furniDesc ?? null,
     FurniType: i.furniType,
     Revision: i.revision,
+    Tradeable: i.tradeable ?? true,
+    NoMarketData: false,
     hotel_domain: hotel,
   }))
 
   const merged = officialBatch
     ? mergeOfficialMarketData(legacyItems, officialBatch)
     : legacyItems
-    
-  return merged.filter(item => {
-    // Mostra sempre que a API oficial reconheceu o item (mesmo com valores zerados)
-    // Itens sem marketData = classname não existe no mercado = ocultar
-    return item?.marketData !== undefined
-  })
+
+  const withMarketData = merged.filter(item => item?.marketData !== undefined)
+
+  // Posters vêm no final, separados dos itens com preço
+  return [...withMarketData, ...legacyNoMarket]
 }

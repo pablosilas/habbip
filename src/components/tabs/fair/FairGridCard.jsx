@@ -319,6 +319,14 @@ export default function FairGridCard({
               <img src={starIcon} alt="" className="w-[9px] h-[9px] object-contain" />
             </div>
           )}
+          {item?.NoMarketData && (
+            <div
+              className="absolute bottom-[6px] left-[6px] px-[5px] py-[2px] rounded-[3px] bg-[rgba(255,255,255,0.07)] border border-[#ffffff18]"
+              title="Este item não possui dados na feira livre"
+            >
+              <span className="text-[8px] text-[#666] leading-none">sem dados na feira</span>
+            </div>
+          )}
         </div>
       )}
 

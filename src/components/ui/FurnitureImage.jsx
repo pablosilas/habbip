@@ -6,7 +6,7 @@ import { getFurnitureImageUrl } from "../../services/habboApi"
 function buildAngleFallbacks(angle) {
   if (angle === "4_0") return ["4_0", "2_0", "0_0"]
   if (angle === "2_0") return ["2_0", "4_0", "0_0"]
-  return ["0_0"]
+  return ["0_0", "2_0", "4_0"]
 }
 
 function applyAngle(url, angle) {
