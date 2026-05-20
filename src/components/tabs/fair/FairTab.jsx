@@ -134,28 +134,28 @@ export default function FairTab({
 
   const {
     categories: customCategories,
-    pinnedIds, hiddenBuiltins,
+    pinnedIds, hiddenBuiltins, hiddenCustomChipIds,
     addCategory, removeCategory, updateCategory, addMobiToCategory,
     pinCategory, unpinCategory, reorderPinned,
     hideBuiltin, showBuiltin,
+    hideCustomFromChips, showCustomInChips,
     MAX_CATEGORIES, MAX_PINNED,
   } = useCustomCategories()
 
-  // allCategories = built-ins visíveis + custom
+  // allCategories = built-ins visíveis + custom (todos, inclusive ocultos dos chips)
   const allCategories = React.useMemo(() => [
     ...FAIR_CATEGORIES.filter((c) => !hiddenBuiltins.includes(c.id)),
     ...customCategories,
   ], [customCategories, hiddenBuiltins])
 
-  // chips visíveis = apenas os fixados, na ordem dos pinnedIds
+  // chips visíveis = apenas os fixados, na ordem dos pinnedIds (excluindo ocultos dos chips)
   const pinnedCategories = React.useMemo(() =>
     pinnedIds
       .map((id) => allCategories.find((c) => c.id === id))
-      .filter(Boolean),
-    [pinnedIds, allCategories])
+      .filter((c) => c && !hiddenCustomChipIds.includes(c.id)),
+    [pinnedIds, allCategories, hiddenCustomChipIds])
 
-  // Complemento: categorias não-pinned para preencher até 4 slots
-  // ordem: built-ins visíveis primeiro, depois custom
+  // Complemento: categorias não-pinned para preencher até 4 slots, excluindo ocultas dos chips
   const chipCategories = React.useMemo(() => {
     if (allCategories.length === 0) return []
 
@@ -163,9 +163,8 @@ export default function FairTab({
     const MAX_CHIPS = 4
 
     const complement = allCategories
-      .filter((c) => !pinnedSet.has(c.id))
+      .filter((c) => !pinnedSet.has(c.id) && !hiddenCustomChipIds.includes(c.id))
       .sort((a, b) => {
-        // built-ins antes de custom
         if (!a.isCustom && b.isCustom) return -1
         if (a.isCustom && !b.isCustom) return 1
         return 0
@@ -176,7 +175,7 @@ export default function FairTab({
       ...pinnedCategories.map((c) => ({ ...c, _pinned: true })),
       ...complement.map((c) => ({ ...c, _pinned: false })),
     ]
-  }, [pinnedCategories, pinnedIds, allCategories])
+  }, [pinnedCategories, pinnedIds, allCategories, hiddenCustomChipIds])
 
   const wrapperRef = React.useRef(null)
   const inputRef = React.useRef(null)
@@ -410,6 +409,7 @@ export default function FairTab({
         builtinCategories={FAIR_CATEGORIES}
         customCategories={customCategories}
         hiddenBuiltins={hiddenBuiltins}
+        hiddenCustomChipIds={hiddenCustomChipIds}
         pinnedIds={pinnedIds}
         maxPinned={MAX_PINNED}
         activeCategory={activeCategory}
@@ -426,6 +426,7 @@ export default function FairTab({
           hideBuiltin(id)
         }}
         onShowBuiltin={showBuiltin}
+        onShowCustomInChips={showCustomInChips}
       />
 
       {/* ── Modal criar / editar categoria ── */}
@@ -463,15 +464,12 @@ export default function FairTab({
                   if (from !== null && from !== index) reorderPinned(from, index)
                   dragIndexRef.current = null
                 } : undefined}
-                className="relative"
+                className="relative flex group"
               >
-                <button
-                  type="button"
-                  onClick={() => handleCategoryClick(cat)}
-                  disabled={isLoadingAny}
+                <div
                   className={[
-                    "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer select-none",
-                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    "flex items-stretch text-[11px] font-bold border transition-colors select-none",
+                    isLoadingAny ? "opacity-50 pointer-events-none" : "",
                     activeCategory === cat.id
                       ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
                       : cat.isCustom
@@ -479,23 +477,67 @@ export default function FairTab({
                         : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
                   ].join(" ")}
                 >
-                  {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain" />}
-                  {cat.habboIconId != null && !cat.icon && (
-                    <img
-                      src={getCatalogIconUrl(cat.habboIconId)}
-                      alt={cat.label}
-                      className="w-[14px] h-[14px] object-contain"
-                      loading="lazy"
-                    />
+                  {/* Botão principal */}
+                  <button
+                    type="button"
+                    onClick={() => handleCategoryClick(cat)}
+                    disabled={isLoadingAny}
+                    className="flex items-center gap-1 px-2 py-[4px] cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    {cat.icon && <img src={cat.icon} alt={cat.label} className="w-3.5 h-3.5 object-contain" />}
+                    {cat.habboIconId != null && !cat.icon && (
+                      <img src={getCatalogIconUrl(cat.habboIconId)} alt={cat.label} className="w-3.5 h-3.5 object-contain" loading="lazy" />
+                    )}
+                    {cat.emoji && !cat.icon && cat.habboIconId == null && (
+                      <span className="text-[12px] leading-none">{cat.emoji}</span>
+                    )}
+                    {cat.label}
+                    {cat._pinned && (
+                      <span className="text-[8px] text-[#ffd64d] opacity-50 leading-none ml-px group-hover:hidden">★</span>
+                    )}
+                  </button>
+
+                  {/* Ações — só aparecem no hover */}
+                  {cat.isCustom && (
+                    <button
+                      type="button"
+                      onClick={() => { setEditingCategory(cat); setCustomCategoryModalOpen(true) }}
+                      disabled={isLoadingAny}
+                      title="Editar categoria"
+                      className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] text-[#666] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    >
+                      <span className="text-[10px] leading-none">✎</span>
+                    </button>
                   )}
-                  {cat.emoji && !cat.icon && cat.habboIconId == null && (
-                    <span className="text-[12px] leading-none">{cat.emoji}</span>
-                  )}
-                  {cat.label}
-                  {cat._pinned && (
-                    <span className="text-[8px] text-[#555] leading-none ml-[1px]">📌</span>
-                  )}
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => cat._pinned ? unpinCategory(cat.id) : pinCategory(cat.id)}
+                    disabled={isLoadingAny || (!cat._pinned && pinnedIds.length >= MAX_PINNED)}
+                    title={cat._pinned ? "Desafixar" : pinnedIds.length >= MAX_PINNED ? `Limite de ${MAX_PINNED} fixadas` : "Fixar"}
+                    className={[
+                      "hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30",
+                      cat._pinned
+                        ? "text-[#ffd64d] hover:text-[#ffb300] hover:bg-[rgba(255,214,77,0.08)]"
+                        : "text-[#555] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]",
+                    ].join(" ")}
+                  >
+                    <span className="text-[10px] leading-none font-bold">{cat._pinned ? "★" : "☆"}</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      if (activeCategory === cat.id) { setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.() }
+                      if (cat.isCustom) hideCustomFromChips(cat.id)
+                      else hideBuiltin(cat.id)
+                    }}
+                    disabled={isLoadingAny}
+                    title="Remover da visualização"
+                    className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] text-[#555] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                  >
+                    <span className="text-[9px] leading-none font-bold">✕</span>
+                  </button>
+                </div>
               </div>
             ))}
 

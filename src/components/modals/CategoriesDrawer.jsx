@@ -66,7 +66,7 @@ function CategoryRow({
               : "border-[#555] text-[#666] hover:border-[#888] hover:text-[#aaa]"
               }`}
           >
-            <span className="text-[11px] leading-none">{isPinned ? "📌" : "📍"}</span>
+            <span className="text-[11px] leading-none font-bold">{isPinned ? "★" : "☆"}</span>
           </button>
         )}
 
@@ -110,9 +110,10 @@ function CategoryRow({
 export default function CategoriesDrawer({
   open,
   onClose,
-  builtinCategories,   // FAIR_CATEGORIES
+  builtinCategories,
   customCategories,
   hiddenBuiltins,
+  hiddenCustomChipIds = [],
   pinnedIds,
   maxPinned,
   activeCategory,
@@ -123,6 +124,7 @@ export default function CategoriesDrawer({
   onDeleteCustom,
   onHideBuiltin,
   onShowBuiltin,
+  onShowCustomInChips,
 }) {
   const pinnedCount = pinnedIds.length
 
@@ -130,7 +132,11 @@ export default function CategoriesDrawer({
   const visibleBuiltins = builtinCategories.filter((c) => !hiddenBuiltins.includes(c.id))
   const hiddenBuiltinList = builtinCategories.filter((c) => hiddenBuiltins.includes(c.id))
 
-  const hasHidden = hiddenBuiltinList.length > 0
+  // Separar custom visíveis nos chips vs ocultas
+  const visibleCustom = customCategories.filter((c) => !hiddenCustomChipIds.includes(c.id))
+  const hiddenCustomList = customCategories.filter((c) => hiddenCustomChipIds.includes(c.id))
+
+  const hasHidden = hiddenBuiltinList.length > 0 || hiddenCustomList.length > 0
 
   if (!open) return null
 
@@ -198,13 +204,13 @@ export default function CategoriesDrawer({
             </>
           )}
 
-          {/* Custom */}
-          {customCategories.length > 0 && (
+          {/* Custom visíveis */}
+          {visibleCustom.length > 0 && (
             <>
               <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#666] uppercase tracking-wider">
                 Minhas Categorias
               </div>
-              {customCategories.map((cat) => (
+              {visibleCustom.map((cat) => (
                 <CategoryRow
                   key={cat.id}
                   cat={cat}
@@ -222,7 +228,7 @@ export default function CategoriesDrawer({
             </>
           )}
 
-          {/* Built-ins ocultos */}
+          {/* Ocultas (built-ins + custom removidas dos chips) */}
           {hasHidden && (
             <>
               <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#555] uppercase tracking-wider">
@@ -243,6 +249,21 @@ export default function CategoriesDrawer({
                   isHidden
                 />
               ))}
+              {hiddenCustomList.map((cat) => (
+                <CategoryRow
+                  key={cat.id}
+                  cat={cat}
+                  isPinned={false}
+                  pinnedCount={pinnedCount}
+                  maxPinned={maxPinned}
+                  isActive={false}
+                  onActivate={() => { }}
+                  onPin={() => { }}
+                  onUnpin={() => { }}
+                  onShow={() => onShowCustomInChips(cat.id)}
+                  isHidden
+                />
+              ))}
             </>
           )}
 
@@ -256,7 +277,7 @@ export default function CategoriesDrawer({
         {/* Footer */}
         <div className="shrink-0 px-3 py-2 border-t border-[#2a2a2a] bg-[#2e2e2e]">
           <div className="text-[9px] text-[#555] leading-[14px]">
-            📌 Fixe até {maxPinned} categorias para acesso rápido. Arraste os chips para reordenar.
+            Fixe até {maxPinned} categorias para acesso rápido. Arraste os chips para reordenar.
           </div>
         </div>
       </div>

@@ -3,6 +3,7 @@ import { useState, useCallback } from "react"
 const STORAGE_KEY = "habbip:custom_categories"
 const PINNED_KEY = "habbip:pinned_categories"
 const HIDDEN_BUILTIN_KEY = "habbip:hidden_builtins"
+const HIDDEN_CUSTOM_CHIP_KEY = "habbip:hidden_custom_chips"
 const MAX_CATEGORIES = 20
 const MAX_PINNED = 4
 
@@ -21,6 +22,7 @@ export function useCustomCategories() {
   const [categories, setCategories] = useState(() => load(STORAGE_KEY, []))
   const [pinnedIds, setPinnedIds] = useState(() => load(PINNED_KEY, []))
   const [hiddenBuiltins, setHiddenBuiltins] = useState(() => load(HIDDEN_BUILTIN_KEY, []))
+  const [hiddenCustomChipIds, setHiddenCustomChipIds] = useState(() => load(HIDDEN_CUSTOM_CHIP_KEY, []))
 
   // ── CRUD ────────────────────────────────────────────────────────────────
   const addCategory = useCallback((cat) => {
@@ -123,11 +125,35 @@ export function useCustomCategories() {
     })
   }, [])
 
+  // ── CUSTOM CHIP VISIBILITY ───────────────────────────────────────────────
+  const hideCustomFromChips = useCallback((id) => {
+    setHiddenCustomChipIds((prev) => {
+      if (prev.includes(id)) return prev
+      const next = [...prev, id]
+      save(HIDDEN_CUSTOM_CHIP_KEY, next)
+      return next
+    })
+    setPinnedIds((prev) => {
+      const next = prev.filter((pid) => pid !== id)
+      save(PINNED_KEY, next)
+      return next
+    })
+  }, [])
+
+  const showCustomInChips = useCallback((id) => {
+    setHiddenCustomChipIds((prev) => {
+      const next = prev.filter((hid) => hid !== id)
+      save(HIDDEN_CUSTOM_CHIP_KEY, next)
+      return next
+    })
+  }, [])
+
   return {
-    categories, pinnedIds, hiddenBuiltins,
+    categories, pinnedIds, hiddenBuiltins, hiddenCustomChipIds,
     addCategory, removeCategory, updateCategory, addMobiToCategory,
     pinCategory, unpinCategory, reorderPinned,
     hideBuiltin, showBuiltin,
+    hideCustomFromChips, showCustomInChips,
     MAX_CATEGORIES, MAX_PINNED,
   }
 }

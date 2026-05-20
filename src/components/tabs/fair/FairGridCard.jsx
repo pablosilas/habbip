@@ -428,7 +428,7 @@ export default function FairGridCard({
         <div className="flex flex-col justify-center gap-[6px] flex-1 min-w-0">
 
           <Tooltip text="Preço atual" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
+            <div className="flex items-center gap-[5px] h-[18px]">
               <img src={coinSmIcon} alt="Preço" className="w-[16px] h-[16px] shrink-0 object-contain" />
               <div className="flex items-center gap-[3px] min-w-0">
                 {priceNow != null ? (
@@ -438,7 +438,7 @@ export default function FairGridCard({
                     <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-80 shrink-0" />
                   </>
                 ) : (
-                  <span className="text-[9px] text-[#777] italic leading-none">sem preço</span>
+                  <span className="text-[9px] text-[#555] italic leading-none">sem preço</span>
                 )}
                 {isXs && priceNow != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">preço atual</span>}
               </div>
@@ -446,7 +446,7 @@ export default function FairGridCard({
           </Tooltip>
 
           <Tooltip text="Média" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
+            <div className="flex items-center gap-[5px] h-[18px]">
               <img src={mediaIcon} alt="Média" className="w-[16px] h-[16px] shrink-0 object-contain" />
               {averagePrice != null ? (
                 <>
@@ -454,19 +454,19 @@ export default function FairGridCard({
                   <img src={coinIcon} alt="coin" className="w-[15px] h-[15px] object-contain opacity-60 shrink-0" />
                 </>
               ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem média</span>
+                <span className="text-[9px] text-[#555] italic leading-none">sem média</span>
               )}
               {isXs && averagePrice != null && <span className="text-[9px] text-[#666] leading-none ml-[2px]">média</span>}
             </div>
           </Tooltip>
 
           <Tooltip text="Ofertas" disabled={isMobile}>
-            <div className="flex items-center gap-[5px]">
+            <div className="flex items-center gap-[5px] h-[18px]">
               <img src={ofertasIcon} alt="Ofertas" className="w-[16px] h-[16px] shrink-0 object-contain" />
               {openOffers != null && openOffers > 0 ? (
                 <span className="text-[12px] text-[#aaa] tabular-nums leading-none">{openOffers}</span>
               ) : (
-                <span className="text-[9px] text-[#777] italic leading-none">sem ofertas</span>
+                <span className="text-[9px] text-[#555] italic leading-none">sem ofertas</span>
               )}
               {isXs && openOffers != null && openOffers > 0 && <span className="text-[9px] text-[#666] leading-none ml-[2px]">ofertas</span>}
             </div>
