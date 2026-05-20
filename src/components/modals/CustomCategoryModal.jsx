@@ -17,6 +17,10 @@ function getRandomEmoji() {
   return EMOJI_SUGGESTIONS[Math.floor(Math.random() * EMOJI_SUGGESTIONS.length)]
 }
 
+function getRandomHabboIconId() {
+  return CATALOG_ICONS[Math.floor(Math.random() * CATALOG_ICONS.length)].id
+}
+
 function MiniMobiIcon({ classname, hotel = "br" }) {
   const [url, setUrl] = React.useState(null)
   const [err, setErr] = React.useState(false)
@@ -109,9 +113,9 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
         setSelectedMobis(initialData.mobis || [])
       } else {
         setName("")
-        setIconType("emoji")
+        setIconType("habbo")
+        setHabboIconId(getRandomHabboIconId())
         setEmoji(getRandomEmoji())
-        setHabboIconId(22)
         setCustomEmoji("")
         setSelectedMobis([])
       }
