@@ -196,7 +196,7 @@ function FakeToggle({ checked }) {
 
 // ── ActionsMenu ───────────────────────────────────────────────────────────────
 
-function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn, onConfigureAlert, customCategories = [], onAddToCategory }) {
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn, onConfigureAlert, customCategories = [], onAddToCategory, onRemoveFromCategory }) {
   const [open, setOpen] = React.useState(false)
   const [pos, setPos] = React.useState({ top: 0, left: 0 })
   const btnRef = React.useRef(null)
@@ -345,12 +345,17 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
                   type="button"
                   onClick={(e) => {
                     e.stopPropagation()
-                    if (!alreadyIn) onAddToCategory?.(cat.id, item)
+                    if (alreadyIn) onRemoveFromCategory?.(cat.id, item)
+                    else onAddToCategory?.(cat.id, item)
                     setShowCatMenu(false)
                     setOpen(false)
                   }}
-                  disabled={alreadyIn}
-                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer disabled:cursor-not-allowed border-b border-[#444] last:border-b-0"
+                  className={[
+                    "w-full flex items-center gap-2 px-3 py-1.5 text-left transition-colors cursor-pointer border-b border-[#444] last:border-b-0",
+                    alreadyIn
+                      ? "hover:bg-[rgba(255,80,80,0.08)]"
+                      : "hover:bg-[rgba(255,255,255,0.06)]",
+                  ].join(" ")}
                 >
                   <div className="shrink-0 w-4 h-4 flex items-center justify-center">
                     {cat.icon ? (
@@ -361,9 +366,9 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
                       <span className="text-[12px] leading-none">{cat.emoji}</span>
                     )}
                   </div>
-                  <span className={`flex-1 text-[10px] truncate ${alreadyIn ? "text-[#888]" : "text-[#d0d0d0]"}`}>{cat.label}</span>
+                  <span className={`flex-1 text-[10px] truncate ${alreadyIn ? "text-[#aaa]" : "text-[#d0d0d0]"}`}>{cat.label}</span>
                   {alreadyIn
-                    ? <span className="text-[9px] text-[#ffd64d] shrink-0 font-bold">✓</span>
+                    ? <span className="text-[9px] text-[#FF8A8A] shrink-0 font-bold" title="Remover da categoria">✕</span>
                     : <span className="text-[10px] text-[#555] shrink-0">+</span>
                   }
                 </button>
@@ -436,8 +441,9 @@ export default function FairGridCard({
   isLoggedIn = false,
   onConfigureAlert,
   onClick,
-  customCategories = [], 
+  customCategories = [],
   onAddToCategory,
+  onRemoveFromCategory,
 }) {
   const isMobile = useIsMobile()
   const isXs = useIsXs()
@@ -634,6 +640,7 @@ export default function FairGridCard({
             onConfigureAlert={onConfigureAlert}
             customCategories={customCategories}
             onAddToCategory={onAddToCategory}
+            onRemoveFromCategory={onRemoveFromCategory}
           />
         </div>
       </div>

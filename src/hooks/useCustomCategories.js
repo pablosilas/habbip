@@ -73,6 +73,23 @@ export function useCustomCategories() {
     })
   }, [])
 
+  const removeMobiFromCategory = useCallback((categoryId, className) => {
+    setCategories((prev) => {
+      const next = prev.map((c) => {
+        if (c.id !== categoryId) return c
+        const newMobis = (c.mobis || []).filter((m) => m.ClassName !== className)
+        return {
+          ...c,
+          mobis: newMobis,
+          exactClassNames: newMobis.map((m) => m.ClassName),
+          searchTerms: [...new Set(newMobis.map((m) => m.ClassName.split("*")[0]))],
+        }
+      })
+      save(STORAGE_KEY, next)
+      return next
+    })
+  }, [])
+
   // ── PINNED ───────────────────────────────────────────────────────────────
   const pinCategory = useCallback((id) => {
     setPinnedIds((prev) => {
@@ -150,7 +167,7 @@ export function useCustomCategories() {
 
   return {
     categories, pinnedIds, hiddenBuiltins, hiddenCustomChipIds,
-    addCategory, removeCategory, updateCategory, addMobiToCategory,
+    addCategory, removeCategory, updateCategory, addMobiToCategory, removeMobiFromCategory,
     pinCategory, unpinCategory, reorderPinned,
     hideBuiltin, showBuiltin,
     hideCustomFromChips, showCustomInChips,

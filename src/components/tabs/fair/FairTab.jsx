@@ -1,4 +1,5 @@
 import React from "react"
+import { createPortal } from "react-dom"
 import FairGridCard from "../fair/FairGridCard"
 import FairDetailModal from "../../modals/FairDetailModal"
 import Button from "../../ui/Button"
@@ -129,6 +130,14 @@ export default function FairTab({
   const [editingCategory, setEditingCategory] = React.useState(null)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
   const [chipsExpanded, setChipsExpanded] = React.useState(false)
+  const [toast, setToast] = React.useState(null)
+  const toastTimerRef = React.useRef(null)
+
+  function showToast(msg) {
+    clearTimeout(toastTimerRef.current)
+    setToast(msg)
+    toastTimerRef.current = setTimeout(() => setToast(null), 3000)
+  }
 
   // drag & drop nos chips pinned
   const dragIndexRef = React.useRef(null)
@@ -136,7 +145,7 @@ export default function FairTab({
   const {
     categories: customCategories,
     pinnedIds, hiddenBuiltins, hiddenCustomChipIds,
-    addCategory, removeCategory, updateCategory, addMobiToCategory,
+    addCategory, removeCategory, updateCategory, addMobiToCategory, removeMobiFromCategory,
     pinCategory, unpinCategory, reorderPinned,
     hideBuiltin, showBuiltin,
     hideCustomFromChips, showCustomInChips,
@@ -383,6 +392,15 @@ export default function FairTab({
 
   return (
     <div ref={wrapperRef}>
+      {/* ── Toast ── */}
+      {toast && createPortal(
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-2 px-4 py-2.5 rounded-md border border-[#ffd64d55] bg-[#1e1e1e] shadow-[0_4px_16px_rgba(0,0,0,0.5)] text-[12px] text-white max-w-[90vw]">
+          <span className="text-[#ffd64d] text-[14px] leading-none">🏷️</span>
+          <span className="leading-tight">{toast}</span>
+          <button type="button" onClick={() => setToast(null)} className="ml-1 text-[#777] hover:text-white leading-none cursor-pointer text-[14px]">✕</button>
+        </div>,
+        document.body
+      )}
       {/* ── Modal de detalhe ── */}
       <FairDetailModal
         open={!!detailItem}
@@ -715,9 +733,18 @@ export default function FairTab({
                   customCategories={customCategories}
                   onAddToCategory={(categoryId, item) => {
                     addMobiToCategory(categoryId, item)
+                    const cat = customCategories.find(c => c.id === categoryId)
+                    showToast(`${item.FurniName || item.ClassName} adicionado à categoria ${cat?.label ?? ""}`)
                     if (activeCategory === categoryId) {
-                      const cat = customCategories.find(c => c.id === categoryId)
                       if (cat) fetchByClassNames([...(cat.exactClassNames || []), item.ClassName])
+                    }
+                  }}
+                  onRemoveFromCategory={(categoryId, item) => {
+                    removeMobiFromCategory(categoryId, item.ClassName)
+                    const cat = customCategories.find(c => c.id === categoryId)
+                    showToast(`${item.FurniName || item.ClassName} removido da categoria ${cat?.label ?? ""}`)
+                    if (activeCategory === categoryId) {
+                      if (cat) fetchByClassNames((cat.exactClassNames || []).filter(cn => cn !== item.ClassName))
                     }
                   }}
                 />
