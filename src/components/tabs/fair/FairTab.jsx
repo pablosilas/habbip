@@ -472,9 +472,7 @@ export default function FairTab({
                     isLoadingAny ? "opacity-50 pointer-events-none" : "",
                     activeCategory === cat.id
                       ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                      : cat.isCustom
-                        ? "border-[#5a5a5a] text-[#999] hover:border-[#aaa] hover:text-[#ddd]"
-                        : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
+                      : "border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)]",
                   ].join(" ")}
                 >
                   {/* Botão principal */}
@@ -504,7 +502,7 @@ export default function FairTab({
                       onClick={() => { setEditingCategory(cat); setCustomCategoryModalOpen(true) }}
                       disabled={isLoadingAny}
                       title="Editar categoria"
-                      className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] text-[#666] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                      className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed"
                     >
                       <span className="text-[10px] leading-none">✎</span>
                     </button>
@@ -515,10 +513,10 @@ export default function FairTab({
                     disabled={isLoadingAny || (!cat._pinned && pinnedIds.length >= MAX_PINNED)}
                     title={cat._pinned ? "Desafixar" : pinnedIds.length >= MAX_PINNED ? `Limite de ${MAX_PINNED} fixadas` : "Fixar"}
                     className={[
-                      "hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30",
+                      "hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30",
                       cat._pinned
-                        ? "text-[#ffd64d] hover:text-[#ffb300] hover:bg-[rgba(255,214,77,0.08)]"
-                        : "text-[#555] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.08)]",
+                        ? "text-[#ffd64d] hover:text-[#ffb300] hover:bg-[rgba(255,214,77,0.12)]"
+                        : "text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)]",
                     ].join(" ")}
                   >
                     <span className="text-[10px] leading-none font-bold">{cat._pinned ? "★" : "☆"}</span>
@@ -533,7 +531,7 @@ export default function FairTab({
                     }}
                     disabled={isLoadingAny}
                     title="Remover da visualização"
-                    className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.1)] text-[#555] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.08)] transition-colors cursor-pointer disabled:cursor-not-allowed"
+                    className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed"
                   >
                     <span className="text-[9px] leading-none font-bold">✕</span>
                   </button>
@@ -548,7 +546,7 @@ export default function FairTab({
                 onClick={() => setDrawerOpen(true)}
                 disabled={isLoadingAny}
                 title="Ver todas as categorias"
-                className="flex items-center gap-1 px-2 py-[4px] text-[10px] font-bold border border-dashed border-[#555] text-[#666] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] transition-colors cursor-pointer disabled:opacity-40"
+                className="flex items-center gap-1 px-2 py-[4px] text-[10px] font-bold border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40"
               >
                 <span className="text-[12px] leading-none">⊞</span>
                 <span>Todas</span>
@@ -559,7 +557,7 @@ export default function FairTab({
                 onClick={() => { setEditingCategory(null); setCustomCategoryModalOpen(true) }}
                 disabled={isLoadingAny || customCategories.length >= MAX_CATEGORIES}
                 title={customCategories.length >= MAX_CATEGORIES ? `Limite de ${MAX_CATEGORIES} categorias atingido` : "Nova categoria"}
-                className="flex items-center justify-center w-[26px] py-[4px] border border-dashed border-[#555] text-[#666] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-bold leading-none"
+                className="flex items-center justify-center w-[26px] py-[4px] border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-bold leading-none"
               >
                 +
               </button>
@@ -575,7 +573,7 @@ export default function FairTab({
                     "px-2 py-[3px] text-[10px] border transition-colors cursor-pointer disabled:opacity-50",
                     activeSubcategory === sub.id
                       ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)] text-[#ffd64d]"
-                      : "border-[#444] text-[#999] hover:border-[#777] hover:text-[#ddd]",
+                      : "border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)]",
                   ].join(" ")}
                 >
                   {sub.label}

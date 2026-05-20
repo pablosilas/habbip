@@ -11,6 +11,8 @@ const EMOJI_SUGGESTIONS = [
   "🌈", "🦋", "🐾", "🌸", "🍀", "⚡", "🌊", "🍭", "🎶", "🎸",
 ]
 
+const ICON_PAGE_SIZE = 40
+
 function getRandomEmoji() {
   return EMOJI_SUGGESTIONS[Math.floor(Math.random() * EMOJI_SUGGESTIONS.length)]
 }
@@ -35,7 +37,7 @@ function MiniMobiIcon({ classname, hotel = "br" }) {
   if (err || !url) {
     return (
       <div className="w-6 h-6 rounded bg-[#3a3a3a] flex items-center justify-center">
-        <span className="text-[8px] text-[#666]">?</span>
+        <span className="text-[8px] text-[#777]">?</span>
       </div>
     )
   }
@@ -54,12 +56,13 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
   const isEdit = !!initialData
 
   const [name, setName] = React.useState("")
-  const [iconType, setIconType] = React.useState("habbo")  // "habbo" | "emoji"
-  const [habboIconId, setHabboIconId] = React.useState(22) // animais como padrão
+  const [iconType, setIconType] = React.useState("habbo")
+  const [habboIconId, setHabboIconId] = React.useState(22)
   const [emoji, setEmoji] = React.useState("⭐")
   const [customEmoji, setCustomEmoji] = React.useState("")
   const [showIconPicker, setShowIconPicker] = React.useState(false)
   const [iconSearch, setIconSearch] = React.useState("")
+  const [iconPage, setIconPage] = React.useState(0)
 
   const [searchQuery, setSearchQuery] = React.useState("")
   const [searchResults, setSearchResults] = React.useState([])
@@ -68,14 +71,33 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
 
   const [selectedMobis, setSelectedMobis] = React.useState([])
   const [saving, setSaving] = React.useState(false)
-  const inputRef = React.useRef(null)
 
-  // Preenche com dados iniciais ao abrir (modo edição)
+  const inputRef = React.useRef(null)
+  const iconPickerRef = React.useRef(null)
+  const iconBtnRef = React.useRef(null)
+
+  // Fecha picker ao clicar fora
+  React.useEffect(() => {
+    if (!showIconPicker) return
+    function handle(e) {
+      if (
+        iconPickerRef.current && !iconPickerRef.current.contains(e.target) &&
+        iconBtnRef.current && !iconBtnRef.current.contains(e.target)
+      ) {
+        setShowIconPicker(false)
+      }
+    }
+    document.addEventListener("mousedown", handle)
+    return () => document.removeEventListener("mousedown", handle)
+  }, [showIconPicker])
+
+  // Reset página ao mudar busca
+  React.useEffect(() => { setIconPage(0) }, [iconSearch])
+
   React.useEffect(() => {
     if (open) {
       if (initialData) {
         setName(initialData.label || "")
-        // suporte a categorias que têm habboIconId ou emoji
         if (initialData.habboIconId != null) {
           setIconType("habbo")
           setHabboIconId(initialData.habboIconId)
@@ -95,6 +117,7 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
       }
       setShowIconPicker(false)
       setIconSearch("")
+      setIconPage(0)
       setSearchQuery("")
       setSearchResults([])
       setSearchError("")
@@ -136,7 +159,6 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
       id: initialData?.id || `custom_${Date.now()}`,
       label: name.trim(),
       isCustom: true,
-      // ícone — uma das duas formas
       habboIconId: iconType === "habbo" ? habboIconId : null,
       emoji: iconType === "emoji" ? (customEmoji.trim() || emoji) : null,
       exactClassNames: selectedMobis.map((m) => m.ClassName),
@@ -148,7 +170,19 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
     onClose()
   }
 
+  const filteredIcons = React.useMemo(() =>
+    iconSearch.trim()
+      ? CATALOG_ICONS.filter((ic) => ic.label.toLowerCase().includes(iconSearch.toLowerCase()))
+      : CATALOG_ICONS,
+    [iconSearch]
+  )
+  const totalPages = Math.ceil(filteredIcons.length / ICON_PAGE_SIZE)
+  const pageIcons = filteredIcons.slice(iconPage * ICON_PAGE_SIZE, (iconPage + 1) * ICON_PAGE_SIZE)
+
   if (!open) return null
+
+  const currentIconSrc = iconType === "habbo" ? getCatalogIconUrl(habboIconId) : null
+  const currentEmoji = iconType === "emoji" ? (customEmoji.trim() || emoji) : null
 
   const modal = (
     <div
@@ -190,82 +224,27 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
 
           {/* Nome + Ícone */}
           <div className="flex gap-3 items-start">
-            {/* Botão do ícone selecionado */}
-            <div className="relative shrink-0">
+            {/* Botão do ícone */}
+            <div className="shrink-0">
+              <div className="text-[9px] font-bold text-[#ccc] uppercase tracking-wider block mb-1">Ícone</div>
               <button
+                ref={iconBtnRef}
                 type="button"
                 onClick={() => setShowIconPicker((v) => !v)}
-                className="w-[48px] h-[42px] flex flex-col items-center justify-center border border-[#555] bg-[rgba(255,255,255,0.08)] hover:bg-[rgba(255,255,255,0.14)] cursor-pointer transition-colors gap-[2px]"
+                className={`w-[48px] h-[42px] flex flex-col items-center justify-center border hover:bg-[rgba(255,255,255,0.14)] cursor-pointer transition-colors gap-[2px] ${showIconPicker ? "border-[#ffd64d] bg-[rgba(255,214,77,0.1)]" : "border-[#888] bg-[rgba(255,255,255,0.08)]"}`}
                 title="Escolher ícone"
               >
-                {iconType === "habbo" ? (
-                  <img
-                    src={getCatalogIconUrl(habboIconId)}
-                    alt=""
-                    className="w-[28px] h-[28px] object-contain"
-                    loading="lazy"
-                  />
+                {currentIconSrc ? (
+                  <img src={currentIconSrc} alt="" className="w-[28px] h-[28px] object-contain" loading="lazy" />
                 ) : (
-                  <span className="text-[22px] leading-none">{customEmoji.trim() || emoji}</span>
+                  <span className="text-[22px] leading-none">{currentEmoji}</span>
                 )}
-                <span className="text-[7px] text-[#666] leading-none">ícone</span>
               </button>
-
-              {showIconPicker && (
-                <div
-                  className="absolute top-[50px] left-0 z-10 bg-[#3a3a3a] border border-[#555] shadow-xl"
-                  style={{ width: 320 }}
-                >
-                  <div className="px-2 pt-2 pb-1 border-b border-[#555]">
-                    <span className="text-[9px] font-bold text-[#888] uppercase tracking-wider">Ícones Habbo</span>
-                  </div>
-                  <div className="p-2">
-                    <input
-                      type="text"
-                      value={iconSearch}
-                      onChange={(e) => setIconSearch(e.target.value)}
-                      placeholder="Buscar ícone..."
-                      className="w-full h-7 border border-[#555] bg-[rgba(255,255,255,0.08)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] mb-2"
-                    />
-                    <div className="grid grid-cols-8 gap-[3px] max-h-[220px] overflow-y-auto pr-1">
-                      {CATALOG_ICONS
-                        .filter((ic) =>
-                          !iconSearch.trim() ||
-                          ic.label.toLowerCase().includes(iconSearch.toLowerCase())
-                        )
-                        .map((ic) => (
-                          <button
-                            key={ic.id}
-                            type="button"
-                            onClick={() => {
-                              setHabboIconId(ic.id)
-                              setIconType("habbo")
-                              setShowIconPicker(false)
-                            }}
-                            title={ic.label}
-                            className={`w-[32px] h-[32px] flex items-center justify-center rounded transition-colors cursor-pointer ${habboIconId === ic.id && iconType === "habbo"
-                              ? "bg-[rgba(255,214,77,0.2)] ring-1 ring-[#ffd64d]"
-                              : "hover:bg-[rgba(255,255,255,0.08)]"
-                              }`}
-                          >
-                            <img
-                              src={getCatalogIconUrl(ic.id)}
-                              alt={ic.label}
-                              className="w-[24px] h-[24px] object-contain"
-                              loading="lazy"
-                              onError={(e) => { e.currentTarget.style.opacity = "0.2" }}
-                            />
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-                </div>
-              )}
             </div>
 
             {/* Nome */}
             <div className="flex-1">
-              <label className="text-[9px] font-bold text-[#888] uppercase tracking-wider block mb-1">
+              <label className="text-[9px] font-bold text-[#ccc] uppercase tracking-wider block mb-1">
                 Nome da categoria
               </label>
               <input
@@ -274,11 +253,87 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
                 onChange={(e) => setName(e.target.value.slice(0, 24))}
                 placeholder="Ex: Raros, Favoritos, Sala..."
                 maxLength={24}
-                className="w-full h-[42px] border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-3 text-[13px] text-white outline-none placeholder:text-[#888]"
+                className="w-full h-[42px] border border-[#c3c3c3] bg-[rgba(255,255,255,0.12)] px-3 text-[13px] text-white outline-none placeholder:text-[#999]"
               />
-              <div className="text-[9px] text-[#666] text-right mt-[2px]">{name.length}/24</div>
+              <div className="text-[9px] text-[#999] text-right mt-[2px]">{name.length}/24</div>
             </div>
           </div>
+
+          {/* Icon Picker inline */}
+          {showIconPicker && (
+            <div
+              ref={iconPickerRef}
+              className="border border-[#555] bg-[#333] p-2 space-y-1.5"
+            >
+              {/* Busca + contagem */}
+              <div className="flex items-center gap-2">
+                <input
+                  type="text"
+                  value={iconSearch}
+                  onChange={(e) => setIconSearch(e.target.value)}
+                  placeholder="Buscar ícone..."
+                  className="flex-1 h-6 border border-[#555] bg-[rgba(255,255,255,0.08)] px-2 text-[10px] text-white outline-none placeholder:text-[#777]"
+                />
+                <span className="text-[9px] text-[#777] shrink-0">{filteredIcons.length} ícones</span>
+              </div>
+
+              {/* Grid — altura fixa para prev/next ficarem sempre no mesmo lugar */}
+              <div className="grid grid-cols-10 gap-0.5 h-40 content-start overflow-hidden">
+                {pageIcons.map((ic) => (
+                  <button
+                    key={ic.id}
+                    type="button"
+                    onClick={() => {
+                      setHabboIconId(ic.id)
+                      setIconType("habbo")
+                      setShowIconPicker(false)
+                    }}
+                    title={ic.label}
+                    className={`w-full aspect-square flex items-center justify-center rounded-sm transition-colors cursor-pointer ${habboIconId === ic.id && iconType === "habbo"
+                      ? "bg-[rgba(255,214,77,0.2)] ring-1 ring-[#ffd64d]"
+                      : "hover:bg-[rgba(255,255,255,0.1)]"
+                      }`}
+                  >
+                    <img
+                      src={getCatalogIconUrl(ic.id)}
+                      alt={ic.label}
+                      className="w-[20px] h-[20px] object-contain"
+                      loading="lazy"
+                      onError={(e) => { e.currentTarget.style.opacity = "0.2" }}
+                    />
+                  </button>
+                ))}
+                {pageIcons.length === 0 && (
+                  <div className="col-span-10 py-3 text-center text-[10px] text-[#777]">
+                    Nenhum ícone encontrado.
+                  </div>
+                )}
+              </div>
+
+              {/* Paginação */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-1 border-t border-[#444]">
+                  <button
+                    type="button"
+                    onClick={() => setIconPage((p) => Math.max(0, p - 1))}
+                    disabled={iconPage === 0}
+                    className="px-2 h-6 text-[9px] font-bold border border-[#666] text-[#ccc] hover:border-[#aaa] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  >
+                    ← Ant.
+                  </button>
+                  <span className="text-[9px] text-[#aaa]">{iconPage + 1} / {totalPages}</span>
+                  <button
+                    type="button"
+                    onClick={() => setIconPage((p) => Math.min(totalPages - 1, p + 1))}
+                    disabled={iconPage >= totalPages - 1}
+                    className="px-2 h-6 text-[9px] font-bold border border-[#666] text-[#ccc] hover:border-[#aaa] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer transition-colors"
+                  >
+                    Próx. →
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Buscar mobis */}
           <div>
@@ -313,8 +368,8 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
             )}
 
             {searchResults.length > 0 && (
-              <div className="max-h-[200px] overflow-y-auto border border-[#444] bg-[rgba(0,0,0,0.2)] mb-2">
-                <div className="grid grid-cols-2 gap-px bg-[#3a3a3a]">
+              <div className="max-h-[200px] overflow-y-auto border border-[#555] bg-[rgba(0,0,0,0.2)] mb-2">
+                <div className="grid grid-cols-2 gap-px bg-[#444]">
                   {searchResults.map((item) => {
                     const sel = isSelected(item)
                     return (
@@ -322,14 +377,14 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
                         key={item.ClassName}
                         type="button"
                         onClick={() => toggleMobi(item)}
-                        className={`flex items-center gap-2 px-2 py-[5px] text-left cursor-pointer transition-colors ${sel ? "bg-[rgba(255,214,77,0.12)] hover:bg-[rgba(255,214,77,0.18)]" : "bg-[#2e2e2e] hover:bg-[rgba(255,255,255,0.06)]"}`}
+                        className={`flex items-center gap-2 px-2 py-[5px] text-left cursor-pointer transition-colors ${sel ? "bg-[rgba(255,214,77,0.12)] hover:bg-[rgba(255,214,77,0.18)]" : "bg-[#2e2e2e] hover:bg-[rgba(255,255,255,0.07)]"}`}
                       >
                         <MiniMobiIcon classname={item.ClassName} hotel={hotel} />
                         <div className="flex-1 min-w-0">
                           <div className="text-[10px] text-white font-bold truncate leading-tight">{item.FurniName || item.ClassName}</div>
-                          <div className="text-[8px] text-[#666] font-mono truncate">{item.ClassName}</div>
+                          <div className="text-[8px] text-[#999] font-mono truncate">{item.ClassName}</div>
                         </div>
-                        <div className={`shrink-0 w-4 h-4 flex items-center justify-center text-[10px] font-bold ${sel ? "text-[#ffd64d]" : "text-[#555]"}`}>
+                        <div className={`shrink-0 w-4 h-4 flex items-center justify-center text-[10px] font-bold ${sel ? "text-[#ffd64d]" : "text-[#888]"}`}>
                           {sel ? "✓" : "+"}
                         </div>
                       </button>
@@ -350,7 +405,7 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
                 <button
                   type="button"
                   onClick={() => setSelectedMobis([])}
-                  className="text-[9px] text-[#888] hover:text-[#ff8a8a] cursor-pointer"
+                  className="text-[9px] text-[#aaa] hover:text-[#ff8a8a] cursor-pointer"
                 >
                   limpar tudo
                 </button>
@@ -366,7 +421,7 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
                     <button
                       type="button"
                       onClick={() => toggleMobi(m)}
-                      className="text-[#888] hover:text-[#ff8a8a] cursor-pointer ml-1 leading-none"
+                      className="text-[#aaa] hover:text-[#ff8a8a] cursor-pointer ml-1 leading-none"
                     >
                       ×
                     </button>
@@ -378,11 +433,11 @@ export default function CustomCategoryModal({ open, onClose, onSave, hotel = "br
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 flex gap-2 px-4 py-3 border-t border-[#3a3a3a] bg-[#3a3a3a]">
+        <div className="shrink-0 flex gap-2 px-4 py-3 border-t border-[#555] bg-[#3a3a3a]">
           <button
             type="button"
             onClick={onClose}
-            className="flex-1 h-9 border border-[#555] bg-[rgba(255,255,255,0.06)] text-[#ccc] text-[11px] cursor-pointer hover:brightness-110"
+            className="flex-1 h-9 border border-[#888] bg-[rgba(255,255,255,0.06)] text-[#ddd] text-[11px] cursor-pointer hover:brightness-110"
           >
             Cancelar
           </button>

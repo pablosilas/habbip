@@ -1,6 +1,7 @@
 import React from "react"
 import { createPortal } from "react-dom"
 import { getFurnitureIconUrl, getFurnitureImageUrl } from "../../../services/habboApi"
+import { getCatalogIconUrl } from "../../../constants/habboCatalogIcons"
 import FurnitureImage from "../../ui/FurnitureImage"
 import coinSmIcon from "../../../assets/coin_sm.png"
 import coinIcon from "../../../assets/coin.png"
@@ -201,6 +202,8 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   const btnRef = React.useRef(null)
   const menuRef = React.useRef(null)
   const [showCatMenu, setShowCatMenu] = React.useState(false)
+  const [catPage, setCatPage] = React.useState(0)
+  const CAT_PAGE_SIZE = 3
 
   function handleToggle(e) {
     e.stopPropagation()
@@ -209,10 +212,33 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       const menuWidth = 220
       const spaceRight = window.innerWidth - rect.right
       const left = spaceRight >= menuWidth ? rect.right + 4 : rect.left - menuWidth - 4
-      setPos({ top: rect.bottom + 4, left })
+      setPos({ top: rect.bottom + 4, left, openUpward: false, btnTop: rect.top })
     }
     setOpen((v) => !v)
   }
+
+  // Após renderizar (ou expandir submenu), mede o menu real e ajusta se sair da tela
+  React.useLayoutEffect(() => {
+    if (!open || !menuRef.current) return
+    // reseta para posição original antes de medir (evita acúmulo de ajustes)
+    setPos((prev) => {
+      if (!btnRef.current) return prev
+      const rect = btnRef.current.getBoundingClientRect()
+      const menuWidth = 220
+      const spaceRight = window.innerWidth - rect.right
+      const left = spaceRight >= menuWidth ? rect.right + 4 : rect.left - menuWidth - 4
+      return { ...prev, top: rect.bottom + 4, left }
+    })
+    // aguarda o re-render com posição resetada para medir corretamente
+    requestAnimationFrame(() => {
+      if (!menuRef.current) return
+      const menuRect = menuRef.current.getBoundingClientRect()
+      const overflow = menuRect.bottom - (window.innerHeight - 8)
+      if (overflow > 0) {
+        setPos((prev) => ({ ...prev, top: Math.max(8, prev.top - overflow) }))
+      }
+    })
+  }, [open, showCatMenu])
 
   React.useEffect(() => {
     if (!open) return
@@ -220,6 +246,7 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
       if (!btnRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) {
         setOpen(false)
         setShowCatMenu(false)
+        setCatPage(0)
       }
 
     }
@@ -230,10 +257,11 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   function action(fn) { return (e) => { e?.stopPropagation(); fn?.() } }
 
   const menu = open ? (
-    <div ref={menuRef} style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 220 }}
-      className="relative overflow-hidden rounded-[14px] border-[2px] border-[#7A7A7A] outline outline-[1px] outline-[#000] bg-[#4D4D4D] shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]"
+    <div ref={menuRef}
+      className="rounded-[14px] border-2 border-[#7A7A7A] outline outline-black bg-[#4D4D4D] shadow-[inset_1px_1px_0_#cfcfcf,inset_-1px_-1px_0_#2f2f2f,0_8px_18px_rgba(0,0,0,0.45)]"
+      style={{ position: "fixed", top: pos.top, left: pos.left, zIndex: 99999, width: 220, overflow: "visible" }}
     >
-      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A]">
+      <div className="relative h-[28px] px-3 flex items-center bg-[#7A7A7A] rounded-t-xl">
         <span className="text-[10px] font-bold text-white truncate">{item.FurniName || "Ações"}</span>
         <div className="absolute right-[4px] top-0 bottom-0 flex items-center">
           <button type="button" onClick={(e) => { e.stopPropagation(); setOpen(false) }} className="flex items-center justify-center cursor-pointer"
@@ -243,7 +271,8 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           </button>
         </div>
       </div>
-      <div className="bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b]">
+      {/* Body principal — overflow-hidden para cantos funcionarem */}
+      <div className={`bg-[#4D4D4D] shadow-[inset_1px_1px_0_#6e6e6e,inset_-1px_-1px_0_#3b3b3b] overflow-hidden ${showCatMenu && customCategories.length > 0 ? "" : "rounded-b-[12px]"}`}>
         <button type="button"
           onClick={(e) => {
             e.stopPropagation()
@@ -277,52 +306,93 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           <FakeToggle checked={isFavorite} />
         </button>
         <button type="button" onClick={action(() => onAddToInventory?.(item))}
-          className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer">
+          className={`w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer ${customCategories.length === 0 ? "" : "border-b border-[#3f3f3f]"}`}>
           <img src={plusIcon} alt="Inventário" className={`w-[14px] h-[14px] object-contain ${isInInventory ? "brightness-100" : "opacity-50"}`} />
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           <FakeToggle checked={isInInventory} />
         </button>
-        {/* ── Adicionar à categoria ── */}
+        {/* Trigger de categorias — último item do body */}
         {customCategories.length > 0 && (
-          <div className="relative">
-            <button
-              type="button"
-              onClick={(e) => { e.stopPropagation(); setShowCatMenu((v) => !v) }}
-              className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-t border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
-            >
-              <span className="text-[14px] leading-none opacity-70">🏷️</span>
-              <span className="flex-1 text-[11px] text-[#d0d0d0]">Adicionar à categoria</span>
-              <span className="text-[10px] text-[#666]">{showCatMenu ? "▲" : "▶"}</span>
-            </button>
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowCatMenu((v) => !v) }}
+            className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
+          >
+            <span className="text-[14px] leading-none opacity-70">🏷️</span>
+            <span className="flex-1 text-[11px] text-[#d0d0d0]">Adicionar à categoria</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              {customCategories.length > 4 && (
+                <span className="text-[9px] text-[#666]">{customCategories.length}</span>
+              )}
+              <span className="text-[10px] text-[#666]">{showCatMenu ? "▼" : "▶"}</span>
+            </div>
+          </button>
+        )}
+      </div>
 
-            {showCatMenu && (
-              <div className="bg-[#3a3a3a] border-t border-[#3f3f3f]">
-                {customCategories.map((cat) => {
-                  const alreadyIn = cat.mobis?.some((m) => m.ClassName === item.ClassName)
-                  return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (!alreadyIn) onAddToCategory?.(cat.id, item)
-                        setShowCatMenu(false)
-                        setOpen(false)
-                      }}
-                      disabled={alreadyIn}
-                      className="w-full flex items-center gap-2 px-4 py-[7px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border-b border-[#444] last:border-b-0"
-                    >
+      {/* Submenu categorias — irmão do body, fora do overflow-hidden */}
+      {customCategories.length > 0 && showCatMenu && (() => {
+        const totalPages = Math.ceil(customCategories.length / CAT_PAGE_SIZE)
+        const page = Math.min(catPage, totalPages - 1)
+        const pageCats = customCategories.slice(page * CAT_PAGE_SIZE, (page + 1) * CAT_PAGE_SIZE)
+        return (
+          <div className="bg-[#3a3a3a] rounded-b-[12px] overflow-hidden border-t border-[#2a2a2a]">
+            {pageCats.map((cat) => {
+              const alreadyIn = cat.mobis?.some((m) => m.ClassName === item.ClassName)
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    if (!alreadyIn) onAddToCategory?.(cat.id, item)
+                    setShowCatMenu(false)
+                    setOpen(false)
+                  }}
+                  disabled={alreadyIn}
+                  className="w-full flex items-center gap-2 px-3 py-1.5 text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer disabled:cursor-not-allowed border-b border-[#444] last:border-b-0"
+                >
+                  <div className="shrink-0 w-4 h-4 flex items-center justify-center">
+                    {cat.icon ? (
+                      <img src={cat.icon} alt={cat.label} className="w-4 h-4 object-contain" />
+                    ) : cat.habboIconId != null ? (
+                      <img src={getCatalogIconUrl(cat.habboIconId)} alt={cat.label} className="w-4 h-4 object-contain" loading="lazy" />
+                    ) : (
                       <span className="text-[12px] leading-none">{cat.emoji}</span>
-                      <span className="flex-1 text-[10px] text-[#d0d0d0] truncate">{cat.label}</span>
-                      {alreadyIn && <span className="text-[9px] text-[#666] shrink-0">já adicionado</span>}
-                    </button>
-                  )
-                })}
+                    )}
+                  </div>
+                  <span className={`flex-1 text-[10px] truncate ${alreadyIn ? "text-[#888]" : "text-[#d0d0d0]"}`}>{cat.label}</span>
+                  {alreadyIn
+                    ? <span className="text-[9px] text-[#ffd64d] shrink-0 font-bold">✓</span>
+                    : <span className="text-[10px] text-[#555] shrink-0">+</span>
+                  }
+                </button>
+              )
+            })}
+            {totalPages > 1 && (
+              <div className="flex items-center justify-between px-3 py-1 border-t border-[#444]">
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setCatPage((p) => Math.max(0, p - 1)) }}
+                  disabled={page === 0}
+                  className="text-[9px] text-[#aaa] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer px-1"
+                >
+                  ← ant
+                </button>
+                <span className="text-[9px] text-[#666]">{page + 1} / {totalPages}</span>
+                <button
+                  type="button"
+                  onClick={(e) => { e.stopPropagation(); setCatPage((p) => Math.min(totalPages - 1, p + 1)) }}
+                  disabled={page >= totalPages - 1}
+                  className="text-[9px] text-[#aaa] hover:text-white disabled:opacity-30 disabled:cursor-not-allowed cursor-pointer px-1"
+                >
+                  próx →
+                </button>
               </div>
             )}
           </div>
-        )}
-      </div>
+        )
+      })()}
     </div>
   ) : null
 

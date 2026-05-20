@@ -9,7 +9,7 @@ export function getCatalogIconUrl(iconId) {
 }
 
 // Ícones organizados por tema com nome amigável para o usuário
-export const CATALOG_ICONS = [
+const RAW_CATALOG_ICONS = [
   // Decoração & Ambientes
   { id: 17, label: "Banheiro" },
   { id: 43, label: "Cozinha" },
@@ -22,7 +22,7 @@ export const CATALOG_ICONS = [
   { id: 242, label: "Sotão" },
   { id: 49, label: "Relax" },
   { id: 211, label: "Spa" },
-  { id: 57, label: "Piscina" },
+  { id: 57, label: "Piscina/Verão" },
 
   // Natureza & Animais
   { id: 22, label: "Animais" },
@@ -41,7 +41,6 @@ export const CATALOG_ICONS = [
   { id: 34, label: "Halloween" },
   { id: 144, label: "Amor" },
   { id: 21, label: "Festa Junina" },
-  { id: 57, label: "Verão" },
   { id: 86, label: "Gélido" },
   { id: 176, label: "Carnaval" },
   { id: 143, label: "Ano Novo Chinês" },
@@ -127,3 +126,8 @@ export const CATALOG_ICONS = [
   { id: 210, label: "Habbo Stories" },
   { id: 127, label: "Toa Toa" },
 ]
+
+// Deduplicação por id — garante que nunca apareçam ícones repetidos
+export const CATALOG_ICONS = RAW_CATALOG_ICONS.filter(
+  (ic, idx, arr) => arr.findIndex((x) => x.id === ic.id) === idx
+)

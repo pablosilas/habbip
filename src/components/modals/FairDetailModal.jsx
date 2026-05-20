@@ -123,7 +123,7 @@ function SectionHeader({ label, right }) {
 
 // ── HistoryBars ───────────────────────────────────────────────────────────────
 
-function HistoryBars({ history = [] }) {
+function HistoryBars({ history = [], compact = false }) {
   const entries = React.useMemo(() =>
     [...history]
       .filter(e => e[0] > 0 && e[4])
@@ -132,6 +132,38 @@ function HistoryBars({ history = [] }) {
   )
 
   if (entries.length === 0) return null
+
+  if (compact) {
+    return (
+      <div className="flex flex-col h-full min-h-0">
+        <SectionHeader label="Histórico diário" right={`${entries.length}d`} />
+        <div className="flex-1 min-h-0 overflow-y-auto">
+          <div className="grid grid-cols-2 gap-x-2 gap-y-0.5">
+            {entries.map((entry, i) => {
+              const price = entry[0]
+              const sold = entry[1] ?? 0
+              const ts = entry[4]
+              return (
+                <div
+                  key={ts ?? i}
+                  className="flex items-center gap-1 px-1 py-[3px] rounded-xs hover:bg-[rgba(255,255,255,0.05)]"
+                >
+                  <span className="text-[8px] text-[#777] tabular-nums shrink-0 font-mono leading-none">{formatDateShort(ts)}</span>
+                  <span className="text-[9px] text-[#ffd64d] font-bold tabular-nums leading-none flex-1 truncate">{price.toLocaleString("pt-BR")}</span>
+                  <span
+                    className="text-[8px] tabular-nums font-bold leading-none shrink-0"
+                    style={{ color: sold > 0 ? "#7CFC8A" : "#444" }}
+                  >
+                    {sold > 0 ? `${sold}x` : "—"}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="flex flex-col h-full min-h-0">
@@ -417,7 +449,18 @@ function ChartHeader({ periodId, setPeriodId, periods }) {
 
 // ── FairDetailModal ───────────────────────────────────────────────────────────
 
+function useIsMobile(bp = 640) {
+  const [is, setIs] = React.useState(() => typeof window !== "undefined" && window.innerWidth < bp)
+  React.useEffect(() => {
+    const fn = () => setIs(window.innerWidth < bp)
+    window.addEventListener("resize", fn)
+    return () => window.removeEventListener("resize", fn)
+  }, [bp])
+  return is
+}
+
 export default function FairDetailModal({ open, item, onClose, creditRate }) {
+  const isMobile = useIsMobile()
   const [now, setNow] = React.useState(() => Math.floor(Date.now() / 1000))
   React.useEffect(() => { setNow(Math.floor(Date.now() / 1000)) }, [open, item])
 
@@ -507,7 +550,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
 
   const modal = (
     <div
-      className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-end sm:items-center justify-center p-0 sm:p-4"
       onClick={onClose}
     >
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[640px]">
@@ -515,10 +558,10 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
           title={item.FurniName || "Detalhes"}
           onClose={onClose}
           expand
-          className="w-full max-w-[640px] h-[90vh] flex flex-col"
+          className="w-full max-w-[640px] h-[96vh] sm:h-[90vh] flex flex-col rounded-t-[23px] sm:rounded-[23px]"
           innerClassName="flex flex-col overflow-hidden"
         >
-          <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3">
+          <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 px-0 sm:px-0">
 
             {/* ── Item header ── */}
             <div className="flex items-center gap-3 pb-3 border-b border-[rgba(255,255,255,0.07)]">
@@ -549,44 +592,41 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
               </div>
             </div>
 
-            {/* ── Price block + History ── */}
-            <div className="flex gap-3 items-stretch">
+            {/* ── Price block ── */}
+            <div
+              className="rounded-md border border-[#3a3a3a] hover:border-[#ffd64d66] transition-colors p-3"
+              style={{ background: "rgb(58,58,58)" }}
+            >
+              {/* Preço atual + média: lado a lado */}
+              <div className="flex items-start justify-between gap-3">
 
-              {/* Price block */}
-              <div
-                className="flex-1 min-w-0 rounded-md border border-[#3a3a3a] hover:border-[#ffd64d66] transition-colors p-3"
-                style={{ background: "rgb(58,58,58)" }}
-              >
-                <div className="flex items-start justify-between gap-3">
-
-                  {/* Left: current price */}
-                  <div>
-                    <SectionHeader label="Preço atual" />
-                    {priceNow != null ? (
-                      <>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <div className="flex items-center gap-1">
-                            {trendInfo && (
-                              <span className={`text-[11px] font-bold leading-none ${trendInfo.colorClass}`}>{trendInfo.icon}</span>
-                            )}
-                            <img src={coinIcon} alt="" className="w-[15px] h-[15px]" />
-                            <span className="text-[26px] text-[#ffd64d] font-bold tabular-nums leading-none">
-                              {priceNow.toLocaleString("pt-BR")}
-                            </span>
-                          </div>
-
+                {/* Preço atual */}
+                <div className="flex-1 min-w-0">
+                  <SectionHeader label="Preço atual" />
+                  {priceNow != null ? (
+                    <>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <div className="flex items-center gap-1">
+                          {trendInfo && (
+                            <span className={`text-[13px] font-bold leading-none ${trendInfo.colorClass}`}>{trendInfo.icon}</span>
+                          )}
+                          <img src={coinIcon} alt="" className="w-4.5 h-4.5 sm:w-3.75 sm:h-3.75" />
+                          <span className="text-[32px] sm:text-[26px] text-[#ffd64d] font-bold tabular-nums leading-none">
+                            {priceNow.toLocaleString("pt-BR")}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-1 flex-wrap">
                           {marketSignal && (
                             <span
-                              className="text-[8px] font-bold px-[6px] py-0.5 rounded-xs tracking-wider leading-none"
+                              className="text-[9px] sm:text-[8px] font-bold px-1.5 py-0.5 rounded-xs tracking-wider leading-none"
                               style={{ color: marketSignal.color, background: marketSignal.bg, border: `1px solid ${marketSignal.border}` }}
                             >
                               {marketSignal.label}
                             </span>
                           )}
-
                           {variation7d != null && (
                             <span className={[
-                              "text-[8px] font-bold px-[4px] py-[1px] rounded-xs border tabular-nums leading-none",
+                              "text-[9px] sm:text-[8px] font-bold px-1 py-px rounded-xs border tabular-nums leading-none",
                               variation7d >= 0
                                 ? "text-[#FF8A8A] bg-[rgba(255,138,138,0.08)] border-[rgba(255,138,138,0.25)]"
                                 : "text-[#7CFC8A] bg-[rgba(124,252,138,0.08)] border-[rgba(124,252,138,0.25)]",
@@ -595,231 +635,250 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
                             </span>
                           )}
                         </div>
-
-                        {fmtBRL(priceNow) && (
-                          <div className="text-[10px] text-[#aaa] mt-[3px] font-mono">{fmtBRL(priceNow)}</div>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-[12px] text-[#aaa] italic">sem oferta ativa</span>
-                    )}
-                  </div>
-
-                  {/* Right: média Habbo */}
-                  {averagePrice != null && (
-                    <div className="text-right shrink-0">
-                      <div className="text-[8px] text-[#aaa] uppercase tracking-widest mb-1">Média Habbo</div>
-                      <div className="flex items-baseline gap-0.5 justify-end">
-                        <span className="text-[16px] text-[#888] font-bold tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
-                        <span className="text-[10px] text-[#aaa]">c</span>
                       </div>
-                      {priceNow != null && (
-                        <div
-                          className="text-[9px] mt-[2px] tabular-nums font-mono"
-                          style={{ color: trendColor((priceNow / averagePrice - 1) * 100) }}
-                        >
-                          {(priceNow / averagePrice - 1) >= 0 ? "+" : ""}
-                          {((priceNow / averagePrice - 1) * 100).toFixed(1)}% vs média
-                        </div>
+                      {fmtBRL(priceNow) && (
+                        <div className="text-[11px] sm:text-[10px] text-[#aaa] mt-0.75 font-mono">{fmtBRL(priceNow)}</div>
                       )}
-                      {fmtBRL(averagePrice) && (
-                        <div className="text-[8px] text-[#aaa] font-mono">{fmtBRL(averagePrice)}</div>
-                      )}
-                    </div>
+                    </>
+                  ) : (
+                    <span className="text-[14px] sm:text-[12px] text-[#aaa] italic">sem oferta ativa</span>
                   )}
                 </div>
 
-                {/* Range bar */}
-                {histMin != null && histMax != null && histMin < histMax && (
-                  <div className="mt-4">
-
-                    {/* Floating price pin above bar */}
+                {/* Média Habbo */}
+                {averagePrice != null && (
+                  <div className="text-right shrink-0">
+                    <div className="text-[9px] sm:text-[8px] text-[#aaa] uppercase tracking-widest mb-1">Média</div>
+                    <div className="flex items-baseline gap-0.5 justify-end">
+                      <span className="text-[20px] sm:text-[16px] text-[#888] font-bold tabular-nums leading-none">{averagePrice.toLocaleString("pt-BR")}</span>
+                      <span className="text-[10px] text-[#aaa]">c</span>
+                    </div>
                     {priceNow != null && (
-                      <div className="relative h-5.5">
-                        <div
-                          className="absolute -translate-x-1/2 flex flex-col items-center pointer-events-none"
-                          style={{ left: `${barPct(priceNow)}%` }}
-                        >
-                          <span
-                            className="text-[8px] font-bold tabular-nums px-1.25 py-0.5 rounded-xs leading-none whitespace-nowrap"
-                            style={{
-                              color: marketSignal?.color ?? "#ffd64d",
-                              background: marketSignal?.bg ?? "rgba(255,214,77,0.12)",
-                              border: `1px solid ${marketSignal?.border ?? "rgba(255,214,77,0.3)"}`,
-                            }}
-                          >
-                            {priceNow.toLocaleString("pt-BR")}c
-                          </span>
-                          <div style={{
-                            width: 0, height: 0,
-                            borderLeft: "4px solid transparent",
-                            borderRight: "4px solid transparent",
-                            borderTop: `5px solid ${marketSignal?.color ?? "#ffd64d"}`,
-                            opacity: 0.55,
-                          }} />
-                        </div>
+                      <div
+                        className="text-[10px] sm:text-[9px] mt-0.5 tabular-nums font-mono"
+                        style={{ color: trendColor((priceNow / averagePrice - 1) * 100) }}
+                      >
+                        {(priceNow / averagePrice - 1) >= 0 ? "+" : ""}
+                        {((priceNow / averagePrice - 1) * 100).toFixed(1)}%
                       </div>
                     )}
-
-                    {/* Track */}
-                    <div
-                      className="relative h-5 rounded-md overflow-hidden mb-2"
-                      style={{ background: "#1a1a1a", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}
-                    >
-                      {/* Subtle heatmap gradient */}
-                      <div className="absolute inset-0" style={{
-                        background: "linear-gradient(90deg, rgba(255,100,80,0.07) 0%, rgba(255,255,255,0.02) 50%, rgba(80,220,100,0.07) 100%)",
-                      }} />
-
-                      {/* Fair zone fill */}
-                      {fairLow != null && fairHigh != null && (
-                        <div
-                          className="absolute top-0 bottom-0"
-                          style={{
-                            left: `${barPct(fairLow)}%`,
-                            width: `${Math.max(0, barPct(fairHigh) - barPct(fairLow))}%`,
-                            background: "rgba(124,252,138,0.2)",
-                            borderLeft: "1px solid rgba(124,252,138,0.55)",
-                            borderRight: "1px solid rgba(124,252,138,0.55)",
-                          }}
-                        />
-                      )}
-
-                      {/* Price needle */}
-                      {priceNow != null && (
-                        <div
-                          className="absolute top-0 bottom-0 w-1"
-                          style={{
-                            left: `${barPct(priceNow)}%`,
-                            transform: "translateX(-1px)",
-                            background: marketSignal?.color ?? "#ffd64d",
-                            boxShadow: `0 0 6px ${marketSignal?.color ?? "#ffd64d"}88`,
-                          }}
-                        />
-                      )}
-                    </div>
-
-                    {/* Labels row */}
-                    <div className="flex justify-between items-start">
-                      <div>
-                        <div className="text-[8px] text-[#777] font-mono leading-none">mín</div>
-                        <div className="text-[9px] text-[#bbb] font-bold tabular-nums font-mono mt-px">
-                          {histMin.toLocaleString("pt-BR")}c
-                        </div>
-                      </div>
-                      {fairLow != null && fairHigh != null && (
-                        <div className="flex flex-col items-center">
-                          <div className="text-[7px] uppercase tracking-widest leading-none" style={{ color: "#5a9e5a" }}>zona justa</div>
-                          <div className="text-[9px] font-bold font-mono mt-px" style={{ color: "#72c472" }}>
-                            {fairLow.toLocaleString("pt-BR")}–{fairHigh.toLocaleString("pt-BR")}c
-                          </div>
-                        </div>
-                      )}
-                      <div className="text-right">
-                        <div className="text-[8px] text-[#777] font-mono leading-none">máx</div>
-                        <div className="text-[9px] text-[#bbb] font-bold tabular-nums font-mono mt-px">
-                          {histMax.toLocaleString("pt-BR")}c
-                        </div>
-                      </div>
-                    </div>
-
+                    {fmtBRL(averagePrice) && (
+                      <div className="text-[9px] sm:text-[8px] text-[#aaa] font-mono">{fmtBRL(averagePrice)}</div>
+                    )}
                   </div>
                 )}
               </div>
 
-              {/* History panel */}
-              {history.length > 0 && (
-                <div
-                  className="w-[195px] shrink-0 rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2 max-h-[320px] flex flex-col"
-                  style={{ background: "rgb(58,58,58)" }}
-                >
-                  <HistoryBars history={history} />
+              {/* Range bar */}
+              {histMin != null && histMax != null && histMin < histMax && (
+                <div className="mt-4">
+                  {priceNow != null && (
+                    <div className="relative h-5.5">
+                      <div
+                        className="absolute -translate-x-1/2 flex flex-col items-center pointer-events-none"
+                        style={{ left: `${barPct(priceNow)}%` }}
+                      >
+                        <span
+                          className="text-[8px] font-bold tabular-nums px-1.25 py-0.5 rounded-xs leading-none whitespace-nowrap"
+                          style={{
+                            color: marketSignal?.color ?? "#ffd64d",
+                            background: marketSignal?.bg ?? "rgba(255,214,77,0.12)",
+                            border: `1px solid ${marketSignal?.border ?? "rgba(255,214,77,0.3)"}`,
+                          }}
+                        >
+                          {priceNow.toLocaleString("pt-BR")}c
+                        </span>
+                        <div style={{
+                          width: 0, height: 0,
+                          borderLeft: "4px solid transparent",
+                          borderRight: "4px solid transparent",
+                          borderTop: `5px solid ${marketSignal?.color ?? "#ffd64d"}`,
+                          opacity: 0.55,
+                        }} />
+                      </div>
+                    </div>
+                  )}
+
+                  <div
+                    className="relative h-5 rounded-md overflow-hidden mb-2"
+                    style={{ background: "#1a1a1a", boxShadow: "inset 0 1px 3px rgba(0,0,0,0.5)" }}
+                  >
+                    <div className="absolute inset-0" style={{
+                      background: "linear-gradient(90deg, rgba(255,100,80,0.07) 0%, rgba(255,255,255,0.02) 50%, rgba(80,220,100,0.07) 100%)",
+                    }} />
+                    {fairLow != null && fairHigh != null && (
+                      <div
+                        className="absolute top-0 bottom-0"
+                        style={{
+                          left: `${barPct(fairLow)}%`,
+                          width: `${Math.max(0, barPct(fairHigh) - barPct(fairLow))}%`,
+                          background: "rgba(124,252,138,0.2)",
+                          borderLeft: "1px solid rgba(124,252,138,0.55)",
+                          borderRight: "1px solid rgba(124,252,138,0.55)",
+                        }}
+                      />
+                    )}
+                    {priceNow != null && (
+                      <div
+                        className="absolute top-0 bottom-0 w-1"
+                        style={{
+                          left: `${barPct(priceNow)}%`,
+                          transform: "translateX(-1px)",
+                          background: marketSignal?.color ?? "#ffd64d",
+                          boxShadow: `0 0 6px ${marketSignal?.color ?? "#ffd64d"}88`,
+                        }}
+                      />
+                    )}
+                  </div>
+
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <div className="text-[8px] text-[#777] font-mono leading-none">mín</div>
+                      <div className="text-[9px] text-[#bbb] font-bold tabular-nums font-mono mt-px">{histMin.toLocaleString("pt-BR")}c</div>
+                    </div>
+                    {fairLow != null && fairHigh != null && (
+                      <div className="flex flex-col items-center">
+                        <div className="text-[7px] uppercase tracking-widest leading-none" style={{ color: "#5a9e5a" }}>zona justa</div>
+                        <div className="text-[9px] font-bold font-mono mt-px" style={{ color: "#72c472" }}>
+                          {fairLow.toLocaleString("pt-BR")}–{fairHigh.toLocaleString("pt-BR")}c
+                        </div>
+                      </div>
+                    )}
+                    <div className="text-right">
+                      <div className="text-[8px] text-[#777] font-mono leading-none">máx</div>
+                      <div className="text-[9px] text-[#bbb] font-bold tabular-nums font-mono mt-px">{histMax.toLocaleString("pt-BR")}c</div>
+                    </div>
+                  </div>
                 </div>
               )}
+            </div>
 
-            </div>{/* end flex price+history */}
-
-            {/* ── 3-col stats ── */}
-            <div className="grid grid-cols-3 gap-2">
-
-              {/* Liquidez */}
-              <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
-                <SectionHeader label="Liquidez" />
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span
-                    className="text-[18px] font-bold tabular-nums leading-none"
-                    style={{ color: liquidityInfo.color }}
-                  >
-                    {daysWithSales30}
-                  </span>
-                  <span className="text-[8px] text-[#aaa]">/ 30d</span>
-                </div>
-                <span
-                  className="text-[8px] font-bold px-[4px] py-[1px] rounded-xs leading-none"
-                  style={{
-                    color: liquidityInfo.color,
-                    background: `${liquidityInfo.color}18`,
-                    border: `1px solid ${liquidityInfo.borderColor}`,
-                  }}
-                >
-                  {liquidityInfo.label}
-                </span>
-                <div className="text-[9px] text-[#888] mt-2 leading-tight">{liquidityInfo.desc}</div>
+            {/* ── Histórico diário (abaixo do preço no mobile, compacto) ── */}
+            {history.length > 0 && (
+              <div
+                className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2 flex flex-col"
+                style={{ background: "rgb(58,58,58)", maxHeight: isMobile ? 180 : 220 }}
+              >
+                <HistoryBars history={history} compact={isMobile} />
               </div>
+            )}
 
-              {/* Volume */}
-              <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
-                <SectionHeader label="Volume / dia" />
-                <div className="flex items-baseline gap-1 mb-1">
-                  <span className="text-[18px] font-bold text-[#e0e0e0] tabular-nums leading-none">{avgDailyVolume}</span>
-                  <span className="text-[8px] text-[#aaa]">unid.</span>
-                </div>
-                <div className="text-[8px] text-[#aaa]">{totalSold30} vendas em 30 dias</div>
-                <div className="text-[9px] text-[#888] mt-2 leading-tight">
-                  {avgDailyVolume >= 3
-                    ? "Alto volume de negociação."
-                    : avgDailyVolume >= 1
-                      ? "Volume moderado de negociação."
-                      : avgDailyVolume > 0
-                        ? "Baixo volume de negociação."
-                        : "Sem negociações recentes."}
-                </div>
-              </div>
+            {/* ── Stats ── */}
+            {isMobile ? (
+              /* Mobile: card único com 3 linhas horizontais */
+              <div className="rounded-md border border-[#333] p-3" style={{ background: "rgb(58,58,58)" }}>
+                <SectionHeader label="Estatísticas" />
+                <div className="divide-y divide-[rgba(255,255,255,0.06)]">
 
-              {/* Tendência */}
-              <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
-                <SectionHeader label="Tendência" />
-                {activeTrend != null ? (
-                  <>
-                    <div className="flex items-baseline gap-1 mb-1">
+                  {/* Liquidez */}
+                  <div className="flex items-center justify-between py-2.5">
+                    <div>
+                      <div className="text-[10px] font-bold text-[#aaa] uppercase tracking-wider leading-none mb-1">Liquidez</div>
+                      <div className="text-[9px] text-[#666] leading-none">{liquidityInfo.desc}</div>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <div className="text-right">
+                        <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: liquidityInfo.color }}>{daysWithSales30}</span>
+                        <span className="text-[10px] text-[#aaa] ml-1">/ 30d</span>
+                      </div>
                       <span
-                        className="text-[18px] font-bold tabular-nums leading-none"
-                        style={{ color: trendColor(activeTrend) }}
+                        className="text-[9px] font-bold px-1.5 py-0.5 rounded-xs leading-none whitespace-nowrap"
+                        style={{ color: liquidityInfo.color, background: `${liquidityInfo.color}18`, border: `1px solid ${liquidityInfo.borderColor}` }}
                       >
-                        {activeTrend >= 0 ? "+" : ""}{activeTrend.toFixed(1)}%
+                        {liquidityInfo.label}
                       </span>
                     </div>
-                    <div className="text-[8px] text-[#aaa]">{activeTrendLabel}</div>
-                    <div className="text-[9px] text-[#888] mt-2 leading-tight">
-                      {activeTrend >= 10
-                        ? "Preço em forte alta."
-                        : activeTrend > 0
-                          ? "Preço subindo levemente."
-                          : activeTrend === 0
-                            ? "Preço estável."
-                            : activeTrend > -10
-                              ? "Preço caindo levemente."
-                              : "Preço em forte queda."}
+                  </div>
+
+                  {/* Volume */}
+                  <div className="flex items-center justify-between py-2.5">
+                    <div>
+                      <div className="text-[10px] font-bold text-[#aaa] uppercase tracking-wider leading-none mb-1">Volume / dia</div>
+                      <div className="text-[9px] text-[#666] leading-none">{totalSold30} vendas em 30 dias</div>
                     </div>
-                  </>
-                ) : (
-                  <>
-                    <span className="text-[13px] text-[#aaa] italic">—</span>
-                    <div className="text-[9px] text-[#888] mt-2 leading-tight">Dados insuficientes.</div>
-                  </>
-                )}
+                    <div className="flex items-baseline gap-1 shrink-0">
+                      <span className="text-[22px] font-bold text-[#e0e0e0] tabular-nums leading-none">{avgDailyVolume}</span>
+                      <span className="text-[10px] text-[#aaa]">/ dia</span>
+                    </div>
+                  </div>
+
+                  {/* Tendência */}
+                  <div className="flex items-center justify-between py-2.5">
+                    <div>
+                      <div className="text-[10px] font-bold text-[#aaa] uppercase tracking-wider leading-none mb-1">Tendência</div>
+                      {activeTrend != null && (
+                        <div className="text-[9px] text-[#666] leading-none">
+                          {activeTrend >= 10 ? "Preço em forte alta." : activeTrend > 0 ? "Preço subindo." : activeTrend === 0 ? "Preço estável." : activeTrend > -10 ? "Preço caindo." : "Preço em forte queda."}
+                        </div>
+                      )}
+                    </div>
+                    {activeTrend != null ? (
+                      <div className="flex items-baseline gap-1.5 shrink-0">
+                        <span className="text-[22px] font-bold tabular-nums leading-none" style={{ color: trendColor(activeTrend) }}>
+                          {activeTrend >= 0 ? "+" : ""}{activeTrend.toFixed(1)}%
+                        </span>
+                        <span className="text-[9px] text-[#666]">{activeTrendLabel}</span>
+                      </div>
+                    ) : (
+                      <span className="text-[14px] text-[#555] italic">sem dados</span>
+                    )}
+                  </div>
+
+                </div>
               </div>
-            </div>
+            ) : (
+              /* Desktop: 3 colunas */
+              <div className="grid grid-cols-3 gap-2">
+
+                <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
+                  <SectionHeader label="Liquidez" />
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-[18px] font-bold tabular-nums leading-none" style={{ color: liquidityInfo.color }}>{daysWithSales30}</span>
+                    <span className="text-[8px] text-[#aaa]">/ 30d</span>
+                  </div>
+                  <span className="text-[8px] font-bold px-1 py-px rounded-xs leading-none"
+                    style={{ color: liquidityInfo.color, background: `${liquidityInfo.color}18`, border: `1px solid ${liquidityInfo.borderColor}` }}>
+                    {liquidityInfo.label}
+                  </span>
+                  <div className="text-[9px] text-[#888] mt-2 leading-tight">{liquidityInfo.desc}</div>
+                </div>
+
+                <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
+                  <SectionHeader label="Volume / dia" />
+                  <div className="flex items-baseline gap-1 mb-1">
+                    <span className="text-[18px] font-bold text-[#e0e0e0] tabular-nums leading-none">{avgDailyVolume}</span>
+                    <span className="text-[8px] text-[#aaa]">unid.</span>
+                  </div>
+                  <div className="text-[8px] text-[#aaa]">{totalSold30} vendas em 30 dias</div>
+                  <div className="text-[9px] text-[#888] mt-2 leading-tight">
+                    {avgDailyVolume >= 3 ? "Alto volume de negociação." : avgDailyVolume >= 1 ? "Volume moderado de negociação." : avgDailyVolume > 0 ? "Baixo volume de negociação." : "Sem negociações recentes."}
+                  </div>
+                </div>
+
+                <div className="rounded-md border border-[#333] hover:border-[#ffd64d66] transition-colors p-2" style={{ background: "rgb(58,58,58)" }}>
+                  <SectionHeader label="Tendência" />
+                  {activeTrend != null ? (
+                    <>
+                      <div className="flex items-baseline gap-1 mb-1">
+                        <span className="text-[18px] font-bold tabular-nums leading-none" style={{ color: trendColor(activeTrend) }}>
+                          {activeTrend >= 0 ? "+" : ""}{activeTrend.toFixed(1)}%
+                        </span>
+                      </div>
+                      <div className="text-[8px] text-[#aaa]">{activeTrendLabel}</div>
+                      <div className="text-[9px] text-[#888] mt-2 leading-tight">
+                        {activeTrend >= 10 ? "Preço em forte alta." : activeTrend > 0 ? "Preço subindo levemente." : activeTrend === 0 ? "Preço estável." : activeTrend > -10 ? "Preço caindo levemente." : "Preço em forte queda."}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-[13px] text-[#aaa] italic">—</span>
+                      <div className="text-[9px] text-[#888] mt-2 leading-tight">Dados insuficientes.</div>
+                    </>
+                  )}
+                </div>
+
+              </div>
+            )}
 
 
             <div className="border-t border-[rgba(255,255,255,0.06)]" />

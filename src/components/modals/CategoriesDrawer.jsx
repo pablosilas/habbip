@@ -18,7 +18,7 @@ function CategoryRow({
 }) {
   return (
     <div
-      className={`flex items-center gap-2 px-3 py-[8px] border-b border-[#3a3a3a] transition-colors ${isActive ? "bg-[rgba(255,214,77,0.08)]" : "hover:bg-[rgba(255,255,255,0.04)]"}`}
+      className={`flex items-center gap-2 px-3 py-[9px] border-b border-[#484848] transition-colors ${isActive ? "bg-[rgba(255,214,77,0.1)]" : "hover:bg-[rgba(255,255,255,0.06)]"}`}
     >
       {/* Ícone / emoji */}
       <div className="shrink-0 w-6 flex items-center justify-center">
@@ -42,18 +42,18 @@ function CategoryRow({
         onClick={onActivate}
         className="flex-1 min-w-0 text-left cursor-pointer"
       >
-        <div className={`text-[11px] font-bold truncate ${isActive ? "text-[#ffd64d]" : "text-[#d0d0d0]"}`}>
+        <div className={`text-[11px] font-bold truncate ${isActive ? "text-[#ffd64d]" : "text-white"}`}>
           {cat.label}
         </div>
         {cat.isCustom && cat.mobis?.length > 0 && (
-          <div className="text-[9px] text-[#666] leading-none mt-[2px]">
+          <div className="text-[9px] text-[#999] leading-none mt-[2px]">
             {cat.mobis.length} mobi{cat.mobis.length > 1 ? "s" : ""}
           </div>
         )}
       </button>
 
       {/* Ações */}
-      <div className="flex items-center gap-[6px] shrink-0">
+      <div className="flex items-center gap-[5px] shrink-0">
         {/* Pin / Unpin */}
         {!isHidden && (
           <button
@@ -61,9 +61,9 @@ function CategoryRow({
             onClick={isPinned ? onUnpin : onPin}
             disabled={!isPinned && pinnedCount >= maxPinned}
             title={isPinned ? "Desafixar" : pinnedCount >= maxPinned ? `Limite de ${maxPinned} fixadas` : "Fixar"}
-            className={`w-[22px] h-[22px] flex items-center justify-center rounded-[3px] border transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${isPinned
-              ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d] hover:bg-[rgba(255,214,77,0.25)]"
-              : "border-[#555] text-[#666] hover:border-[#888] hover:text-[#aaa]"
+            className={`w-[24px] h-[24px] flex items-center justify-center rounded-[3px] border transition-colors cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed ${isPinned
+              ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d] hover:bg-[rgba(255,214,77,0.28)]"
+              : "border-[#888] text-[#bbb] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.1)]"
               }`}
           >
             <span className="text-[11px] leading-none font-bold">{isPinned ? "★" : "☆"}</span>
@@ -76,7 +76,7 @@ function CategoryRow({
             type="button"
             onClick={onEdit}
             title="Editar"
-            className="w-[22px] h-[22px] flex items-center justify-center rounded-[3px] border border-[#555] text-[#666] hover:border-[#5599cc] hover:text-[#5599cc] transition-colors cursor-pointer"
+            className="w-[24px] h-[24px] flex items-center justify-center rounded-[3px] border border-[#888] text-[#bbb] hover:border-[#6aadee] hover:text-[#6aadee] hover:bg-[rgba(106,173,238,0.1)] transition-colors cursor-pointer"
           >
             <span className="text-[10px] leading-none">✎</span>
           </button>
@@ -88,7 +88,7 @@ function CategoryRow({
             type="button"
             onClick={onShow}
             title="Restaurar"
-            className="w-[22px] h-[22px] flex items-center justify-center rounded-[3px] border border-[#555] text-[#666] hover:border-[#4caf50] hover:text-[#4caf50] transition-colors cursor-pointer"
+            className="w-[24px] h-[24px] flex items-center justify-center rounded-[3px] border border-[#888] text-[#bbb] hover:border-[#5ecb6b] hover:text-[#5ecb6b] hover:bg-[rgba(94,203,107,0.1)] transition-colors cursor-pointer"
           >
             <span className="text-[10px] leading-none">↩</span>
           </button>
@@ -97,7 +97,7 @@ function CategoryRow({
             type="button"
             onClick={onDelete}
             title={cat.isCustom ? "Excluir" : "Ocultar"}
-            className="w-[22px] h-[22px] flex items-center justify-center rounded-[3px] border border-[#555] text-[#666] hover:border-[#cc3333] hover:text-[#cc3333] transition-colors cursor-pointer"
+            className="w-[24px] h-[24px] flex items-center justify-center rounded-[3px] border border-[#888] text-[#bbb] hover:border-[#e05555] hover:text-[#e05555] hover:bg-[rgba(224,85,85,0.1)] transition-colors cursor-pointer"
           >
             <span className="text-[10px] leading-none">×</span>
           </button>
@@ -184,7 +184,7 @@ export default function CategoriesDrawer({
           {/* Built-ins */}
           {visibleBuiltins.length > 0 && (
             <>
-              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#666] uppercase tracking-wider">
+              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#aaa] uppercase tracking-wider">
                 Padrão
               </div>
               {visibleBuiltins.map((cat) => (
@@ -207,7 +207,7 @@ export default function CategoriesDrawer({
           {/* Custom visíveis */}
           {visibleCustom.length > 0 && (
             <>
-              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#666] uppercase tracking-wider">
+              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#aaa] uppercase tracking-wider">
                 Minhas Categorias
               </div>
               {visibleCustom.map((cat) => (
@@ -231,7 +231,7 @@ export default function CategoriesDrawer({
           {/* Ocultas (built-ins + custom removidas dos chips) */}
           {hasHidden && (
             <>
-              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#555] uppercase tracking-wider">
+              <div className="px-3 pt-3 pb-1 text-[9px] font-bold text-[#888] uppercase tracking-wider">
                 Ocultas
               </div>
               {hiddenBuiltinList.map((cat) => (
@@ -275,8 +275,8 @@ export default function CategoriesDrawer({
         </div>
 
         {/* Footer */}
-        <div className="shrink-0 px-3 py-2 border-t border-[#2a2a2a] bg-[#2e2e2e]">
-          <div className="text-[9px] text-[#555] leading-[14px]">
+        <div className="shrink-0 px-3 py-2 border-t border-[#484848] bg-[#2e2e2e]">
+          <div className="text-[9px] text-[#999] leading-[14px]">
             Fixe até {maxPinned} categorias para acesso rápido. Arraste os chips para reordenar.
           </div>
         </div>
