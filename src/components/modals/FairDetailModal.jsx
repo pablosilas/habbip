@@ -550,7 +550,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
 
   const modal = (
     <div
-      className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-end sm:items-center justify-center p-0 sm:p-4"
+      className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4"
       onClick={onClose}
     >
       <div onClick={(e) => e.stopPropagation()} className="w-full max-w-[640px]">
@@ -558,7 +558,7 @@ export default function FairDetailModal({ open, item, onClose, creditRate }) {
           title={item.FurniName || "Detalhes"}
           onClose={onClose}
           expand
-          className="w-full max-w-[640px] h-[96vh] sm:h-[90vh] flex flex-col rounded-t-[23px] sm:rounded-[23px]"
+          className="w-full max-w-[640px] h-[90vh] flex flex-col rounded-[23px]"
           innerClassName="flex flex-col overflow-hidden"
         >
           <div className="flex-1 min-h-0 overflow-y-auto pr-1 space-y-3 px-0 sm:px-0">

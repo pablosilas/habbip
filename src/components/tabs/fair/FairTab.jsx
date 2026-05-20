@@ -128,6 +128,7 @@ export default function FairTab({
   const [customCategoryModalOpen, setCustomCategoryModalOpen] = React.useState(false)
   const [editingCategory, setEditingCategory] = React.useState(null)
   const [drawerOpen, setDrawerOpen] = React.useState(false)
+  const [chipsExpanded, setChipsExpanded] = React.useState(false)
 
   // drag & drop nos chips pinned
   const dragIndexRef = React.useRef(null)
@@ -165,8 +166,9 @@ export default function FairTab({
     const complement = allCategories
       .filter((c) => !pinnedSet.has(c.id) && !hiddenCustomChipIds.includes(c.id))
       .sort((a, b) => {
-        if (!a.isCustom && b.isCustom) return -1
-        if (a.isCustom && !b.isCustom) return 1
+        // custom (criadas pelo usuário) têm prioridade sobre built-ins
+        if (a.isCustom && !b.isCustom) return -1
+        if (!a.isCustom && b.isCustom) return 1
         return 0
       })
       .slice(0, MAX_CHIPS - pinnedCategories.length)
@@ -451,118 +453,135 @@ export default function FairTab({
 
       {expanded && (
         <>
-          {/* ── Chips de categoria (pinned) + botão Todas ── */}
-          <div className="flex items-center gap-[6px] mb-2 flex-wrap">
-            {chipCategories.map((cat, index) => (
-              <div
-                key={cat.id}
-                draggable={cat._pinned}
-                onDragStart={cat._pinned ? () => { dragIndexRef.current = index } : undefined}
-                onDragOver={cat._pinned ? (e) => e.preventDefault() : undefined}
-                onDrop={cat._pinned ? () => {
-                  const from = dragIndexRef.current
-                  if (from !== null && from !== index) reorderPinned(from, index)
-                  dragIndexRef.current = null
-                } : undefined}
-                className="relative flex group"
-              >
-                <div
+          {/* ── Chips de categoria ── */}
+          {/* Row 1: toggle (mobile) | chips scroll (desktop) | Todas + + */}
+          <div className="flex items-center gap-2 mb-2 min-w-0">
+            {/* Toggle expandível — só mobile */}
+            <button
+              type="button"
+              onClick={() => setChipsExpanded(v => !v)}
+              disabled={isLoadingAny}
+              className="sm:hidden flex items-center gap-1.5 px-2 py-[4px] text-[11px] font-bold border border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40"
+            >
+              <span>Categorias</span>
+              <span className="text-[9px] leading-none">{chipsExpanded ? "▲" : "▼"}</span>
+            </button>
+
+            {/* Chips em scroll — só desktop */}
+            <div className="hidden sm:flex flex-1 overflow-x-auto min-w-0 [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
+              <div className="flex items-center gap-[6px]">
+                {chipCategories.map((cat, index) => (
+                  <div
+                    key={cat.id}
+                    draggable={cat._pinned}
+                    onDragStart={cat._pinned ? () => { dragIndexRef.current = index } : undefined}
+                    onDragOver={cat._pinned ? (e) => e.preventDefault() : undefined}
+                    onDrop={cat._pinned ? () => {
+                      const from = dragIndexRef.current
+                      if (from !== null && from !== index) reorderPinned(from, index)
+                      dragIndexRef.current = null
+                    } : undefined}
+                    className="relative flex group"
+                  >
+                    <div
+                      className={[
+                        "flex items-stretch text-[11px] font-bold border transition-colors select-none",
+                        isLoadingAny ? "opacity-50 pointer-events-none" : "",
+                        activeCategory === cat.id
+                          ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                          : "border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)]",
+                      ].join(" ")}
+                    >
+                      <button
+                        type="button"
+                        onClick={() => handleCategoryClick(cat)}
+                        disabled={isLoadingAny}
+                        className="flex items-center gap-1 px-2 py-[4px] cursor-pointer disabled:cursor-not-allowed"
+                      >
+                        {cat.icon && <img src={cat.icon} alt={cat.label} className="w-3.5 h-3.5 object-contain" />}
+                        {cat.habboIconId != null && !cat.icon && (
+                          <img src={getCatalogIconUrl(cat.habboIconId)} alt={cat.label} className="w-3.5 h-3.5 object-contain" loading="lazy" />
+                        )}
+                        {cat.emoji && !cat.icon && cat.habboIconId == null && (
+                          <span className="text-[12px] leading-none">{cat.emoji}</span>
+                        )}
+                        {cat.label}
+                        {cat._pinned && (
+                          <span className="text-[8px] text-[#ffd64d] opacity-50 leading-none ml-px group-hover:hidden">★</span>
+                        )}
+                      </button>
+                      {cat.isCustom && (
+                        <button type="button" onClick={() => { setEditingCategory(cat); setCustomCategoryModalOpen(true) }} disabled={isLoadingAny} title="Editar categoria"
+                          className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed">
+                          <span className="text-[10px] leading-none">✎</span>
+                        </button>
+                      )}
+                      <button type="button"
+                        onClick={() => cat._pinned ? unpinCategory(cat.id) : pinCategory(cat.id)}
+                        disabled={isLoadingAny || (!cat._pinned && pinnedIds.length >= MAX_PINNED)}
+                        title={cat._pinned ? "Desafixar" : pinnedIds.length >= MAX_PINNED ? `Limite de ${MAX_PINNED} fixadas` : "Fixar"}
+                        className={["hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30",
+                          cat._pinned ? "text-[#ffd64d] hover:text-[#ffb300] hover:bg-[rgba(255,214,77,0.12)]" : "text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)]"].join(" ")}>
+                        <span className="text-[10px] leading-none font-bold">{cat._pinned ? "★" : "☆"}</span>
+                      </button>
+                      <button type="button"
+                        onClick={(e) => { e.stopPropagation(); if (activeCategory === cat.id) { setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.() } if (cat.isCustom) hideCustomFromChips(cat.id); else hideBuiltin(cat.id) }}
+                        disabled={isLoadingAny} title="Remover da visualização"
+                        className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed">
+                        <span className="text-[9px] leading-none font-bold">✕</span>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Todas + + */}
+            <div className="flex items-center gap-[4px] ml-auto sm:ml-0 shrink-0">
+              <button type="button" onClick={() => setDrawerOpen(true)} disabled={isLoadingAny} title="Ver todas as categorias"
+                className="flex items-center gap-1 px-2 py-[4px] text-[10px] font-bold border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40">
+                <span className="text-[12px] leading-none">⊞</span>
+                <span className="hidden sm:inline">Todas</span>
+              </button>
+              <button type="button"
+                onClick={() => { setEditingCategory(null); setCustomCategoryModalOpen(true) }}
+                disabled={isLoadingAny || customCategories.length >= MAX_CATEGORIES}
+                title={customCategories.length >= MAX_CATEGORIES ? `Limite de ${MAX_CATEGORIES} categorias atingido` : "Nova categoria"}
+                className="flex items-center justify-center w-[26px] py-[4px] border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-bold leading-none">
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Chips expandidos — só mobile */}
+          {chipsExpanded && (
+            <div className="sm:hidden flex flex-wrap gap-[6px] mb-2">
+              {chipCategories.map((cat) => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => { handleCategoryClick(cat); setChipsExpanded(false) }}
+                  disabled={isLoadingAny}
                   className={[
-                    "flex items-stretch text-[11px] font-bold border transition-colors select-none",
-                    isLoadingAny ? "opacity-50 pointer-events-none" : "",
+                    "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer disabled:opacity-50",
                     activeCategory === cat.id
                       ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
                       : "border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)]",
                   ].join(" ")}
                 >
-                  {/* Botão principal */}
-                  <button
-                    type="button"
-                    onClick={() => handleCategoryClick(cat)}
-                    disabled={isLoadingAny}
-                    className="flex items-center gap-1 px-2 py-[4px] cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    {cat.icon && <img src={cat.icon} alt={cat.label} className="w-3.5 h-3.5 object-contain" />}
-                    {cat.habboIconId != null && !cat.icon && (
-                      <img src={getCatalogIconUrl(cat.habboIconId)} alt={cat.label} className="w-3.5 h-3.5 object-contain" loading="lazy" />
-                    )}
-                    {cat.emoji && !cat.icon && cat.habboIconId == null && (
-                      <span className="text-[12px] leading-none">{cat.emoji}</span>
-                    )}
-                    {cat.label}
-                    {cat._pinned && (
-                      <span className="text-[8px] text-[#ffd64d] opacity-50 leading-none ml-px group-hover:hidden">★</span>
-                    )}
-                  </button>
-
-                  {/* Ações — só aparecem no hover */}
-                  {cat.isCustom && (
-                    <button
-                      type="button"
-                      onClick={() => { setEditingCategory(cat); setCustomCategoryModalOpen(true) }}
-                      disabled={isLoadingAny}
-                      title="Editar categoria"
-                      className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed"
-                    >
-                      <span className="text-[10px] leading-none">✎</span>
-                    </button>
+                  {cat.icon && <img src={cat.icon} alt={cat.label} className="w-3.5 h-3.5 object-contain" />}
+                  {cat.habboIconId != null && !cat.icon && (
+                    <img src={getCatalogIconUrl(cat.habboIconId)} alt={cat.label} className="w-3.5 h-3.5 object-contain" loading="lazy" />
                   )}
-                  <button
-                    type="button"
-                    onClick={() => cat._pinned ? unpinCategory(cat.id) : pinCategory(cat.id)}
-                    disabled={isLoadingAny || (!cat._pinned && pinnedIds.length >= MAX_PINNED)}
-                    title={cat._pinned ? "Desafixar" : pinnedIds.length >= MAX_PINNED ? `Limite de ${MAX_PINNED} fixadas` : "Fixar"}
-                    className={[
-                      "hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] transition-colors cursor-pointer disabled:cursor-not-allowed disabled:opacity-30",
-                      cat._pinned
-                        ? "text-[#ffd64d] hover:text-[#ffb300] hover:bg-[rgba(255,214,77,0.12)]"
-                        : "text-[#ccc] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.12)]",
-                    ].join(" ")}
-                  >
-                    <span className="text-[10px] leading-none font-bold">{cat._pinned ? "★" : "☆"}</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation()
-                      if (activeCategory === cat.id) { setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.() }
-                      if (cat.isCustom) hideCustomFromChips(cat.id)
-                      else hideBuiltin(cat.id)
-                    }}
-                    disabled={isLoadingAny}
-                    title="Remover da visualização"
-                    className="hidden group-hover:flex items-center px-1.5 border-l border-[rgba(255,255,255,0.2)] text-[#ccc] hover:text-[#ff6b6b] hover:bg-[rgba(255,107,107,0.12)] transition-colors cursor-pointer disabled:cursor-not-allowed"
-                  >
-                    <span className="text-[9px] leading-none font-bold">✕</span>
-                  </button>
-                </div>
-              </div>
-            ))}
-
-            {/* Botão Ver Todas */}
-            <div className="flex items-center gap-[4px] ml-auto">
-              <button
-                type="button"
-                onClick={() => setDrawerOpen(true)}
-                disabled={isLoadingAny}
-                title="Ver todas as categorias"
-                className="flex items-center gap-1 px-2 py-[4px] text-[10px] font-bold border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40"
-              >
-                <span className="text-[12px] leading-none">⊞</span>
-                <span>Todas</span>
-              </button>
-              {/* Botão + nova categoria */}
-              <button
-                type="button"
-                onClick={() => { setEditingCategory(null); setCustomCategoryModalOpen(true) }}
-                disabled={isLoadingAny || customCategories.length >= MAX_CATEGORIES}
-                title={customCategories.length >= MAX_CATEGORIES ? `Limite de ${MAX_CATEGORIES} categorias atingido` : "Nova categoria"}
-                className="flex items-center justify-center w-[26px] py-[4px] border border-dashed border-[#c3c3c3] text-white hover:border-white hover:bg-[rgba(255,255,255,0.07)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-bold leading-none"
-              >
-                +
-              </button>
+                  {cat.emoji && !cat.icon && cat.habboIconId == null && (
+                    <span className="text-[12px] leading-none">{cat.emoji}</span>
+                  )}
+                  {cat.label}
+                  {cat._pinned && <span className="text-[8px] text-[#ffd64d] opacity-50 leading-none ml-px">★</span>}
+                </button>
+              ))}
             </div>
-          </div>
+          )}
 
           {/* ── Subcategorias ── */}
           {subcategories && (
