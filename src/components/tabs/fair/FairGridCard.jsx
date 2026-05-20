@@ -30,6 +30,28 @@ function getTrendInfo(hasActiveOffers, currentPrice, averagePrice) {
   return { icon: "•", colorClass: "text-[#f1d97a]" }
 }
 
+function getPriceSignal(currentPrice, averagePrice) {
+  if (currentPrice == null || currentPrice <= 0 || averagePrice == null || averagePrice <= 0) return null
+  const ratio = currentPrice / averagePrice
+  if (ratio <= 0.90) return { label: "BARATO", tooltip: "Preço abaixo da média histórica", color: "#7CFC8A", bg: "rgba(124,252,138,0.12)", border: "rgba(124,252,138,0.3)" }
+  if (ratio >= 1.10) return { label: "CARO", tooltip: "Preço acima da média histórica", color: "#FF8A8A", bg: "rgba(255,138,138,0.12)", border: "rgba(255,138,138,0.3)" }
+  return { label: "JUSTO", tooltip: "Preço dentro da faixa esperada", color: "#f1d97a", bg: "rgba(241,217,122,0.12)", border: "rgba(241,217,122,0.3)" }
+}
+
+function getFlowSignal(history = []) {
+  if (!Array.isArray(history) || history.length === 0) return null
+  const now = Math.floor(Date.now() / 1000)
+  const cutoff30 = now - 30 * 86400
+  const recent = history.filter((e) => e[4] >= cutoff30)
+  if (recent.length === 0) return null
+  const daysWithSales = recent.filter((e) => (e[1] ?? 0) > 0).length
+  const liquidity = daysWithSales / 30
+  if (liquidity >= 0.60) return { label: "ATIVO", tooltip: "Vende quase todos os dias", color: "#7CFC8A", bg: "rgba(124,252,138,0.12)", border: "rgba(124,252,138,0.3)" }
+  if (liquidity >= 0.30) return { label: "REGULAR", tooltip: "Vende algumas vezes por semana", color: "#f1d97a", bg: "rgba(241,217,122,0.12)", border: "rgba(241,217,122,0.3)" }
+  if (daysWithSales > 0) return { label: "BAIXO", tooltip: "Poucas vendas recentes", color: "#aaa", bg: "rgba(255,255,255,0.06)", border: "rgba(255,255,255,0.15)" }
+  return { label: "PARADO", tooltip: "Sem vendas nos últimos 30 dias", color: "#666", bg: "rgba(255,255,255,0.04)", border: "rgba(255,255,255,0.1)" }
+}
+
 // ── useIsMobile ───────────────────────────────────────────────────────────────
 
 function useIsMobile() {
@@ -91,12 +113,28 @@ function FurniIcon({ classname, hotel = "br" }) {
 
 // ── Tooltip — desativado no mobile (sem hover) ────────────────────────────────
 
-function Tooltip({ text, children, disabled = false }) {
+function Tooltip({ text, children, disabled = false, tapMode = false }) {
   const [visible, setVisible] = React.useState(false)
   const [pos, setPos] = React.useState({ x: 0, y: 0 })
   const ref = React.useRef(null)
+  const timerRef = React.useRef(null)
 
-  const tooltip = (!disabled && visible) ? createPortal(
+  React.useEffect(() => () => clearTimeout(timerRef.current), [])
+
+  function calcPos() {
+    const r = ref.current?.getBoundingClientRect()
+    if (r) setPos({ x: r.left + r.width / 2, y: r.top - 6 })
+  }
+
+  function handleTap(e) {
+    e.stopPropagation()
+    calcPos()
+    setVisible(true)
+    clearTimeout(timerRef.current)
+    timerRef.current = setTimeout(() => setVisible(false), 2000)
+  }
+
+  const tooltip = visible ? createPortal(
     <div style={{ position: "fixed", left: pos.x, top: pos.y, transform: "translate(-50%, -100%)", zIndex: 99999, pointerEvents: "none" }}
       className="px-2 py-[3px] rounded bg-[#111] border border-[#444] text-[9px] text-[#e0e0e0] whitespace-nowrap shadow-lg"
     >{text}</div>,
@@ -105,13 +143,17 @@ function Tooltip({ text, children, disabled = false }) {
 
   if (disabled) return <>{children}</>
 
+  if (tapMode) {
+    return (
+      <span ref={ref} onTouchEnd={handleTap}>
+        {children}{tooltip}
+      </span>
+    )
+  }
+
   return (
     <span ref={ref}
-      onMouseEnter={() => {
-        const r = ref.current?.getBoundingClientRect()
-        if (r) setPos({ x: r.left + r.width / 2, y: r.top - 6 })
-        setVisible(true)
-      }}
+      onMouseEnter={() => { calcPos(); setVisible(true) }}
       onMouseLeave={() => setVisible(false)}
     >
       {children}{tooltip}
@@ -153,11 +195,12 @@ function FakeToggle({ checked }) {
 
 // ── ActionsMenu ───────────────────────────────────────────────────────────────
 
-function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn, onConfigureAlert }) {
+function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavorite, onToggleWatchlist, onAddToInventory, onTriggerFly, isLoggedIn, onConfigureAlert, customCategories = [], onAddToCategory }) {
   const [open, setOpen] = React.useState(false)
   const [pos, setPos] = React.useState({ top: 0, left: 0 })
   const btnRef = React.useRef(null)
   const menuRef = React.useRef(null)
+  const [showCatMenu, setShowCatMenu] = React.useState(false)
 
   function handleToggle(e) {
     e.stopPropagation()
@@ -174,7 +217,11 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
   React.useEffect(() => {
     if (!open) return
     function handleOutside(e) {
-      if (!btnRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) setOpen(false)
+      if (!btnRef.current?.contains(e.target) && !menuRef.current?.contains(e.target)) {
+        setOpen(false)
+        setShowCatMenu(false)
+      }
+
     }
     document.addEventListener("mousedown", handleOutside)
     return () => document.removeEventListener("mousedown", handleOutside)
@@ -235,6 +282,46 @@ function ActionsMenu({ item, isFavorite, isWatching, isInInventory, onToggleFavo
           <span className="flex-1 text-[11px] text-[#d0d0d0]">{isInInventory ? "Remover do inventário" : "Adicionar ao inventário"}</span>
           <FakeToggle checked={isInInventory} />
         </button>
+        {/* ── Adicionar à categoria ── */}
+        {customCategories.length > 0 && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setShowCatMenu((v) => !v) }}
+              className="w-full flex items-center gap-[10px] px-3 py-[9px] text-left border-t border-[#3f3f3f] hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer"
+            >
+              <span className="text-[14px] leading-none opacity-70">🏷️</span>
+              <span className="flex-1 text-[11px] text-[#d0d0d0]">Adicionar à categoria</span>
+              <span className="text-[10px] text-[#666]">{showCatMenu ? "▲" : "▶"}</span>
+            </button>
+
+            {showCatMenu && (
+              <div className="bg-[#3a3a3a] border-t border-[#3f3f3f]">
+                {customCategories.map((cat) => {
+                  const alreadyIn = cat.mobis?.some((m) => m.ClassName === item.ClassName)
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        if (!alreadyIn) onAddToCategory?.(cat.id, item)
+                        setShowCatMenu(false)
+                        setOpen(false)
+                      }}
+                      disabled={alreadyIn}
+                      className="w-full flex items-center gap-2 px-4 py-[7px] text-left hover:bg-[rgba(255,255,255,0.06)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed border-b border-[#444] last:border-b-0"
+                    >
+                      <span className="text-[12px] leading-none">{cat.emoji}</span>
+                      <span className="flex-1 text-[10px] text-[#d0d0d0] truncate">{cat.label}</span>
+                      {alreadyIn && <span className="text-[9px] text-[#666] shrink-0">já adicionado</span>}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   ) : null
@@ -279,6 +366,8 @@ export default function FairGridCard({
   isLoggedIn = false,
   onConfigureAlert,
   onClick,
+  customCategories = [], 
+  onAddToCategory,
 }) {
   const isMobile = useIsMobile()
   const isXs = useIsXs()
@@ -294,6 +383,8 @@ export default function FairGridCard({
   const hasActiveOffers = (openOffers ?? 0) > 0 && rawPrice != null && rawPrice > 0
   const priceNow = hasActiveOffers ? rawPrice : null
   const trendInfo = getTrendInfo(hasActiveOffers, priceNow, averagePrice)
+  const priceSignal = getPriceSignal(priceNow, averagePrice)
+  const flowSignal = getFlowSignal(history)
 
   return (
     <div
@@ -381,6 +472,47 @@ export default function FairGridCard({
             </div>
           </Tooltip>
 
+          <div className="flex items-center gap-[4px] mt-[2px] h-[16px]">
+            {priceSignal ? (
+              <Tooltip text={priceSignal.tooltip} tapMode={isMobile}>
+                <span
+                  className="text-[8px] font-bold px-[5px] py-[1px] rounded-[3px] leading-none"
+                  style={{ color: priceSignal.color, background: priceSignal.bg, border: `1px solid ${priceSignal.border}` }}
+                >
+                  {priceSignal.label}
+                </span>
+              </Tooltip>
+            ) : (
+              <Tooltip text="Sem oferta ativa ou média indisponível" tapMode={isMobile}>
+                <span
+                  className="text-[8px] font-bold px-[5px] py-[1px] rounded-[3px] leading-none whitespace-nowrap"
+                  style={{ color: "#555", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  S/PREÇO
+                </span>
+              </Tooltip>
+            )}
+            {flowSignal ? (
+              <Tooltip text={flowSignal.tooltip} tapMode={isMobile}>
+                <span
+                  className="text-[8px] font-bold px-[5px] py-[1px] rounded-[3px] leading-none"
+                  style={{ color: flowSignal.color, background: flowSignal.bg, border: `1px solid ${flowSignal.border}` }}
+                >
+                  {flowSignal.label}
+                </span>
+              </Tooltip>
+            ) : (
+              <Tooltip text="Sem histórico de vendas disponível" tapMode={isMobile}>
+                <span
+                  className="text-[8px] font-bold px-[5px] py-[1px] rounded-[3px] leading-none whitespace-nowrap"
+                  style={{ color: "#555", background: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.08)" }}
+                >
+                  S/HIST.
+                </span>
+              </Tooltip>
+            )}
+          </div>
+
         </div>
 
         {/* Imagem + InfoBadge — coluna direita */}
@@ -430,6 +562,8 @@ export default function FairGridCard({
             onTriggerFly={onTriggerFly}
             isLoggedIn={isLoggedIn}
             onConfigureAlert={onConfigureAlert}
+            customCategories={customCategories}
+            onAddToCategory={onAddToCategory}
           />
         </div>
       </div>

@@ -11,6 +11,10 @@ import traxIcon from "../../../assets/trax.png"
 import plasticIcon from "../../../assets/plastic.png"
 import modeIcon from "../../../assets/mode.png"
 import HotelSelect from "../../ui/HotelSelect"
+import { useCustomCategories } from "../../../hooks/useCustomCategories"
+import CustomCategoryModal from "../../modals/CustomCategoryModal"
+import CategoriesDrawer from "../../modals/CategoriesDrawer"
+import { getCatalogIconUrl } from "../../../constants/habboCatalogIcons"
 
 // ── Categorias ────────────────────────────────────────────────────────────────
 const FAIR_CATEGORIES = [
@@ -121,6 +125,58 @@ export default function FairTab({
   const [categoryLoading, setCategoryLoading] = React.useState(false)
   // Modal de detalhes
   const [detailItem, setDetailItem] = React.useState(null)
+  const [customCategoryModalOpen, setCustomCategoryModalOpen] = React.useState(false)
+  const [editingCategory, setEditingCategory] = React.useState(null)
+  const [drawerOpen, setDrawerOpen] = React.useState(false)
+
+  // drag & drop nos chips pinned
+  const dragIndexRef = React.useRef(null)
+
+  const {
+    categories: customCategories,
+    pinnedIds, hiddenBuiltins,
+    addCategory, removeCategory, updateCategory, addMobiToCategory,
+    pinCategory, unpinCategory, reorderPinned,
+    hideBuiltin, showBuiltin,
+    MAX_CATEGORIES, MAX_PINNED,
+  } = useCustomCategories()
+
+  // allCategories = built-ins visíveis + custom
+  const allCategories = React.useMemo(() => [
+    ...FAIR_CATEGORIES.filter((c) => !hiddenBuiltins.includes(c.id)),
+    ...customCategories,
+  ], [customCategories, hiddenBuiltins])
+
+  // chips visíveis = apenas os fixados, na ordem dos pinnedIds
+  const pinnedCategories = React.useMemo(() =>
+    pinnedIds
+      .map((id) => allCategories.find((c) => c.id === id))
+      .filter(Boolean),
+    [pinnedIds, allCategories])
+
+  // Complemento: categorias não-pinned para preencher até 4 slots
+  // ordem: built-ins visíveis primeiro, depois custom
+  const chipCategories = React.useMemo(() => {
+    if (allCategories.length === 0) return []
+
+    const pinnedSet = new Set(pinnedIds)
+    const MAX_CHIPS = 4
+
+    const complement = allCategories
+      .filter((c) => !pinnedSet.has(c.id))
+      .sort((a, b) => {
+        // built-ins antes de custom
+        if (!a.isCustom && b.isCustom) return -1
+        if (a.isCustom && !b.isCustom) return 1
+        return 0
+      })
+      .slice(0, MAX_CHIPS - pinnedCategories.length)
+
+    return [
+      ...pinnedCategories.map((c) => ({ ...c, _pinned: true })),
+      ...complement.map((c) => ({ ...c, _pinned: false })),
+    ]
+  }, [pinnedCategories, pinnedIds, allCategories])
 
   const wrapperRef = React.useRef(null)
   const inputRef = React.useRef(null)
@@ -205,7 +261,10 @@ export default function FairTab({
       setActiveCategory(null); setActiveSubcategory(null); setMobiQuery(""); onCategoryReset?.(); return
     }
     setActiveCategory(cat.id); setMobiQuery(""); setFilterQuery("")
-    if (cat.subcategories) {
+    if (cat.isCustom) {
+      setActiveSubcategory(null)
+      await fetchByClassNames(cat.exactClassNames || [])
+    } else if (cat.subcategories) {
       const todos = cat.subcategories.find(s => s.id.endsWith("_todos"))
       setActiveSubcategory(todos?.id ?? null)
       await fetchByTerms(todos?.searchTerms ?? cat.searchTerms, todos?.exactClassNames ?? cat.exactClassNames ?? null)
@@ -217,7 +276,7 @@ export default function FairTab({
 
   async function handleSubcategoryClick(sub) {
     if (activeSubcategory === sub.id) {
-      const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+      const cat = allCategories.find(c => c.id === activeCategory)
       const todos = cat?.subcategories?.find(s => s.id.endsWith("_todos"))
       setActiveSubcategory(todos?.id ?? null); setFilterQuery("")
       if (todos) await fetchByTerms(todos.searchTerms, todos.exactClassNames ?? null)
@@ -230,7 +289,7 @@ export default function FairTab({
 
   async function handleRefresh() {
     if (activeCategory) {
-      const cat = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+      const cat = allCategories.find(c => c.id === activeCategory)
       if (cat) {
         const sub = cat.subcategories?.find(s => s.id === activeSubcategory)
         await fetchByTerms(
@@ -243,7 +302,7 @@ export default function FairTab({
     onRefresh?.()
   }
 
-  const activeCategoryObj = FAIR_CATEGORIES.find(c => c.id === activeCategory)
+  const activeCategoryObj = allCategories.find(c => c.id === activeCategory)
   const subcategories = activeCategoryObj?.subcategories ?? null
   const hasDropdownItems = history.length > 0 || favorites.length > 0
   const isLoadingAny = loading || categoryLoading
@@ -281,6 +340,46 @@ export default function FairTab({
     )
     : sortedResults
 
+  async function fetchByClassNames(classNames) {
+    if (!classNames?.length) { onCategoryResults?.([]); return }
+    setCategoryLoading(true)
+    try {
+      const searches = await Promise.all(
+        [...new Set(classNames.map((cn) => cn.split("*")[0]))].map((term) =>
+          searchMarketItems({ query: term, hotel: fairHotel })
+        )
+      )
+      const seen = new Set()
+      const merged = []
+      for (const list of searches) {
+        for (const item of list) {
+          if (seen.has(item.ClassName)) continue
+          seen.add(item.ClassName)
+          merged.push(item)
+        }
+      }
+      const filtered = merged.filter((item) => classNames.includes(item.ClassName))
+      onCategoryResults?.(filtered)
+    } catch (err) {
+      console.error("[Categoria custom]", err?.message || err)
+    } finally {
+      setCategoryLoading(false)
+    }
+  }
+
+  function handleSaveCategoryModal(cat) {
+    if (editingCategory) {
+      updateCategory(cat)
+      // Se a categoria editada estava ativa, faz re-fetch
+      if (activeCategory === cat.id) {
+        fetchByClassNames(cat.exactClassNames)
+      }
+    } else {
+      addCategory(cat)
+    }
+    setEditingCategory(null)
+  }
+
   return (
     <div ref={wrapperRef}>
       {/* ── Modal de detalhe ── */}
@@ -304,6 +403,40 @@ export default function FairTab({
         onClose={() => setAlertConfigOpen(false)}
       />
 
+      {/* ── Drawer de categorias ── */}
+      <CategoriesDrawer
+        open={drawerOpen}
+        onClose={() => setDrawerOpen(false)}
+        builtinCategories={FAIR_CATEGORIES}
+        customCategories={customCategories}
+        hiddenBuiltins={hiddenBuiltins}
+        pinnedIds={pinnedIds}
+        maxPinned={MAX_PINNED}
+        activeCategory={activeCategory}
+        onActivate={handleCategoryClick}
+        onPin={pinCategory}
+        onUnpin={unpinCategory}
+        onEdit={(cat) => { setEditingCategory(cat); setCustomCategoryModalOpen(true) }}
+        onDeleteCustom={(id) => {
+          if (activeCategory === id) { setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.() }
+          removeCategory(id)
+        }}
+        onHideBuiltin={(id) => {
+          if (activeCategory === id) { setActiveCategory(null); setActiveSubcategory(null); onCategoryReset?.() }
+          hideBuiltin(id)
+        }}
+        onShowBuiltin={showBuiltin}
+      />
+
+      {/* ── Modal criar / editar categoria ── */}
+      <CustomCategoryModal
+        open={customCategoryModalOpen}
+        onClose={() => { setCustomCategoryModalOpen(false); setEditingCategory(null) }}
+        onSave={handleSaveCategoryModal}
+        hotel={fairHotel}
+        initialData={editingCategory}
+      />
+
       {/* ── Cabeçalho ── */}
       <div className="flex items-center justify-between mb-2 cursor-pointer" onClick={() => setExpanded((v) => !v)}>
         <div className="min-w-0 flex-1 mr-2">
@@ -317,22 +450,78 @@ export default function FairTab({
 
       {expanded && (
         <>
-          {/* ── Chips de categoria ── */}
-          <div className="flex flex-wrap gap-[6px] mb-2">
-            {FAIR_CATEGORIES.map((cat) => (
-              <button key={cat.id} type="button" onClick={() => handleCategoryClick(cat)} disabled={isLoadingAny}
-                className={[
-                  "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer",
-                  "disabled:opacity-50 disabled:cursor-not-allowed",
-                  activeCategory === cat.id
-                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
-                    : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
-                ].join(" ")}
+          {/* ── Chips de categoria (pinned) + botão Todas ── */}
+          <div className="flex items-center gap-[6px] mb-2 flex-wrap">
+            {chipCategories.map((cat, index) => (
+              <div
+                key={cat.id}
+                draggable={cat._pinned}
+                onDragStart={cat._pinned ? () => { dragIndexRef.current = index } : undefined}
+                onDragOver={cat._pinned ? (e) => e.preventDefault() : undefined}
+                onDrop={cat._pinned ? () => {
+                  const from = dragIndexRef.current
+                  if (from !== null && from !== index) reorderPinned(from, index)
+                  dragIndexRef.current = null
+                } : undefined}
+                className="relative"
               >
-                {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain " />}
-                {cat.label}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => handleCategoryClick(cat)}
+                  disabled={isLoadingAny}
+                  className={[
+                    "flex items-center gap-1 px-2 py-[4px] text-[11px] font-bold border transition-colors cursor-pointer select-none",
+                    "disabled:opacity-50 disabled:cursor-not-allowed",
+                    activeCategory === cat.id
+                      ? "border-[#ffd64d] bg-[rgba(255,214,77,0.15)] text-[#ffd64d]"
+                      : cat.isCustom
+                        ? "border-[#5a5a5a] text-[#999] hover:border-[#aaa] hover:text-[#ddd]"
+                        : "border-[#555] text-[#888] hover:border-[#888] hover:text-[#ccc]",
+                  ].join(" ")}
+                >
+                  {cat.icon && <img src={cat.icon} alt={cat.label} className="w-[14px] h-[14px] object-contain" />}
+                  {cat.habboIconId != null && !cat.icon && (
+                    <img
+                      src={getCatalogIconUrl(cat.habboIconId)}
+                      alt={cat.label}
+                      className="w-[14px] h-[14px] object-contain"
+                      loading="lazy"
+                    />
+                  )}
+                  {cat.emoji && !cat.icon && cat.habboIconId == null && (
+                    <span className="text-[12px] leading-none">{cat.emoji}</span>
+                  )}
+                  {cat.label}
+                  {cat._pinned && (
+                    <span className="text-[8px] text-[#555] leading-none ml-[1px]">📌</span>
+                  )}
+                </button>
+              </div>
             ))}
+
+            {/* Botão Ver Todas */}
+            <div className="flex items-center gap-[4px] ml-auto">
+              <button
+                type="button"
+                onClick={() => setDrawerOpen(true)}
+                disabled={isLoadingAny}
+                title="Ver todas as categorias"
+                className="flex items-center gap-1 px-2 py-[4px] text-[10px] font-bold border border-dashed border-[#555] text-[#666] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] transition-colors cursor-pointer disabled:opacity-40"
+              >
+                <span className="text-[12px] leading-none">⊞</span>
+                <span>Todas</span>
+              </button>
+              {/* Botão + nova categoria */}
+              <button
+                type="button"
+                onClick={() => { setEditingCategory(null); setCustomCategoryModalOpen(true) }}
+                disabled={isLoadingAny || customCategories.length >= MAX_CATEGORIES}
+                title={customCategories.length >= MAX_CATEGORIES ? `Limite de ${MAX_CATEGORIES} categorias atingido` : "Nova categoria"}
+                className="flex items-center justify-center w-[26px] py-[4px] border border-dashed border-[#555] text-[#666] hover:border-[#ffd64d] hover:text-[#ffd64d] hover:bg-[rgba(255,214,77,0.07)] transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-[14px] font-bold leading-none"
+              >
+                +
+              </button>
+            </div>
           </div>
 
           {/* ── Subcategorias ── */}
@@ -464,6 +653,14 @@ export default function FairTab({
                     setAlertConfigOpen(true)
                   }}
                   onClick={() => setDetailItem(item)}
+                  customCategories={customCategories}
+                  onAddToCategory={(categoryId, item) => {
+                    addMobiToCategory(categoryId, item)
+                    if (activeCategory === categoryId) {
+                      const cat = customCategories.find(c => c.id === categoryId)
+                      if (cat) fetchByClassNames([...(cat.exactClassNames || []), item.ClassName])
+                    }
+                  }}
                 />
               )
             })}
