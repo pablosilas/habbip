@@ -26,6 +26,7 @@ import ProfileModal from "../components/modals/ProfileModal"
 import InfoModal from "../components/modals/InfoModal"
 import LogoutConfirmModal from "../components/modals/LogoutConfirmModal"
 import WelcomeModal from "../components/modals/WelcomeModal"
+import SubscriptionModal from "../components/modals/SubscriptionModal"
 
 import { useFairSearch } from "../hooks/useFairSearch"
 import { useUserSearch } from "../hooks/useUserSearch"
@@ -353,14 +354,19 @@ export default function HabboDeskApp() {
         onClose={() => setWelcomeOpen(false)}
         onDismiss={() => setWelcomeOpen(false)}
       />
+      <SubscriptionModal
+        open={auth.subscriptionModalOpen}
+        onActivated={auth.handleSubscriptionActivated}
+        onLogout={doLogout}
+      />
       <LoginModal
         open={auth.loginModalOpen}
         mode={auth.authMode}
         onSetMode={auth.setAuthMode}
         loading={auth.loginLoading}
         error={auth.loginError}
-        onLogin={auth.handleLogin}
-        onRegister={auth.handleRegister}
+        onLogin={({ email, password }) => auth.handleLogin({ email, password })}
+        onRegister={({ email, habboNick, password }) => auth.handleRegister({ email, habboNick, password })}
         onClose={() => auth.setLoginModalOpen(false)}
       />
       <ProfileModal

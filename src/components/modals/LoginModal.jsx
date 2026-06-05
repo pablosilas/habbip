@@ -48,7 +48,7 @@ function AvatarPreview({ nick, status, habboUser }) {
         <img
           src={getHabboAvatarHeadUrl({ name: nick, hotel: "br", size: "s" })}
           alt={nick}
-          className="w-8 h-8 object-contain  shrink-0"
+          className="w-8 h-8 object-contain shrink-0"
           onError={() => setImgError(true)}
         />
       ) : (
@@ -71,12 +71,10 @@ function AvatarPreview({ nick, status, habboUser }) {
   )
 }
 
-// ── EyeIcon ───────────────────────────────────────────────────────────────────
 function EyeIcon({ open }) {
   return open ? (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
-      <circle cx="12" cy="12" r="3" />
+      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" /><circle cx="12" cy="12" r="3" />
     </svg>
   ) : (
     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -87,109 +85,59 @@ function EyeIcon({ open }) {
   )
 }
 
-// ── PinInput ─────────────────────────────────────────────────────────────────
-// Input visual de PIN estilo "caixinhas", aceita 6 dígitos
-function PinInput({ value, onChange, disabled, maxLength = 6, placeholder = "PIN" }) {
-  const inputRef = React.useRef(null)
+function PasswordInput({ value, onChange, disabled, placeholder = "Senha", autoComplete }) {
   const [reveal, setReveal] = React.useState(false)
-
-  function handleChange(e) {
-    const raw = e.target.value.replace(/\D/g, "").slice(0, maxLength)
-    onChange(raw)
-  }
-
   return (
-    <div className="relative">
-      {/* Input invisível captura o foco e teclado */}
+    <div className="flex gap-[4px]">
       <input
-        ref={inputRef}
-        type="tel"
-        inputMode="numeric"
-        pattern="[0-9]*"
+        type={reveal ? "text" : "password"}
         value={value}
-        onChange={handleChange}
+        onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        autoComplete="one-time-code"
-        className="absolute opacity-0 w-0 h-0"
-        aria-label={placeholder}
+        placeholder={placeholder}
+        autoComplete={autoComplete}
+        className="flex-1 h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
       />
-      {/* Display visual dos dígitos + olho */}
-      <div className="flex items-center gap-[5px]">
-        <div
-          className="flex gap-[4px] flex-1 cursor-pointer"
-          onClick={() => inputRef.current?.focus()}
-        >
-          {Array.from({ length: maxLength }).map((_, i) => {
-            const char = value[i]
-            const isCurrent = i === value.length && value.length < maxLength
-            return (
-              <div
-                key={i}
-                className={[
-                  "flex-1 h-8 flex items-center justify-center border text-[14px] font-bold text-white transition-all rounded-[2px]",
-                  char
-                    ? "border-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
-                    : isCurrent
-                      ? "border-[#ffd64d] bg-[rgba(255,255,255,0.06)] animate-pulse"
-                      : "border-[#555] bg-[rgba(255,255,255,0.04)]",
-                ].join(" ")}
-              >
-                {char ? (reveal ? char : "•") : ""}
-              </div>
-            )
-          })}
-        </div>
-        {/* Botão olho */}
-        <button
-          type="button"
-          onClick={() => setReveal((v) => !v)}
-          className={[
-            "shrink-0 w-7 h-8 flex items-center justify-center border rounded-[2px] transition-colors cursor-pointer",
-            reveal
-              ? "border-[#ffd64d] text-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
-              : "border-[#555] text-[#666] bg-[rgba(255,255,255,0.04)] hover:text-[#aaa] hover:border-[#888]",
-          ].join(" ")}
-          title={reveal ? "Ocultar PIN" : "Mostrar PIN"}
-          tabIndex={-1}
-        >
-          <EyeIcon open={reveal} />
-        </button>
-      </div>
-      {/* Indicador de progresso */}
-      <div className="mt-1 text-center text-[10px] text-[#888]">
-        {value.length}/{maxLength} dígitos {value.length === 6 ? "✓" : ""}
-      </div>
+      <button
+        type="button"
+        onClick={() => setReveal(v => !v)}
+        className={[
+          "w-9 h-9 flex items-center justify-center border rounded-[2px] transition-colors cursor-pointer shrink-0",
+          reveal
+            ? "border-[#ffd64d] text-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
+            : "border-[#555] text-[#666] bg-[rgba(255,255,255,0.04)] hover:text-[#aaa] hover:border-[#888]",
+        ].join(" ")}
+        tabIndex={-1}
+      >
+        <EyeIcon open={reveal} />
+      </button>
     </div>
   )
 }
 
-// ── Aviso de segurança ────────────────────────────────────────────────────────
 function SecurityNotice() {
   return (
     <div className="border border-[#ffd64d44] rounded-[6px] p-3 bg-[rgba(255,214,77,0.05)]">
       <div className="flex items-start gap-2">
         <span className="text-[14px] shrink-0 mt-[1px]">🔒</span>
         <div className="text-[10px] text-[#c8c8c8] leading-[16px]">
-          <span className="text-[#ffd64d] font-bold">O Habbip não tem nenhuma relação com o Habbo Hotel.</span>
-          {" "}Seu nick é usado apenas para identificação. O PIN que você cria aqui é{" "}
-          <span className="text-white font-bold">exclusivo do Habbip</span> — nunca use
-          o mesmo PIN/senha do jogo.
+          <span className="text-[#ffd64d] font-bold">O Habbip não tem relação com o Habbo Hotel.</span>
+          {" "}Seu email e senha são exclusivos do Habbip — nunca use a mesma senha do jogo.
         </div>
       </div>
     </div>
   )
 }
 
-// ── LoginForm ─────────────────────────────────────────────────────────────────
 function LoginForm({ onLogin, onSwitch, loading, error }) {
-  const [habboNick, setHabboNick] = React.useState("")
-  const [pin, setPin] = React.useState("")
+  const [email, setEmail] = React.useState("")
+  const [password, setPassword] = React.useState("")
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!habboNick.trim() || pin.length < 6 || loading) return
+    if (!email.trim() || !password || loading) return
     playSound()
-    onLogin({ habboNick: habboNick.trim(), password: pin })
+    onLogin({ email: email.trim(), password })
   }
 
   return (
@@ -197,29 +145,31 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
       <SecurityNotice />
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-1">Nick do Habbo</div>
+        <div className="text-white text-[13px] font-bold mb-1">Email</div>
         <input
-          value={habboNick}
-          onChange={(e) => setHabboNick(e.target.value)}
-          placeholder="Seu nick no Habbo Hotel"
-          autoComplete="username"
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          autoComplete="email"
           className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
         />
       </div>
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-1">PIN do Habbip</div>
-        <PinInput
-          value={pin}
-          onChange={setPin}
+        <div className="text-white text-[13px] font-bold mb-1">Senha</div>
+        <PasswordInput
+          value={password}
+          onChange={setPassword}
           disabled={loading}
-          placeholder="PIN do Habbip"
+          placeholder="Sua senha"
+          autoComplete="current-password"
         />
       </div>
 
       {error && <div className="text-[#ffd6d6] text-[12px]">{error}</div>}
 
-      <Button type="submit" disabled={!habboNick.trim() || pin.length < 6 || loading}>
+      <Button type="submit" disabled={!email.trim() || password.length < 8 || loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
 
@@ -233,27 +183,27 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
   )
 }
 
-// ── RegisterForm ──────────────────────────────────────────────────────────────
 function RegisterForm({ onRegister, onSwitch, loading, error }) {
+  const [email, setEmail] = React.useState("")
   const [habboNick, setHabboNick] = React.useState("")
-  const [pin, setPin] = React.useState("")
-  const [pinConfirm, setPinConfirm] = React.useState("")
+  const [password, setPassword] = React.useState("")
+  const [passwordConfirm, setPasswordConfirm] = React.useState("")
   const [localError, setLocalError] = React.useState("")
 
   const { status, habboUser } = useHabboNickValidation(habboNick)
 
-  const nickValid = status === "found"
-  const pinValid = pin.length === 6
-  const pinsMatch = pin === pinConfirm && pinConfirm.length === 6
-  const canSubmit = nickValid && pinValid && pinsMatch && !loading
+  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
+  const passwordValid = password.length >= 8
+  const passwordsMatch = password === passwordConfirm && passwordConfirm.length >= 8
+  const canSubmit = emailValid && passwordValid && passwordsMatch && !loading
 
   function handleSubmit(e) {
     e.preventDefault()
     if (!canSubmit) return
-    if (!pinsMatch) { setLocalError("Os PINs não coincidem."); return }
+    if (!passwordsMatch) { setLocalError("As senhas não coincidem."); return }
     setLocalError("")
     playSound()
-    onRegister({ habboNick: habboNick.trim(), password: pin })
+    onRegister({ email: email.trim(), habboNick: habboNick.trim() || undefined, password })
   }
 
   const displayError = localError || error
@@ -263,38 +213,64 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
       <SecurityNotice />
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Nick do Habbo</div>
+        <div className="text-white text-[13px] font-bold mb-[2px]">Email</div>
+        <input
+          type="email"
+          value={email}
+          onChange={(e) => setEmail(e.target.value)}
+          placeholder="seu@email.com"
+          autoComplete="email"
+          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
+        />
+        {email.length > 3 && (
+          <div className={`mt-1 text-[10px] font-bold ${emailValid ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
+            {emailValid ? "Email válido ✓" : "Email inválido"}
+          </div>
+        )}
+      </div>
+
+      <div>
+        <div className="text-white text-[13px] font-bold mb-[2px]">
+          Nick do Habbo <span className="text-[#888] font-normal">(opcional)</span>
+        </div>
         <input
           value={habboNick}
           onChange={(e) => setHabboNick(e.target.value)}
           placeholder="Seu nick no Habbo Hotel"
-          autoComplete="username"
+          autoComplete="off"
           className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0] mb-1"
         />
         <AvatarPreview nick={habboNick.trim()} status={status} habboUser={habboUser} />
       </div>
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Criar PIN</div>
-        <PinInput
-          value={pin}
-          onChange={setPin}
+        <div className="text-white text-[13px] font-bold mb-[2px]">Senha</div>
+        <PasswordInput
+          value={password}
+          onChange={setPassword}
           disabled={loading}
-          placeholder="Novo PIN"
+          placeholder="Mínimo 8 caracteres"
+          autoComplete="new-password"
         />
+        {password.length > 0 && (
+          <div className={`mt-1 text-[10px] font-bold ${passwordValid ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
+            {passwordValid ? "Senha válida ✓" : `${8 - password.length} caracteres restantes`}
+          </div>
+        )}
       </div>
 
       <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Confirmar PIN</div>
-        <PinInput
-          value={pinConfirm}
-          onChange={setPinConfirm}
+        <div className="text-white text-[13px] font-bold mb-[2px]">Confirmar senha</div>
+        <PasswordInput
+          value={passwordConfirm}
+          onChange={setPasswordConfirm}
           disabled={loading}
-          placeholder="Confirmar PIN"
+          placeholder="Repita a senha"
+          autoComplete="new-password"
         />
-        {pinConfirm.length === 6 && (
-          <div className={`mt-1 text-center text-[10px] font-bold ${pinsMatch ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-            {pinsMatch ? "PINs coincidem ✓" : "PINs não coincidem"}
+        {passwordConfirm.length > 0 && (
+          <div className={`mt-1 text-[10px] font-bold ${passwordsMatch ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
+            {passwordsMatch ? "Senhas coincidem ✓" : "Senhas não coincidem"}
           </div>
         )}
       </div>
@@ -315,7 +291,6 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
   )
 }
 
-// ── LoginModal ────────────────────────────────────────────────────────────────
 export default function LoginModal({
   open, mode = "login", onSetMode, loading, error,
   onLogin, onRegister, onClose,
@@ -327,7 +302,7 @@ export default function LoginModal({
       <ConsoleCard
         title={mode === "register" ? "Criar conta" : "Entrar"}
         onClose={onClose}
-        className={`w-full max-w-[450px]`}
+        className="w-full max-w-[450px]"
       >
         {mode === "login" ? (
           <LoginForm

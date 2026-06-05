@@ -7,6 +7,7 @@ import {
   clearSession,
   scheduleProactiveRefresh,
   cancelProactiveRefresh,
+  fetchSubscriptionStatus,
 } from "../services/authService"
 import {
   fetchUserByName,
@@ -17,7 +18,6 @@ import {
 } from "../services/habboApi"
 import { migrateAnonDataOnRegister } from "../services/migrateLocalStorage"
 
-// Busca tudo: dados básicos + profile + badges + groups + rooms
 async function enrichWithHabboProfile(user) {
   if (!user?.habboNick) return user
   try {
@@ -50,16 +50,18 @@ async function enrichWithHabboProfile(user) {
 function storeEnrichedUser(user) {
   try {
     localStorage.setItem("habbip:user", JSON.stringify(user))
-  } catch { /* empty */ }
+  } catch { }
 }
 
 export function useAuth() {
   const [loggedUser, setLoggedUser] = React.useState(() => getStoredUser())
-  // Modal começa FECHADO — usuário entra direto como anônimo
   const [loginModalOpen, setLoginModalOpen] = React.useState(false)
   const [authMode, setAuthMode] = React.useState("login")
   const [loginLoading, setLoginLoading] = React.useState(false)
   const [loginError, setLoginError] = React.useState("")
+
+  const [subscriptionStatus, setSubscriptionStatus] = React.useState(null)
+  const [subscriptionModalOpen, setSubscriptionModalOpen] = React.useState(false)
 
   React.useEffect(() => {
     const stored = getStoredUser()
@@ -67,11 +69,10 @@ export function useAuth() {
     return () => cancelProactiveRefresh()
   }, [])
 
-  // Não abre modal automaticamente ao carregar — removido o useEffect anterior
-
   React.useEffect(() => {
     function handleExpired() {
       setLoggedUser(null)
+      setSubscriptionStatus(null)
       cancelProactiveRefresh()
       setLoginError("Sua sessão expirou. Faça login novamente.")
       setLoginModalOpen(true)
@@ -80,7 +81,6 @@ export function useAuth() {
     return () => window.removeEventListener("habbip:session-expired", handleExpired)
   }, [])
 
-  // Se já tem sessão salva mas sem perfil completo, busca em background
   React.useEffect(() => {
     const stored = getStoredUser()
     if (stored?.habboNick && !stored?.habboProfile) {
@@ -91,16 +91,30 @@ export function useAuth() {
     }
   }, [])
 
-  const handleLogin = async ({ habboNick, password }) => {
+  async function checkSubscription() {
+    try {
+      const result = await fetchSubscriptionStatus()
+      setSubscriptionStatus(result)
+      if (result.status !== 'active') {
+        setSubscriptionModalOpen(true)
+      }
+      return result
+    } catch {
+      return null
+    }
+  }
+
+  const handleLogin = async ({ email, password }) => {
     setLoginLoading(true)
     setLoginError("")
     try {
-      const user = await login({ habboNick, password })
+      const user = await login({ email, password })
       const enriched = await enrichWithHabboProfile(user)
       storeEnrichedUser(enriched)
       setLoggedUser(enriched)
       scheduleProactiveRefresh()
       setLoginModalOpen(false)
+      await checkSubscription()
       return enriched
     } catch (err) {
       if (err instanceof TypeError && err.message === "Failed to fetch") {
@@ -114,18 +128,19 @@ export function useAuth() {
     }
   }
 
-  const handleRegister = async ({ habboNick, password }) => {
+  const handleRegister = async ({ email, habboNick, password }) => {
     setLoginLoading(true)
     setLoginError("")
     try {
-      const user = await register({ habboNick, password })
-      // Migra dados anônimos (inventário local) para a conta recém-criada
+      const user = await register({ email, habboNick, password })
       await migrateAnonDataOnRegister().catch(() => { })
       const enriched = await enrichWithHabboProfile(user)
       storeEnrichedUser(enriched)
       setLoggedUser(enriched)
       scheduleProactiveRefresh()
       setLoginModalOpen(false)
+      setSubscriptionStatus({ status: 'none', expiresAt: null })
+      setSubscriptionModalOpen(true)
       return enriched
     } catch (err) {
       if (err instanceof TypeError && err.message === "Failed to fetch") {
@@ -149,9 +164,15 @@ export function useAuth() {
   const handleLogout = async (onAfterLogout) => {
     await logout()
     setLoggedUser(null)
+    setSubscriptionStatus(null)
+    setSubscriptionModalOpen(false)
     cancelProactiveRefresh()
     onAfterLogout?.()
-    // Não reabre o modal — usuário fica anônimo naturalmente
+  }
+
+  const handleSubscriptionActivated = () => {
+    setSubscriptionStatus({ status: 'active' })
+    setSubscriptionModalOpen(false)
   }
 
   return {
@@ -169,5 +190,11 @@ export function useAuth() {
     handleContinueAnonymous,
     handleLogout,
     isLoggedIn: !!loggedUser,
+    subscriptionStatus,
+    subscriptionModalOpen,
+    setSubscriptionModalOpen,
+    hasActiveSubscription: subscriptionStatus?.status === 'active',
+    handleSubscriptionActivated,
+    checkSubscription,
   }
 }

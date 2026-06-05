@@ -89,17 +89,14 @@ export async function apiFetch(path, options = {}) {
 
   if (!res.ok) {
     const err = await res.json().catch(() => null)
-
-    // Mensagem vinda do backend (ex: "Nick ou senha incorretos.")
     if (err?.error) throw new Error(err.error)
 
-    // Fallbacks por status HTTP
     const httpMessages = {
       400: "Dados inválidos. Verifique as informações e tente novamente.",
-      401: "Nick ou senha incorretos.",
+      401: "Email ou senha incorretos.",
       403: "Acesso não autorizado.",
       404: "Recurso não encontrado.",
-      409: "Esse nick já tem uma conta cadastrada.",
+      409: "Este email já está cadastrado.",
       429: "Muitas tentativas. Aguarde alguns minutos e tente novamente.",
       500: "Erro no servidor. Tente novamente em instantes.",
       502: "Servidor indisponível. Tente novamente em instantes.",
@@ -113,19 +110,19 @@ export async function apiFetch(path, options = {}) {
 
 // ── Auth ────────────────────────────────────────────────────────────────────
 
-export async function register({ habboNick, password }) {
+export async function register({ email, habboNick, password }) {
   const data = await apiFetch("/auth/register", {
     method: "POST",
-    body: JSON.stringify({ habboNick, password }),
+    body: JSON.stringify({ email, habboNick, password }),
   })
   storeSession(data)
   return data.user
 }
 
-export async function login({ habboNick, password }) {
+export async function login({ email, password }) {
   const data = await apiFetch("/auth/login", {
     method: "POST",
-    body: JSON.stringify({ habboNick, password }),
+    body: JSON.stringify({ email, password }),
   })
   storeSession(data)
   return data.user
@@ -149,6 +146,16 @@ export async function updatePassword({ currentPassword, newPassword }) {
   })
 }
 
+// ── Pagamento / Assinatura ───────────────────────────────────────────────────
+
+export async function fetchSubscriptionStatus() {
+  return apiFetch("/payment/status")
+}
+
+export async function createPixPayment() {
+  return apiFetch("/payment/create-pix", { method: "POST" })
+}
+
 // ── Dados do usuário ─────────────────────────────────────────────────────────
 
 export async function fetchUserData() {
@@ -169,7 +176,7 @@ export async function syncAllData(data) {
   })
 }
 
-const TOKEN_REFRESH_MARGIN_MS = 2 * 60 * 1000 // 2 min antes de expirar
+const TOKEN_REFRESH_MARGIN_MS = 2 * 60 * 1000
 let proactiveRefreshTimer = null
 
 function getTokenExpiry() {
@@ -189,7 +196,6 @@ export function scheduleProactiveRefresh() {
 
   const delay = expiry - Date.now() - TOKEN_REFRESH_MARGIN_MS
   if (delay <= 0) {
-    // Já expirou ou está na margem — tenta refresh imediato
     refreshAccessToken().catch(() => { })
     return
   }
