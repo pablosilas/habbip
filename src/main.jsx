@@ -20,14 +20,18 @@ import React from "react"
 import ReactDOM from "react-dom/client"
 import MaintenancePage, { useMaintenanceGate } from "./components/MaintenancePage.jsx"
 import HabbipApp from "./views/HabbipApp"
+import AdminPage from "./views/AdminPage"
 import { Analytics } from '@vercel/analytics/react';
 
 import "./index.css"
 
 const IS_MAINTENANCE = import.meta.env.VITE_MAINTENANCE === "true"
+const IS_ADMIN = window.location.pathname === "/admin"
 
 function Root() {
   const previewAllowed = useMaintenanceGate()
+
+  if (IS_ADMIN) return <AdminPage />
 
   if (IS_MAINTENANCE && !previewAllowed) {
     return <MaintenancePage />
