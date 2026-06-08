@@ -1,73 +1,23 @@
 import React from "react"
-import ConsoleCard from "../ui/ConsoleCard"
 import Button from "../ui/Button"
-import { fetchUserByName, getHabboAvatarHeadUrl } from "../../services/habboApi"
 import messageSound from "../../assets/message.mp3"
 
 function playSound() {
   try { new Audio(messageSound).play() } catch { }
 }
 
-function useHabboNickValidation(habboNick) {
-  const [status, setStatus] = React.useState("idle")
-  const [habboUser, setHabboUser] = React.useState(null)
-  const timerRef = React.useRef(null)
-
-  React.useEffect(() => {
-    const nick = habboNick.trim()
-    if (!nick) { setStatus("idle"); setHabboUser(null); return }
-
-    clearTimeout(timerRef.current)
-    timerRef.current = setTimeout(async () => {
-      setStatus("checking"); setHabboUser(null)
-      try {
-        const user = await fetchUserByName(nick)
-        if (user?.uniqueId) { setHabboUser(user); setStatus("found") }
-        else setStatus("not_found")
-      } catch { setStatus("not_found") }
-    }, 600)
-
-    return () => clearTimeout(timerRef.current)
-  }, [habboNick])
-
-  return { status, habboUser }
-}
-
-function AvatarPreview({ nick, status, habboUser }) {
-  const [imgError, setImgError] = React.useState(false)
-  React.useEffect(() => setImgError(false), [nick])
-
-  if (status === "idle") return null
-
+function HabbipLogo() {
   return (
-    <div className={`flex items-center gap-2 px-3 py-2 rounded-[6px] border text-[12px] transition-all ${status === "found" ? "border-[#7CFC8A] bg-[rgba(124,252,138,0.08)]"
-      : status === "not_found" ? "border-[#FF8A8A] bg-[rgba(255,138,138,0.08)]"
-        : "border-[#555] bg-[rgba(255,255,255,0.04)]"
-      }`}>
-      {status === "found" && nick && !imgError ? (
-        <img
-          src={getHabboAvatarHeadUrl({ name: nick, hotel: "br", size: "s" })}
-          alt={nick}
-          className="w-8 h-8 object-contain shrink-0"
-          onError={() => setImgError(true)}
-        />
-      ) : (
-        <div className="w-8 h-8 flex items-center justify-center text-[16px] shrink-0">
-          {status === "checking" ? "⏳" : status === "found" ? "👤" : "❌"}
-        </div>
-      )}
-      <div className="flex-1 min-w-0">
-        {status === "checking" && <span className="text-[#aaa]">Verificando nick no Habbo...</span>}
-        {status === "found" && (
-          <div>
-            <span className="text-[#7CFC8A] font-bold">{habboUser?.name || nick}</span>
-            <span className="text-[#7CFC8A]"> encontrado ✓</span>
-            {habboUser?.motto && <div className="text-[#aaa] text-[10px] truncate">{habboUser.motto}</div>}
-          </div>
-        )}
-        {status === "not_found" && <span className="text-[#FF8A8A]">Nick não encontrado no Habbo Hotel</span>}
-      </div>
-    </div>
+    <svg width="160" height="48" viewBox="0 0 160 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+      {/* Ícone de casa estilo pixel */}
+      <rect x="2" y="18" width="36" height="28" fill="#ffd64d" rx="2"/>
+      <polygon points="20,2 0,20 40,20" fill="#ffb800"/>
+      <rect x="14" y="28" width="12" height="18" fill="#7c4e00" rx="1"/>
+      <rect x="6" y="22" width="8" height="8" fill="#fff9e6" rx="1"/>
+      <rect x="26" y="22" width="8" height="8" fill="#fff9e6" rx="1"/>
+      {/* Texto HABBIP */}
+      <text x="50" y="34" fontFamily="Verdana, Arial, sans-serif" fontWeight="bold" fontSize="26" fill="#ffd64d" letterSpacing="1">HABBIP</text>
+    </svg>
   )
 }
 
@@ -85,7 +35,7 @@ function EyeIcon({ open }) {
   )
 }
 
-function PasswordInput({ value, onChange, disabled, placeholder = "Senha", autoComplete }) {
+function PasswordInput({ value, onChange, disabled }) {
   const [reveal, setReveal] = React.useState(false)
   return (
     <div className="flex gap-[4px]">
@@ -94,15 +44,15 @@ function PasswordInput({ value, onChange, disabled, placeholder = "Senha", autoC
         value={value}
         onChange={(e) => onChange(e.target.value)}
         disabled={disabled}
-        placeholder={placeholder}
-        autoComplete={autoComplete}
-        className="flex-1 h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
+        placeholder="Senha"
+        autoComplete="current-password"
+        className="flex-1 h-10 border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] px-3 text-[13px] text-white outline-none placeholder:text-[#777] rounded-[4px]"
       />
       <button
         type="button"
         onClick={() => setReveal(v => !v)}
         className={[
-          "w-9 h-9 flex items-center justify-center border rounded-[2px] transition-colors cursor-pointer shrink-0",
+          "w-10 h-10 flex items-center justify-center border rounded-[4px] transition-colors cursor-pointer shrink-0",
           reveal
             ? "border-[#ffd64d] text-[#ffd64d] bg-[rgba(255,214,77,0.12)]"
             : "border-[#555] text-[#666] bg-[rgba(255,255,255,0.04)] hover:text-[#aaa] hover:border-[#888]",
@@ -115,190 +65,107 @@ function PasswordInput({ value, onChange, disabled, placeholder = "Senha", autoC
   )
 }
 
-function SecurityNotice() {
-  return (
-    <div className="border border-[#ffd64d44] rounded-[6px] p-3 bg-[rgba(255,214,77,0.05)]">
-      <div className="flex items-start gap-2">
-        <span className="text-[14px] shrink-0 mt-[1px]">🔒</span>
-        <div className="text-[10px] text-[#c8c8c8] leading-[16px]">
-          <span className="text-[#ffd64d] font-bold">O Habbip não tem relação com o Habbo Hotel.</span>
-          {" "}Seu email e senha são exclusivos do Habbip — nunca use a mesma senha do jogo.
-        </div>
-      </div>
-    </div>
-  )
-}
-
-function LoginForm({ onLogin, loading, error }) {
+export default function LoginModal({ open, loading, error, onLogin }) {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
 
   function handleSubmit(e) {
     e.preventDefault()
-    if (!email.trim() || !password || loading) return
+    if (!email.trim() || password.length < 8 || loading) return
     playSound()
     onLogin({ email: email.trim(), password })
   }
 
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3">
-      <SecurityNotice />
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-1">Email</div>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          autoComplete="email"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
-        />
-      </div>
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-1">Senha</div>
-        <PasswordInput
-          value={password}
-          onChange={setPassword}
-          disabled={loading}
-          placeholder="Sua senha"
-          autoComplete="current-password"
-        />
-      </div>
-
-      {error && <div className="text-[#ffd6d6] text-[12px]">{error}</div>}
-
-      <Button type="submit" disabled={!email.trim() || password.length < 8 || loading}>
-        {loading ? "Entrando..." : "Entrar"}
-      </Button>
-    </form>
-  )
-}
-
-function RegisterForm({ onRegister, onSwitch, loading, error }) {
-  const [email, setEmail] = React.useState("")
-  const [habboNick, setHabboNick] = React.useState("")
-  const [password, setPassword] = React.useState("")
-  const [passwordConfirm, setPasswordConfirm] = React.useState("")
-  const [localError, setLocalError] = React.useState("")
-
-  const { status, habboUser } = useHabboNickValidation(habboNick)
-
-  const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())
-  const passwordValid = password.length >= 8
-  const passwordsMatch = password === passwordConfirm && passwordConfirm.length >= 8
-  const canSubmit = emailValid && passwordValid && passwordsMatch && !loading
-
-  function handleSubmit(e) {
-    e.preventDefault()
-    if (!canSubmit) return
-    if (!passwordsMatch) { setLocalError("As senhas não coincidem."); return }
-    setLocalError("")
-    playSound()
-    onRegister({ email: email.trim(), habboNick: habboNick.trim() || undefined, password })
-  }
-
-  const displayError = localError || error
-
-  return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-      <SecurityNotice />
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Email</div>
-        <input
-          type="email"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          placeholder="seu@email.com"
-          autoComplete="email"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0]"
-        />
-        {email.length > 3 && (
-          <div className={`mt-1 text-[10px] font-bold ${emailValid ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-            {emailValid ? "Email válido ✓" : "Email inválido"}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">
-          Nick do Habbo <span className="text-[#888] font-normal">(opcional)</span>
-        </div>
-        <input
-          value={habboNick}
-          onChange={(e) => setHabboNick(e.target.value)}
-          placeholder="Seu nick no Habbo Hotel"
-          autoComplete="off"
-          className="w-full h-9 border border-[#8a8a8a] bg-[rgba(255,255,255,0.10)] px-3 text-[12px] text-white outline-none placeholder:text-[#b0b0b0] mb-1"
-        />
-        <AvatarPreview nick={habboNick.trim()} status={status} habboUser={habboUser} />
-      </div>
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Senha</div>
-        <PasswordInput
-          value={password}
-          onChange={setPassword}
-          disabled={loading}
-          placeholder="Mínimo 8 caracteres"
-          autoComplete="new-password"
-        />
-        {password.length > 0 && (
-          <div className={`mt-1 text-[10px] font-bold ${passwordValid ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-            {passwordValid ? "Senha válida ✓" : `${8 - password.length} caracteres restantes`}
-          </div>
-        )}
-      </div>
-
-      <div>
-        <div className="text-white text-[13px] font-bold mb-[2px]">Confirmar senha</div>
-        <PasswordInput
-          value={passwordConfirm}
-          onChange={setPasswordConfirm}
-          disabled={loading}
-          placeholder="Repita a senha"
-          autoComplete="new-password"
-        />
-        {passwordConfirm.length > 0 && (
-          <div className={`mt-1 text-[10px] font-bold ${passwordsMatch ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-            {passwordsMatch ? "Senhas coincidem ✓" : "Senhas não coincidem"}
-          </div>
-        )}
-      </div>
-
-      {displayError && <div className="text-[#ffd6d6] text-[12px]">{displayError}</div>}
-
-      <Button type="submit" disabled={!canSubmit}>
-        {loading ? "Criando conta..." : "Criar conta"}
-      </Button>
-
-      <div className="text-center text-[11px] text-[#bbb]">
-        Já tem conta?{" "}
-        <button type="button" onClick={onSwitch} className="text-[#ffd64d] hover:underline cursor-pointer">
-          Fazer login
-        </button>
-      </div>
-    </form>
-  )
-}
-
-export default function LoginModal({ open, loading, error, onLogin }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
-      <ConsoleCard
-        title="Entrar"
-        className="w-full max-w-[450px]"
-      >
-        <LoginForm
-          onLogin={onLogin}
-          loading={loading}
-          error={error}
-        />
-      </ConsoleCard>
+    <div
+      className="fixed inset-0 flex items-center justify-center p-4"
+      style={{
+        background: "radial-gradient(ellipse at 60% 40%, #2a1a00 0%, #1a1200 40%, #0d0d0d 100%)",
+      }}
+    >
+      {/* Padrão de fundo decorativo */}
+      <div className="absolute inset-0 opacity-[0.04]" style={{
+        backgroundImage: "repeating-linear-gradient(0deg, #ffd64d 0px, #ffd64d 1px, transparent 1px, transparent 40px), repeating-linear-gradient(90deg, #ffd64d 0px, #ffd64d 1px, transparent 1px, transparent 40px)",
+      }} />
+
+      <div className="relative w-full max-w-[400px] flex flex-col items-center gap-6">
+
+        {/* Logo */}
+        <div className="flex flex-col items-center gap-2">
+          <HabbipLogo />
+          <div className="text-[11px] text-[#888] tracking-widest uppercase">Ferramenta para o Habbo Hotel</div>
+        </div>
+
+        {/* Card de login */}
+        <div className="w-full rounded-[10px] border border-[#3a2a00] bg-[rgba(0,0,0,0.55)] backdrop-blur-sm p-6 flex flex-col gap-4"
+          style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,214,77,0.08)" }}
+        >
+          <div className="text-center">
+            <div className="text-[15px] font-bold text-white mb-1">Acesso exclusivo</div>
+            <div className="text-[11px] text-[#888] leading-5">
+              Este site é de uso restrito.<br />
+              Faça login com suas credenciais para continuar.
+            </div>
+          </div>
+
+          <form onSubmit={handleSubmit} className="flex flex-col gap-3">
+            <div>
+              <div className="text-[11px] text-[#aaa] font-bold mb-1 uppercase tracking-wide">Email</div>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                autoComplete="email"
+                className="w-full h-10 border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] px-3 text-[13px] text-white outline-none placeholder:text-[#777] rounded-[4px] focus:border-[#ffd64d] transition-colors"
+              />
+            </div>
+
+            <div>
+              <div className="text-[11px] text-[#aaa] font-bold mb-1 uppercase tracking-wide">Senha</div>
+              <PasswordInput value={password} onChange={setPassword} disabled={loading} />
+            </div>
+
+            {error && (
+              <div className="text-[#ff8a8a] text-[12px] bg-[rgba(255,100,100,0.08)] border border-[#ff8a8a44] rounded-[4px] px-3 py-2">
+                {error}
+              </div>
+            )}
+
+            <button
+              type="submit"
+              disabled={!email.trim() || password.length < 8 || loading}
+              className="w-full h-10 rounded-[4px] font-bold text-[13px] transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+              style={{
+                background: "linear-gradient(180deg, #ffd64d 0%, #ffb800 100%)",
+                color: "#7c4e00",
+                border: "1px solid #a06800",
+                boxShadow: "0 2px 0 #7c4e00",
+              }}
+            >
+              {loading ? "Entrando..." : "Entrar"}
+            </button>
+          </form>
+        </div>
+
+        {/* Aviso de acesso */}
+        <div className="w-full rounded-[8px] border border-[#ffd64d22] bg-[rgba(255,214,77,0.04)] px-4 py-3 flex flex-col gap-1 text-center">
+          <div className="text-[11px] text-[#888]">Não tem acesso?</div>
+          <div className="text-[11px] text-[#ccc] leading-5">
+            Entre em contato enviando seu e-mail ou nick no Habbo para:
+          </div>
+          <a
+            href="mailto:contato@habbip.org"
+            className="text-[13px] font-bold text-[#ffd64d] hover:underline mt-1"
+          >
+            contato@habbip.org
+          </a>
+        </div>
+
+        <div className="text-[10px] text-[#444]">© Habbip — Todos os direitos reservados</div>
+      </div>
     </div>
   )
 }
