@@ -139,10 +139,10 @@ export async function logout() {
   clearSession()
 }
 
-export async function updatePassword({ currentPassword, newPassword }) {
+export async function updateAccountInfo({ currentPassword, newPassword, email }) {
   return apiFetch("/auth/me", {
     method: "PATCH",
-    body: JSON.stringify({ currentPassword, newPassword }),
+    body: JSON.stringify({ currentPassword, newPassword, email }),
   })
 }
 

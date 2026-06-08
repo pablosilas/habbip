@@ -2,7 +2,7 @@ import React from "react"
 import Button from "../ui/Button"
 import ConsoleCard from "../ui/ConsoleCard"
 import ProfileContent from "../profile/ProfileContent"
-import { updatePassword } from "../../services/authService"
+import { updateAccountInfo } from "../../services/authService"
 import { getHabboAvatarHeadUrl } from "../../services/habboApi"
 import LogoutConfirmModal from "./LogoutConfirmModal"
 
@@ -115,93 +115,91 @@ function PinInput({ value, onChange, disabled, maxLength = 6, label }) {
   )
 }
 
-function ChangePinSection({ user, onUserUpdated }) {
-  const [open, setOpen] = React.useState(false)
-  const [currentPin, setCurrentPin] = React.useState("")
-  const [newPin, setNewPin] = React.useState("")
-  const [confirmPin, setConfirmPin] = React.useState("")
+function AccountEditSection({ user, onUserUpdated }) {
+  const [editTarget, setEditTarget] = React.useState(null) // "email" | "senha" | null
+  const [email, setEmail] = React.useState(user?.email || "")
+  const [newPw, setNewPw] = React.useState("")
+  const [confirmPw, setConfirmPw] = React.useState("")
+  const [currentPw, setCurrentPw] = React.useState("")
   const [loading, setLoading] = React.useState(false)
-  const [error, setError] = React.useState("")
-  const [success, setSuccess] = React.useState(false)
+  const [msg, setMsg] = React.useState(null)
 
   function reset() {
-    setCurrentPin(""); setNewPin(""); setConfirmPin("")
-    setError(""); setSuccess(false)
+    setEmail(user?.email || ""); setNewPw(""); setConfirmPw(""); setCurrentPw(""); setMsg(null)
   }
 
-  async function handleSave() {
-    if (newPin.length < 6) { setError("Novo PIN deve ter 6 dígitos."); return }
-    if (newPin !== confirmPin) { setError("Os PINs não coincidem."); return }
-    setLoading(true); setError("")
+  function openEdit(target) {
+    reset()
+    setEditTarget(t => t === target ? null : target)
+  }
+
+  async function handleSave(e) {
+    e.preventDefault()
+    setMsg(null)
+    if (editTarget === "senha" && newPw !== confirmPw) {
+      setMsg({ ok: false, text: "As senhas não coincidem." }); return
+    }
+    setLoading(true)
     try {
-      const updatedUser = await updatePassword({ currentPassword: currentPin, newPassword: newPin })
-      if (updatedUser && onUserUpdated) {
-        onUserUpdated({ ...user, ...updatedUser })
-      }
-      setSuccess(true)
-      setTimeout(() => { setOpen(false); reset() }, 1500)
+      const payload = { currentPassword: currentPw }
+      if (editTarget === "email") payload.email = email
+      if (editTarget === "senha") payload.newPassword = newPw
+      const data = await updateAccountInfo(payload)
+      if (data.user) onUserUpdated?.({ ...user, ...data.user })
+      setMsg({ ok: true, text: editTarget === "email" ? "Email atualizado!" : "Senha alterada!" })
+      setCurrentPw(""); setNewPw(""); setConfirmPw("")
+      setTimeout(() => { setEditTarget(null); setMsg(null) }, 1800)
     } catch (err) {
-      setError(err.message)
+      setMsg({ ok: false, text: err.message || "Erro ao salvar." })
     } finally {
       setLoading(false)
     }
   }
 
+  const inputCls = "w-full h-8 border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] rounded-[3px] disabled:opacity-50"
+
   return (
     <div className="border border-[#ffffff22] rounded-[8px] p-3 bg-[rgba(255,255,255,0.04)]">
-      <div className="flex items-center justify-between mb-2">
-        <div className="text-[#fff2c1] font-bold text-[12px]">PIN do Habbip</div>
-        <button
-          type="button"
-          onClick={() => { setOpen((v) => !v); reset() }}
-          className="text-[10px] text-[#aaa] hover:text-[#ffd64d] cursor-pointer transition-colors"
-        >
-          {open ? "cancelar" : "alterar PIN"}
+      <div className="text-[#fff2c1] font-bold text-[12px] mb-2">Credenciais de acesso</div>
+
+      <div className="flex items-center justify-between mb-1">
+        <div className="text-[11px] text-[#aaa]">{user?.email}</div>
+        <button type="button" onClick={() => openEdit("email")}
+          className="text-[10px] text-[#aaa] hover:text-[#ffd64d] cursor-pointer transition-colors">
+          {editTarget === "email" ? "cancelar" : "alterar email"}
         </button>
       </div>
 
-      {!open && (
-        <div className="flex gap-[4px]">
-          {Array.from({ length: 5 }).map((_, i) => (
-            <div key={i} className="w-5 h-5 flex items-center justify-center border border-[#444] bg-[rgba(255,255,255,0.04)] text-[#555] text-[14px]">•</div>
-          ))}
-        </div>
-      )}
+      <div className="flex items-center justify-between">
+        <div className="text-[11px] text-[#555]">••••••••</div>
+        <button type="button" onClick={() => openEdit("senha")}
+          className="text-[10px] text-[#aaa] hover:text-[#ffd64d] cursor-pointer transition-colors">
+          {editTarget === "senha" ? "cancelar" : "alterar senha"}
+        </button>
+      </div>
 
-      {open && (
-        <div className="flex flex-col gap-3">
-          <PinInput
-            value={currentPin}
-            onChange={setCurrentPin}
-            disabled={loading}
-            label="PIN atual"
-          />
-          <PinInput
-            value={newPin}
-            onChange={setNewPin}
-            disabled={loading}
-            label="Novo PIN"
-          />
-          <PinInput
-            value={confirmPin}
-            onChange={setConfirmPin}
-            disabled={loading}
-            label="Confirmar novo PIN"
-          />
-          {confirmPin.length === 6 && (
-            <div className={`text-center text-[10px] font-bold ${newPin === confirmPin ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-              {newPin === confirmPin ? "PINs coincidem ✓" : "PINs não coincidem"}
-            </div>
+      {editTarget && (
+        <form onSubmit={handleSave} className="mt-3 flex flex-col gap-2">
+          {editTarget === "email" && (
+            <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+              placeholder="Novo email" disabled={loading} className={inputCls} />
           )}
-          {error && <div className="text-[#ffd6d6] text-[11px]">{error}</div>}
-          {success && <div className="text-[#7CFC8A] text-[11px]">PIN alterado com sucesso!</div>}
-          <Button
-            onClick={handleSave}
-            disabled={currentPin.length < 6 || newPin.length < 6 || confirmPin.length < 6 || loading}
-          >
-            {loading ? "Salvando..." : "Alterar PIN"}
+          {editTarget === "senha" && (
+            <>
+              <input type="password" value={newPw} onChange={e => setNewPw(e.target.value)}
+                placeholder="Nova senha (mín. 8 caracteres)" disabled={loading} className={inputCls} />
+              <input type="password" value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
+                placeholder="Confirmar nova senha" disabled={loading} className={inputCls} />
+            </>
+          )}
+          <input type="password" value={currentPw} onChange={e => setCurrentPw(e.target.value)}
+            placeholder="Senha atual (confirmação)" disabled={loading} className={inputCls} />
+          {msg && <div className={`text-[11px] ${msg.ok ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>{msg.text}</div>}
+          <Button type="submit"
+            disabled={loading || !currentPw || (editTarget === "email" && !email) || (editTarget === "senha" && (newPw.length < 8 || !confirmPw))}>
+            {loading ? "Salvando..." : "Salvar"}
           </Button>
-        </div>
+        </form>
       )}
     </div>
   )
@@ -258,29 +256,19 @@ export default function ProfileModal({ open, user, onClose, onUserUpdated, onLog
 
           {activeTab === "conta" && (
             <div className="space-y-3">
-              <div className="border border-[#ffffff22] rounded-[8px] p-3 bg-[rgba(255,255,255,0.04)]">
-                <div className="text-[#fff2c1] font-bold text-[12px] mb-2">Nick do Habbo</div>
-                <div className="flex items-center gap-3">
-                  <AvatarHead nick={user.habboNick} />
-                  <div>
-                    <div className="text-white text-[13px] font-bold">{user.habboNick}</div>
-                    <div className="text-[#888] text-[10px] mt-[2px]">Seu login no Habbip</div>
+              {user?.habboNick && (
+                <div className="border border-[#ffffff22] rounded-[8px] p-3 bg-[rgba(255,255,255,0.04)]">
+                  <div className="text-[#fff2c1] font-bold text-[12px] mb-2">Nick do Habbo</div>
+                  <div className="flex items-center gap-3">
+                    <AvatarHead nick={user.habboNick} />
+                    <div>
+                      <div className="text-white text-[13px] font-bold">{user.habboNick}</div>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
 
-              <ChangePinSection user={user} onUserUpdated={onUserUpdated} />
-
-              {/* Aviso de segurança */}
-              <div className="border border-[#ffd64d33] rounded-[8px] p-3 bg-[rgba(255,214,77,0.04)]">
-                <div className="flex items-start gap-2">
-                  <span className="text-[12px] shrink-0">🔒</span>
-                  <div className="text-[10px] text-[#c8c8c8] leading-[15px]">
-                    O Habbip <span className="text-white font-bold">não tem relação</span> com o Habbo Hotel.
-                    Seu PIN é exclusivo deste site — nunca é o mesmo da sua conta no jogo.
-                  </div>
-                </div>
-              </div>
+              <AccountEditSection user={user} onUserUpdated={onUserUpdated} />
 
               <div className="border-t border-[#ffffff22] pt-2">
                 <div className="text-[#888] text-[10px] leading-4 text-center">
