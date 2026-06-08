@@ -120,14 +120,15 @@ function UserRow({ user, adminKey, onRefresh }) {
   const [loading, setLoading] = React.useState(false)
   const [editing, setEditing] = React.useState(false)
 
-  const isActive = user.subscription_status === "active" && user.expires_at && new Date(user.expires_at) > new Date()
+  const isUnlimited = user.subscription_status === "active" && !user.expires_at
+  const isActive = isUnlimited || (user.subscription_status === "active" && user.expires_at && new Date(user.expires_at) > new Date())
 
-  async function grant() {
+  async function grant(unlimited = false) {
     setLoading(true)
     await fetch(`${API_BASE}/admin/users/${user.id}/grant`, {
       method: "POST",
       headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-      body: JSON.stringify({ days: 30 }),
+      body: JSON.stringify(unlimited ? { unlimited: true } : { days: 30 }),
     })
     setLoading(false)
     onRefresh()
@@ -150,7 +151,11 @@ function UserRow({ user, adminKey, onRefresh }) {
           <div className="text-white font-bold truncate">{user.email}</div>
           {user.habbo_nick && <div className="text-[#888]">{user.habbo_nick}</div>}
           <div className={`text-[10px] mt-[2px] ${isActive ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>
-            {isActive ? `Ativo até ${new Date(user.expires_at).toLocaleDateString("pt-BR")}` : "Sem acesso"}
+            {isUnlimited
+              ? "Ativo — ilimitado"
+              : isActive
+                ? `Ativo até ${new Date(user.expires_at).toLocaleDateString("pt-BR")}`
+                : "Sem acesso"}
           </div>
         </div>
         <div className="flex gap-1 shrink-0">
@@ -159,15 +164,29 @@ function UserRow({ user, adminKey, onRefresh }) {
             Editar
           </button>
           {isActive ? (
-            <button onClick={revoke} disabled={loading}
-              className="px-2 py-1 text-[10px] border border-[#FF8A8A44] text-[#FF8A8A] rounded-[3px] hover:bg-[rgba(255,138,138,0.1)] cursor-pointer disabled:opacity-40">
-              Revogar
-            </button>
+            <>
+              {!isUnlimited && (
+                <button onClick={() => grant(true)} disabled={loading}
+                  className="px-2 py-1 text-[10px] border border-[#7CFC8A44] text-[#7CFC8A] rounded-[3px] hover:bg-[rgba(124,252,138,0.1)] cursor-pointer disabled:opacity-40">
+                  ∞
+                </button>
+              )}
+              <button onClick={revoke} disabled={loading}
+                className="px-2 py-1 text-[10px] border border-[#FF8A8A44] text-[#FF8A8A] rounded-[3px] hover:bg-[rgba(255,138,138,0.1)] cursor-pointer disabled:opacity-40">
+                Revogar
+              </button>
+            </>
           ) : (
-            <button onClick={grant} disabled={loading}
-              className="px-2 py-1 text-[10px] border border-[#7CFC8A44] text-[#7CFC8A] rounded-[3px] hover:bg-[rgba(124,252,138,0.1)] cursor-pointer disabled:opacity-40">
-              +30 dias
-            </button>
+            <>
+              <button onClick={() => grant(false)} disabled={loading}
+                className="px-2 py-1 text-[10px] border border-[#7CFC8A44] text-[#7CFC8A] rounded-[3px] hover:bg-[rgba(124,252,138,0.1)] cursor-pointer disabled:opacity-40">
+                +30 dias
+              </button>
+              <button onClick={() => grant(true)} disabled={loading}
+                className="px-2 py-1 text-[10px] border border-[#7CFC8A44] text-[#7CFC8A] rounded-[3px] hover:bg-[rgba(124,252,138,0.1)] cursor-pointer disabled:opacity-40">
+                ∞
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -182,7 +201,7 @@ function CreateUserForm({ adminKey, onRefresh }) {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
   const [nick, setNick] = React.useState("")
-  const [grantAccess, setGrantAccess] = React.useState(true)
+  const [accessMode, setAccessMode] = React.useState("days") // "none" | "days" | "unlimited"
   const [loading, setLoading] = React.useState(false)
   const [msg, setMsg] = React.useState(null)
 
@@ -194,7 +213,11 @@ function CreateUserForm({ adminKey, onRefresh }) {
       const res = await fetch(`${API_BASE}/admin/users`, {
         method: "POST",
         headers: { "Content-Type": "application/json", "x-admin-key": adminKey },
-        body: JSON.stringify({ email, password, habboNick: nick || undefined, grantAccess }),
+        body: JSON.stringify({
+          email, password, habboNick: nick || undefined,
+          grantAccess: accessMode !== "none",
+          unlimited: accessMode === "unlimited",
+        }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -220,10 +243,23 @@ function CreateUserForm({ adminKey, onRefresh }) {
         className="w-full h-8 border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] rounded-[3px]" />
       <input value={nick} onChange={e => setNick(e.target.value)} placeholder="Nick Habbo (opcional)"
         className="w-full h-8 border border-[#8a8a8a] bg-[rgba(255,255,255,0.08)] px-2 text-[11px] text-white outline-none placeholder:text-[#666] rounded-[3px]" />
-      <label className="flex items-center gap-2 text-[11px] text-[#ccc] cursor-pointer">
-        <input type="checkbox" checked={grantAccess} onChange={e => setGrantAccess(e.target.checked)} />
-        Liberar acesso imediatamente (30 dias)
-      </label>
+      <div className="flex gap-1">
+        {[
+          { value: "none", label: "Sem acesso" },
+          { value: "days", label: "+30 dias" },
+          { value: "unlimited", label: "Ilimitado ∞" },
+        ].map(opt => (
+          <button key={opt.value} type="button" onClick={() => setAccessMode(opt.value)}
+            className={[
+              "flex-1 py-1 text-[10px] border rounded-[3px] cursor-pointer transition-colors",
+              accessMode === opt.value
+                ? "border-[#ffd64d] text-[#ffd64d] bg-[rgba(255,214,77,0.10)]"
+                : "border-[#444] text-[#777] hover:border-[#666] hover:text-[#aaa]"
+            ].join(" ")}>
+            {opt.label}
+          </button>
+        ))}
+      </div>
       {msg && <div className={`text-[11px] ${msg.ok ? "text-[#7CFC8A]" : "text-[#FF8A8A]"}`}>{msg.text}</div>}
       <Button type="submit" disabled={!email || password.length < 8 || loading}>
         {loading ? "Criando..." : "Criar usuário"}
