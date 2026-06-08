@@ -347,28 +347,29 @@ export default function HabboDeskApp() {
     maxHeight: "calc(var(--vh, 1dvh) * 96)",
   }
 
-  return (
-    <>
-      <WelcomeModal
-        open={welcomeOpen}
-        onClose={() => setWelcomeOpen(false)}
-        onDismiss={() => setWelcomeOpen(false)}
-      />
-      <SubscriptionModal
-        open={auth.subscriptionModalOpen}
-        onActivated={auth.handleSubscriptionActivated}
-        onLogout={doLogout}
-      />
+  // Bloqueia acesso: sem login → tela de login; logado sem assinatura → modal de contato
+  if (!auth.isLoggedIn) {
+    return (
       <LoginModal
-        open={auth.loginModalOpen}
-        mode={auth.authMode}
-        onSetMode={auth.setAuthMode}
+        open={true}
         loading={auth.loginLoading}
         error={auth.loginError}
         onLogin={({ email, password }) => auth.handleLogin({ email, password })}
-        onRegister={({ email, habboNick, password }) => auth.handleRegister({ email, habboNick, password })}
-        onClose={() => auth.setLoginModalOpen(false)}
       />
+    )
+  }
+
+  if (auth.subscriptionModalOpen) {
+    return (
+      <SubscriptionModal
+        open={true}
+        onLogout={doLogout}
+      />
+    )
+  }
+
+  return (
+    <>
       <ProfileModal
         open={profileModalOpen}
         user={auth.loggedUser}

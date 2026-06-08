@@ -129,7 +129,7 @@ function SecurityNotice() {
   )
 }
 
-function LoginForm({ onLogin, onSwitch, loading, error }) {
+function LoginForm({ onLogin, loading, error }) {
   const [email, setEmail] = React.useState("")
   const [password, setPassword] = React.useState("")
 
@@ -172,13 +172,6 @@ function LoginForm({ onLogin, onSwitch, loading, error }) {
       <Button type="submit" disabled={!email.trim() || password.length < 8 || loading}>
         {loading ? "Entrando..." : "Entrar"}
       </Button>
-
-      <div className="text-center text-[11px] text-[#bbb]">
-        Não tem conta?{" "}
-        <button type="button" onClick={onSwitch} className="text-[#ffd64d] hover:underline cursor-pointer">
-          Criar conta
-        </button>
-      </div>
     </form>
   )
 }
@@ -291,42 +284,20 @@ function RegisterForm({ onRegister, onSwitch, loading, error }) {
   )
 }
 
-export default function LoginModal({
-  open, mode = "login", onSetMode, loading, error,
-  onLogin, onRegister, onClose,
-}) {
+export default function LoginModal({ open, loading, error, onLogin }) {
   if (!open) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
       <ConsoleCard
-        title={mode === "register" ? "Criar conta" : "Entrar"}
-        onClose={onClose}
+        title="Entrar"
         className="w-full max-w-[450px]"
       >
-        {mode === "login" ? (
-          <LoginForm
-            onLogin={onLogin}
-            onSwitch={() => onSetMode("register")}
-            loading={loading}
-            error={error}
-          />
-        ) : (
-          <RegisterForm
-            onRegister={onRegister}
-            onSwitch={() => onSetMode("login")}
-            loading={loading}
-            error={error}
-          />
-        )}
-        {mode === "login" && (
-          <div className="mt-1 border border-[#ffffff22] rounded-[6px] p-2 bg-[rgba(255,255,255,0.03)]">
-            <div className="text-[10px] text-[#aaa] leading-4">
-              <span className="text-[#ffd64d] font-bold">Vantagens da conta:</span>{" "}
-              inventário e monitoramento de preços sincronizados em qualquer dispositivo.
-            </div>
-          </div>
-        )}
+        <LoginForm
+          onLogin={onLogin}
+          loading={loading}
+          error={error}
+        />
       </ConsoleCard>
     </div>
   )
