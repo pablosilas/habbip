@@ -146,14 +146,10 @@ export async function updatePassword({ currentPassword, newPassword }) {
   })
 }
 
-// ── Pagamento / Assinatura ───────────────────────────────────────────────────
+// ── Assinatura ───────────────────────────────────────────────────────────────
 
 export async function fetchSubscriptionStatus() {
   return apiFetch("/payment/status")
-}
-
-export async function createPixPayment() {
-  return apiFetch("/payment/create-pix", { method: "POST" })
 }
 
 // ── Dados do usuário ─────────────────────────────────────────────────────────
