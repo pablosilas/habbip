@@ -2,9 +2,10 @@ import React from "react"
 import ConsoleCard from "../ui/ConsoleCard"
 import Button from "../ui/Button"
 import messageSound from "../../assets/message.mp3"
+import bgLogin from "../../assets/bg_login.png"
 
 function playSound() {
-  try { new Audio(messageSound).play() } catch { }
+  try { new Audio(messageSound).play() } catch { /* empty */ }
 }
 
 function EyeIcon({ open }) {
@@ -65,7 +66,15 @@ export default function LoginModal({ open, loading, error, onLogin }) {
   if (!open) return null
 
   return (
-    <div className="fixed inset-0 z-50 bg-[rgba(0,0,0,0.55)] flex items-center justify-center p-4">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{
+        backgroundImage: `url(${bgLogin})`,
+        backgroundRepeat: "no-repeat",
+        backgroundSize: "cover",
+        backgroundPosition: "center 90%",
+      }}
+    >
       <ConsoleCard title="Habbip" className="w-full max-w-[420px]">
         <form onSubmit={handleSubmit} className="flex flex-col gap-3">
 
