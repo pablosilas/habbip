@@ -1,23 +1,23 @@
-import React from "react"
-import { createPortal } from "react-dom"
-import coinIcon from "../../assets/coin.png"
-import closeIcon from "../../assets/close.png"
-import alertIcon from "../../assets/alert.png"
-import watchIcon from "../../assets/watch.png"
-import configIcon from "../../assets/config.png"
-import FurniThumb from "./FurniThumb"
-import AlertConfigModal from "../modals/AlertConfigModal"
+import React from "react";
+import { createPortal } from "react-dom";
+import coinIcon from "../../assets/coin.png";
+import closeIcon from "../../assets/close.png";
+import alertIcon from "../../assets/alert.png";
+import watchIcon from "../../assets/watch.png";
+import configIcon from "../../assets/config.png";
+import FurniThumb from "./FurniThumb";
+import AlertConfigModal from "../modals/AlertConfigModal";
 
 function timeAgo(ms) {
-  const diff = Date.now() - ms
-  const min = Math.floor(diff / 60000)
-  const h = Math.floor(min / 60)
-  const d = Math.floor(h / 24)
+  const diff = Date.now() - ms;
+  const min = Math.floor(diff / 60000);
+  const h = Math.floor(min / 60);
+  const d = Math.floor(h / 24);
 
-  if (min < 1) return "agora"
-  if (min < 60) return `${min}min`
-  if (h < 24) return `${h}h`
-  return `${d}d`
+  if (min < 1) return "agora";
+  if (min < 60) return `${min}min`;
+  if (h < 24) return `${h}h`;
+  return `${d}d`;
 }
 
 function TabBtn({ active, onClick, children }) {
@@ -38,7 +38,7 @@ function TabBtn({ active, onClick, children }) {
     >
       {children}
     </button>
-  )
+  );
 }
 
 function TopIconButton({ onClick, title, children }) {
@@ -63,7 +63,7 @@ function TopIconButton({ onClick, title, children }) {
     >
       {children}
     </button>
-  )
+  );
 }
 
 function CloseButton({ onClick, title }) {
@@ -75,12 +75,11 @@ function CloseButton({ onClick, title }) {
       onClick={onClick}
       className="shrink-0 w-4 h-4 object-contain cursor-pointer transition-all hover:brightness-110 active:translate-y-[1px]"
     />
-  )
+  );
 }
 
-
 function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
-  const isUp = notif.direction === "up"
+  const isUp = notif.direction === "up";
 
   return (
     <div
@@ -97,7 +96,10 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
 
       <div
         className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => { onOpenInFair?.(notif.className); setOpen(false) }}
+        onClick={() => {
+          onOpenInFair?.(notif.className);
+          setOpen(false);
+        }}
       >
         <div className="text-[11px] font-bold text-white truncate">
           {notif.furniName}
@@ -105,8 +107,9 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
 
         <div className="flex items-center gap-1 mt-[5px] flex-wrap">
           <span
-            className={`text-[12px] font-bold ${isUp ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
-              }`}
+            className={`text-[12px] font-bold ${
+              isUp ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
+            }`}
           >
             {isUp ? "▲" : "▼"} {isUp ? "+" : ""}
             {notif.pct}%
@@ -122,8 +125,9 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
           <div className="flex items-center gap-[2px]">
             <img src={coinIcon} alt="" className="w-3 h-3" />
             <span
-              className={`text-[11px] font-bold ${isUp ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
-                }`}
+              className={`text-[11px] font-bold ${
+                isUp ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
+              }`}
             >
               {notif.newPrice}
             </span>
@@ -138,13 +142,23 @@ function NotifItem({ notif, onRemove, onOpenInFair, setOpen }) {
       </div>
 
       <div className="flex items-center self-stretch">
-        <CloseButton onClick={() => onRemove(notif.id)} title="Excluir alerta" />
+        <CloseButton
+          onClick={() => onRemove(notif.id)}
+          title="Excluir alerta"
+        />
       </div>
     </div>
-  )
+  );
 }
 
-function NotifsList({ notifications, onRemove, onOpenInFair, setOpen, expanded, setExpanded }) {
+function NotifsList({
+  notifications,
+  onRemove,
+  onOpenInFair,
+  setOpen,
+  expanded,
+  setExpanded,
+}) {
   if (notifications.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -154,17 +168,25 @@ function NotifsList({ notifications, onRemove, onOpenInFair, setOpen, expanded, 
           Monitore um mobi para receber alertas de preço.
         </span>
       </div>
-    )
+    );
   }
 
-  const LIMIT = 3
-  const notificationsToShow = expanded ? notifications : notifications.slice(0, LIMIT)
-  const hasMore = notifications.length > LIMIT
+  const LIMIT = 3;
+  const notificationsToShow = expanded
+    ? notifications
+    : notifications.slice(0, LIMIT);
+  const hasMore = notifications.length > LIMIT;
 
   return (
     <div>
       {notificationsToShow.map((n) => (
-        <NotifItem key={n.id} notif={n} onRemove={onRemove} onOpenInFair={onOpenInFair} setOpen={setOpen} />
+        <NotifItem
+          key={n.id}
+          notif={n}
+          onRemove={onRemove}
+          onOpenInFair={onOpenInFair}
+          setOpen={setOpen}
+        />
       ))}
       {hasMore && !expanded && (
         <button
@@ -185,27 +207,33 @@ function NotifsList({ notifications, onRemove, onOpenInFair, setOpen, expanded, 
         </button>
       )}
     </div>
-  )
+  );
 }
 
-function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }) {
-  const [configModalOpen, setConfigModalOpen] = React.useState(false)
-  const history = item?.marketData?.history || []
+function WatchlistItem({
+  item,
+  onRemove,
+  onOpenInFair,
+  setOpen,
+  onUpdateConfig,
+}) {
+  const [configModalOpen, setConfigModalOpen] = React.useState(false);
+  const history = item?.marketData?.history || [];
   const currentPrice =
     item?.marketData?.currentPrice ??
     (history.length > 0 ? history[history.length - 1]?.[0] : null) ??
     item?.marketData?.averagePrice ??
     item.basePrice ??
-    "-"
+    "-";
 
   const diff =
     typeof currentPrice === "number" && item.basePrice
       ? currentPrice - item.basePrice
-      : null
+      : null;
 
   function handleSaveConfig(newConfig) {
-    onUpdateConfig?.(item.ClassName, newConfig)
-    setConfigModalOpen(false)
+    onUpdateConfig?.(item.ClassName, newConfig);
+    setConfigModalOpen(false);
   }
 
   return (
@@ -213,10 +241,12 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
       <div className="shrink-0">
         <FurniThumb classname={item.ClassName} size="md" angle="2_0" />
       </div>
-
       <div
         className="flex-1 min-w-0 cursor-pointer"
-        onClick={() => { onOpenInFair?.(item.FurniName); setOpen(false) }}
+        onClick={() => {
+          onOpenInFair?.(item.ClassName);
+          setOpen(false);
+        }}
       >
         <div className="text-[11px] font-bold text-white truncate">
           {item.FurniName}
@@ -232,8 +262,9 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
 
           {diff !== null && diff !== 0 && (
             <span
-              className={`text-[9px] font-bold ${diff > 0 ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
-                }`}
+              className={`text-[9px] font-bold ${
+                diff > 0 ? "text-[#7CFC8A]" : "text-[#FF8A8A]"
+              }`}
             >
               {diff > 0 ? "+" : ""}
               {diff}
@@ -244,7 +275,10 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
       <div className="flex items-center gap-1 self-stretch">
         <button
           type="button"
-          onClick={(e) => { e.stopPropagation(); setConfigModalOpen(true) }}
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfigModalOpen(true);
+          }}
           title="Configurar alertas"
           className="flex items-center justify-center cursor-pointer hover:brightness-110 active:translate-y-[1px] transition-all"
           style={{
@@ -253,9 +287,16 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
             fontSize: "10px",
           }}
         >
-          <img src={configIcon} alt="Configurar" className="w-[14px] h-[14px] object-contain" />
+          <img
+            src={configIcon}
+            alt="Configurar"
+            className="w-[14px] h-[14px] object-contain"
+          />
         </button>
-        <CloseButton onClick={() => onRemove(item.ClassName)} title="Parar de monitorar" />
+        <CloseButton
+          onClick={() => onRemove(item.ClassName)}
+          title="Parar de monitorar"
+        />
       </div>
 
       {typeof document !== "undefined" && (
@@ -267,11 +308,19 @@ function WatchlistItem({ item, onRemove, onOpenInFair, setOpen, onUpdateConfig }
           onClose={() => setConfigModalOpen(false)}
         />
       )}
-    </div >
-  )
+    </div>
+  );
 }
 
-function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateConfig, expanded, setExpanded }) {
+function WatchlistList({
+  watchlist,
+  onRemove,
+  onOpenInFair,
+  setOpen,
+  onUpdateConfig,
+  expanded,
+  setExpanded,
+}) {
   if (watchlist.length === 0) {
     return (
       <div className="px-4 py-6 text-center text-[11px] text-[#f1f1f1]">
@@ -281,15 +330,15 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
           Clique no ícone 👁 em um resultado para monitorar.
         </span>
       </div>
-    )
+    );
   }
 
-  const LIMIT = 4
-  const reversedWatchlist = [...watchlist]
+  const LIMIT = 4;
+  const reversedWatchlist = [...watchlist];
   const watchlistToShow = expanded
     ? reversedWatchlist
-    : reversedWatchlist.slice(0, LIMIT)
-  const hasMore = watchlist.length > LIMIT
+    : reversedWatchlist.slice(0, LIMIT);
+  const hasMore = watchlist.length > LIMIT;
 
   return (
     <div>
@@ -322,7 +371,7 @@ function WatchlistList({ watchlist, onRemove, onOpenInFair, setOpen, onUpdateCon
         </button>
       )}
     </div>
-  )
+  );
 }
 
 function BellIcon() {
@@ -330,7 +379,7 @@ function BellIcon() {
     <svg width="9" height="9" viewBox="0 0 16 16" fill="currentColor">
       <path d="M8 16a2 2 0 0 0 2-2H6a2 2 0 0 0 2 2zm.995-14.901a1 1 0 1 0-1.99 0A5.002 5.002 0 0 0 3 6c0 1.098-.5 6-2 7h14c-1.5-1-2-5.902-2-7 0-2.42-1.72-4.44-4.005-4.901z" />
     </svg>
-  )
+  );
 }
 
 function RefreshIcon() {
@@ -338,7 +387,7 @@ function RefreshIcon() {
     <span className="text-[12px] leading-none text-white translate-y-[0px]">
       ↻
     </span>
-  )
+  );
 }
 
 function CloseIcon() {
@@ -351,7 +400,7 @@ function CloseIcon() {
         borderTop: "6px solid #ffffff",
       }}
     />
-  )
+  );
 }
 
 export default function NotificationBell({
@@ -367,72 +416,74 @@ export default function NotificationBell({
   onPollNow,
   onOpenInFair,
   onUpdateConfig,
-  onClearWatchlist
+  onClearWatchlist,
 }) {
-  const [open, setOpen] = React.useState(false)
-  const [tab, setTab] = React.useState("notifs")
-  const [dropdownPos, setDropdownPos] = React.useState({ top: 0, right: 0 })
-  const [expandedNotifs, setExpandedNotifs] = React.useState(false)
-  const [expandedWatchlist, setExpandedWatchlist] = React.useState(false)
-  const internalRef = React.useRef(null)
-  const panelRef = React.useRef(null)
+  const [open, setOpen] = React.useState(false);
+  const [tab, setTab] = React.useState("notifs");
+  const [dropdownPos, setDropdownPos] = React.useState({ top: 0, right: 0 });
+  const [expandedNotifs, setExpandedNotifs] = React.useState(false);
+  const [expandedWatchlist, setExpandedWatchlist] = React.useState(false);
+  const internalRef = React.useRef(null);
+  const panelRef = React.useRef(null);
 
-  const btnRef = bellRef || internalRef
+  const btnRef = bellRef || internalRef;
 
   function handleToggle() {
     if (!open && btnRef.current) {
-      const rect = btnRef.current.getBoundingClientRect()
-      const isMobile = window.innerWidth < 640
-      const PANEL_WIDTH = isMobile ? Math.min(280, window.innerWidth - 16) : 360
-      const MARGIN = 8
+      const rect = btnRef.current.getBoundingClientRect();
+      const isMobile = window.innerWidth < 640;
+      const PANEL_WIDTH = isMobile
+        ? Math.min(280, window.innerWidth - 16)
+        : 360;
+      const MARGIN = 8;
 
-      let right = window.innerWidth - rect.right
+      let right = window.innerWidth - rect.right;
 
-      const leftEdge = rect.right - PANEL_WIDTH
+      const leftEdge = rect.right - PANEL_WIDTH;
       if (leftEdge < MARGIN) {
-        right = window.innerWidth - PANEL_WIDTH - MARGIN
+        right = window.innerWidth - PANEL_WIDTH - MARGIN;
       }
 
-      if (right < MARGIN) right = MARGIN
+      if (right < MARGIN) right = MARGIN;
 
       setDropdownPos({
         top: rect.bottom + 6,
         right,
-        width: PANEL_WIDTH
-      })
+        width: PANEL_WIDTH,
+      });
     }
 
-    if (!open && unreadCount > 0) onMarkAllRead?.()
-    setOpen((v) => !v)
+    if (!open && unreadCount > 0) onMarkAllRead?.();
+    setOpen((v) => !v);
   }
 
   React.useEffect(() => {
-    if (!open) return
+    if (!open) return;
 
     function handleClickOutside(e) {
       if (
         !btnRef.current?.contains(e.target) &&
         !panelRef.current?.contains(e.target)
       ) {
-        setOpen(false)
+        setOpen(false);
       }
     }
 
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => document.removeEventListener("mousedown", handleClickOutside)
-  }, [open, btnRef])
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open, btnRef]);
 
   // Reset expanded states when switching tabs
   React.useEffect(() => {
     if (tab === "notifs") {
-      setExpandedWatchlist(false)
+      setExpandedWatchlist(false);
     } else {
-      setExpandedNotifs(false)
+      setExpandedNotifs(false);
     }
-  }, [tab])
+  }, [tab]);
 
   const currentCount =
-    tab === "notifs" ? notifications.length : watchlist.length
+    tab === "notifs" ? notifications.length : watchlist.length;
 
   const panel = open ? (
     <div
@@ -462,13 +513,24 @@ export default function NotificationBell({
         <div className="flex items-center gap-1 min-w-0">
           {/* Aba Alertas */}
           <TabBtn active={tab === "notifs"} onClick={() => setTab("notifs")}>
-            <img src={alertIcon} alt="" className="w-[10px] h-[10px] object-contain" />
-            Alertas  ({notifications.length > 9 ? "9+" : notifications.length})
+            <img
+              src={alertIcon}
+              alt=""
+              className="w-[10px] h-[10px] object-contain"
+            />
+            Alertas ({notifications.length > 9 ? "9+" : notifications.length})
           </TabBtn>
 
           {/* Aba Monitorando */}
-          <TabBtn active={tab === "watchlist"} onClick={() => setTab("watchlist")}>
-            <img src={watchIcon} alt="" className="w-[10px] h-[10px] object-contain" />
+          <TabBtn
+            active={tab === "watchlist"}
+            onClick={() => setTab("watchlist")}
+          >
+            <img
+              src={watchIcon}
+              alt=""
+              className="w-[10px] h-[10px] object-contain"
+            />
             Monitorando ({watchlist.length > 9 ? "9+" : watchlist.length})
           </TabBtn>
         </div>
@@ -505,15 +567,16 @@ export default function NotificationBell({
               limpar tudo
             </button>
           )}
-          {tab === "watchlist" && watchlist.length > 0 && (   // <-- bloco novo
-            <button
-              type="button"
-              onClick={onClearWatchlist}
-              className="text-[8px] font-bold text-[#e7e7e7] hover:text-[#ffffff] cursor-pointer transition-colors"
-            >
-              limpar tudo
-            </button>
-          )}
+          {tab === "watchlist" &&
+            watchlist.length > 0 && ( // <-- bloco novo
+              <button
+                type="button"
+                onClick={onClearWatchlist}
+                className="text-[8px] font-bold text-[#e7e7e7] hover:text-[#ffffff] cursor-pointer transition-colors"
+              >
+                limpar tudo
+              </button>
+            )}
         </div>
       </div>
 
@@ -540,7 +603,7 @@ export default function NotificationBell({
         )}
       </div>
     </div>
-  ) : null
+  ) : null;
 
   return (
     <>
@@ -565,5 +628,5 @@ export default function NotificationBell({
         ? createPortal(panel, document.body)
         : null}
     </>
-  )
+  );
 }
